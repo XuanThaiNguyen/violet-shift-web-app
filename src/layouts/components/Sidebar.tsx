@@ -125,6 +125,7 @@ const Sidebar: FC = () => {
                       "hidden px-4 py-2 w-full cursor-pointer hover:bg-primary/20 hover:text-primary rounded-md",
                       isOpen ? "" : "lg:block"
                     )}
+                    key={item.key}
                     onClick={() => setIsOpen(true)}
                   >
                     <Icon className="flex-shrink-0" size={20} />
@@ -161,6 +162,7 @@ const Sidebar: FC = () => {
                         <Link
                           className="flex items-center gap-2 px-4 py-2 hover:bg-primary/20 hover:text-primary cursor-pointer rounded-md"
                           to={child.to}
+                          key={child.key}
                         >
                           <ChildIcon className="flex-shrink-0" size={20} />
                           <span
@@ -185,6 +187,7 @@ const Sidebar: FC = () => {
               <Link
                 className="flex items-center gap-2 px-4 py-2 hover:bg-primary/20 hover:text-primary cursor-pointer rounded-md"
                 to={item.to}
+                key={item.key}
               >
                 <Icon className="flex-shrink-0" size={20} />
                 <span

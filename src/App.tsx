@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { RouterProvider } from "react-router"
-import { router } from "./routes/route"
+import { router } from "@/routes/route"
 
 
 function App() {

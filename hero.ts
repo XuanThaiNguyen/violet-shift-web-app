@@ -1,3 +1,11 @@
 // hero.ts
-import { heroui } from "@heroui/react";
-export default heroui();
+import { commonColors, heroui } from "@heroui/react";
+export default heroui({
+    themes: {
+        light: {
+            colors: {
+                background: commonColors.zinc[50],
+            }
+        }
+    }
+});

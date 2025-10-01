@@ -1,26 +1,35 @@
 import { createBrowserRouter } from "react-router";
-import AuthorizedLayout from "../layouts/AuthorizedLayout";
+import AuthorizedLayout from "@/layouts/AuthorizedLayout";
 import { lazy } from "react";
-import PublicLayout from "../layouts/PublicLayout";
+import PublicLayout from "@/layouts/PublicLayout";
+import NotFound from "@/pages/notfound/NotFound";
 
-const Home = lazy(() => import("../pages/home/Home"));
-const Login = lazy(() => import("../pages/login/Login"));
-const Register = lazy(() => import("../pages/register/Register"));
+const Home = lazy(() => import("@/pages/home/Home"));
+const Login = lazy(() => import("@/pages/auth/login/Login"));
+// const Register = lazy(() => import("@/pages/auth/register/Register"));
+const NewPassword = lazy(() => import("@/pages/auth/new-password/NewPassword"));
+const ProfileSetup = lazy(() => import("@/pages/auth/profile/Profile"));
+const Profile = lazy(() => import("@/pages/profile/Profile"));
 
 export const router = createBrowserRouter([
-  {
-    path: "/",
-    Component: AuthorizedLayout,
-    children: [
-      { index: true, Component: Home },
-    ],
-  },
   {
     path: "/auth",
     Component: PublicLayout,
     children: [
       { path: "login", Component: Login },
-      { path: "register", Component: Register },
+      { path: "new-password", Component: NewPassword },
+      { path: "profile", Component: ProfileSetup },
+    //   { path: "register", Component: Register },
+      { path: "*", Component: NotFound },
     ],
-  }
+  },
+  {
+    path: "/",
+    Component: AuthorizedLayout,
+    children: [
+      { index: true, Component: Home },
+      { path: "profile", Component: Profile },
+      { path: "*", Component: NotFound },
+    ],
+  },
 ]);
