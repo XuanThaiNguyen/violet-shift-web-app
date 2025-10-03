@@ -1,8 +1,13 @@
-import { Button, Input } from "@heroui/react";
+import { useState } from "react";
+import { addToast, Button, Input } from "@heroui/react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import api from "@/services/api/http";
 
-import { type FC } from "react";
+import type { FC } from "react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { LOGIN_ERROR_CODE } from "@/constants/errorMsg";
+import { AxiosError } from "axios";
 
 const passwordSchema = Yup.object({
   currentPassword: Yup.string().required("Current password is required"),
@@ -22,13 +27,44 @@ const initialPasswordValues = {
   confirmPassword: "",
 };
 
+const ErrorMessages = {
+  [LOGIN_ERROR_CODE.INVALID_REQUEST]: "Password update failed",
+  [LOGIN_ERROR_CODE.INVALID_CURRENT_PASSWORD]: "Current password is incorrect",
+  [LOGIN_ERROR_CODE.INTERNAL_SERVER_ERROR]: "Internal server error",
+};
+
 const PasswordUpdate: FC = () => {
+
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const profileFormik = useFormik({
     initialValues: initialPasswordValues,
     validationSchema: passwordSchema,
-    onSubmit: (values) => {
-      console.log("🚀 ~ values:", values);
-      profileFormik.resetForm();
+    onSubmit: async (values) => {
+      try {
+        await api.post("/api/v1/auth/update-password", values);
+        addToast({
+          title: "Password updated",
+          color: "success",
+          timeout: 2000,
+          isClosing: true,
+        });
+      } catch (error) {
+        let msg = "Something went wrong";
+        if (error instanceof AxiosError) {
+          const errorCode = error.response?.data?.code;
+          msg = ErrorMessages[errorCode] ?? "Something went wrong";
+        }
+        addToast({
+          title: "Password update failed",
+          description: msg,
+          color: "danger",
+          timeout: 2000,
+          isClosing: true,
+        });
+      }
     },
   });
 
@@ -44,7 +80,7 @@ const PasswordUpdate: FC = () => {
           <div className="flex flex-col gap-y-4 gap-x-2">
             <Input
               isRequired
-              type="text"
+              type={showCurrentPassword ? "text" : "password"}
               placeholder="Current Password"
               name="currentPassword"
               label="Current Password"
@@ -65,10 +101,18 @@ const PasswordUpdate: FC = () => {
               onBlur={() => {
                 profileFormik.setFieldTouched("currentPassword", true);
               }}
+              endContent={
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                >
+                  {showCurrentPassword ? <EyeIcon /> : <EyeOffIcon />}
+                </button>
+              }
             />
             <Input
               isRequired
-              type="text"
+              type={showPassword ? "text" : "password"}
               placeholder="New Password"
               name="password"
               label="New Password"
@@ -88,9 +132,17 @@ const PasswordUpdate: FC = () => {
               onBlur={() => {
                 profileFormik.setFieldTouched("password", true);
               }}
+              endContent={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeIcon /> : <EyeOffIcon />}
+                </button>
+              }
             />
             <Input
-              type="text"
+              type={showConfirmPassword ? "text" : "password"}
               placeholder="Confirm Password"
               name="confirmPassword"
               label="Confirm Password"
@@ -111,6 +163,14 @@ const PasswordUpdate: FC = () => {
               onBlur={() => {
                 profileFormik.setFieldTouched("confirmPassword", true);
               }}
+              endContent={
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeIcon /> : <EyeOffIcon />}
+                </button>
+              }
             />
           </div>
 

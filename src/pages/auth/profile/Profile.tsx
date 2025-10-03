@@ -1,46 +1,97 @@
-import { Button, DatePicker, Input, Select, SelectItem } from "@heroui/react";
+import { useEffect } from "react";
+import {
+  addToast,
+  Button,
+  DatePicker,
+  Input,
+  Select,
+  SelectItem,
+} from "@heroui/react";
 import { CalendarDate } from "@internationalized/date";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { isValid } from "date-fns";
 import { pad } from "@/utils/strings";
+import { useMe } from "@/states/apis/me";
+import { employmentTypeOptions, genderOptions } from "@/constants/userOptions";
+import api from "@/services/api/http";
+import { useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { type FC } from "react";
+import type { FC } from "react";
 
 const schema = Yup.object({
   avatar: Yup.string(),
   firstName: Yup.string().required("First name is required"),
+  middleName: Yup.string(),
   lastName: Yup.string().required("Last name is required"),
   preferredName: Yup.string(),
   phone: Yup.string(),
-  birthday: Yup.date().required("Birthday is required"),
+  birthdate: Yup.date().required("birthdate is required"),
   gender: Yup.string()
-    .oneOf(["male", "female", "other"])
+    .oneOf(genderOptions.map((option) => option.value))
     .required("Gender is required"),
+  employmentType: Yup.string()
+    .oneOf(employmentTypeOptions.map((option) => option.value))
+    .required("Employment type is required"),
 });
 
 const initialValues = {
   avatar: "",
   firstName: "",
+  middleName: "",
+  employmentType: "full_time",
   lastName: "",
   preferredName: "",
   phone: "",
-  birthday: "",
+  birthdate: "",
   gender: "",
 };
 
 const Profile: FC = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: user, isLoading } = useMe();
+  const init = {
+    ...initialValues,
+    ...user,
+  };
   const formik = useFormik({
-    initialValues: initialValues,
+    initialValues: init,
     validationSchema: schema,
-    onSubmit: (values) => {
-      console.log("🚀 ~ values:", values);
-      formik.resetForm();
+    onSubmit: async (values) => {
+      try {
+        await api.patch("/api/v1/me", values);
+        addToast({
+          title: "Profile updated",
+          description: "Profile updated successfully",
+          color: "success",
+          timeout: 2000,
+          isClosing: true,
+        });
+        queryClient.invalidateQueries({ queryKey: ["me"] });
+        navigate("/");
+      } catch {
+        addToast({
+          title: "Profile update failed",
+          color: "danger",
+          timeout: 2000,
+          isClosing: true,
+        });
+      }
     },
   });
 
-  const birthday = isValid(new Date(formik.values.birthday))
-    ? new Date(formik.values.birthday)
+  useEffect(() => {
+    if (isLoading) return;
+    if (user) {
+      formik.setValues(init);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, user]);
+
+  const birthdate = isValid(new Date(formik.values.birthdate))
+    ? new Date(formik.values.birthdate)
     : null;
 
   return (
@@ -78,6 +129,27 @@ const Profile: FC = () => {
                 }}
                 onBlur={() => {
                   formik.setFieldTouched("firstName", true);
+                }}
+              />
+              <Input
+                type="text"
+                placeholder="Middle Name"
+                name="middleName"
+                label="Middle Name"
+                isInvalid={
+                  !!formik.errors.middleName && formik.touched.middleName
+                }
+                errorMessage={
+                  formik.errors.middleName && formik.touched.middleName
+                    ? formik.errors.middleName
+                    : ""
+                }
+                value={formik.values.middleName}
+                onValueChange={(value) => {
+                  formik.setFieldValue("middleName", value);
+                }}
+                onBlur={() => {
+                  formik.setFieldTouched("middleName", true);
                 }}
               />
               <Input
@@ -121,23 +193,51 @@ const Profile: FC = () => {
                   formik.setFieldTouched("preferredName", true);
                 }}
               />
+              <Select
+                isRequired
+                label="Employment Type"
+                name="employmentType"
+                placeholder="Select Employment Type"
+                isInvalid={
+                  !!formik.errors.employmentType &&
+                  formik.touched.employmentType
+                }
+                errorMessage={
+                  formik.errors.employmentType && formik.touched.employmentType
+                    ? formik.errors.employmentType
+                    : ""
+                }
+                selectedKeys={[formik.values.employmentType]}
+                onSelectionChange={([value]) => {
+                  formik.setFieldValue("employmentType", value as string);
+                }}
+                onBlur={() => {
+                  formik.setFieldTouched("employmentType", true);
+                }}
+              >
+                {employmentTypeOptions.map((option) => (
+                  <SelectItem key={option.value}>{option.label}</SelectItem>
+                ))}
+              </Select>
               <DatePicker
                 showMonthAndYearPickers
                 isRequired
-                label="Birthday"
-                name="birthday"
-                isInvalid={!!formik.errors.birthday && formik.touched.birthday}
+                label="birthdate"
+                name="birthdate"
+                isInvalid={
+                  !!formik.errors.birthdate && formik.touched.birthdate
+                }
                 errorMessage={
-                  formik.errors.birthday && formik.touched.birthday
-                    ? formik.errors.birthday
+                  formik.errors.birthdate && formik.touched.birthdate
+                    ? formik.errors.birthdate
                     : ""
                 }
                 value={
-                  birthday
+                  birthdate
                     ? new CalendarDate(
-                        birthday.getFullYear(),
-                        birthday.getMonth() + 1,
-                        birthday.getDate()
+                        birthdate.getFullYear(),
+                        birthdate.getMonth() + 1,
+                        birthdate.getDate()
                       )
                     : null
                 }
@@ -147,10 +247,10 @@ const Profile: FC = () => {
                         value.day
                       )}`
                     : null;
-                  formik.setFieldValue("birthday", val);
+                  formik.setFieldValue("birthdate", val);
                 }}
                 onBlur={() => {
-                  formik.setFieldTouched("birthday", true);
+                  formik.setFieldTouched("birthdate", true);
                 }}
               />
               <Select
@@ -164,7 +264,7 @@ const Profile: FC = () => {
                     ? formik.errors.gender
                     : ""
                 }
-                value={formik.values.gender}
+                selectedKeys={[formik.values.gender]}
                 onSelectionChange={([value]) => {
                   formik.setFieldValue("gender", value as string);
                 }}
@@ -172,9 +272,9 @@ const Profile: FC = () => {
                   formik.setFieldTouched("gender", true);
                 }}
               >
-                <SelectItem key="male">Male</SelectItem>
-                <SelectItem key="female">Female</SelectItem>
-                <SelectItem key="other">Other</SelectItem>
+                {genderOptions.map((option) => (
+                  <SelectItem key={option.value}>{option.label}</SelectItem>
+                ))}
               </Select>
               <Input
                 type="number"

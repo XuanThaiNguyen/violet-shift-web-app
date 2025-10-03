@@ -1,21 +1,36 @@
-import { Button, DatePicker, Input, Select, SelectItem } from "@heroui/react";
+import {
+  addToast,
+  Button,
+  DatePicker,
+  Input,
+  Select,
+  SelectItem,
+} from "@heroui/react";
 import { CalendarDate } from "@internationalized/date";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { isValid } from "date-fns";
 import { pad } from "@/utils/strings";
+import api from "@/services/api/http";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMe } from "@/states/apis/me";
+import { employmentTypeOptions, genderOptions } from "@/constants/userOptions";
 
-import { type FC } from "react";
+import type {  FC } from "react";
 
 const profileSchema = Yup.object({
   avatar: Yup.string(),
   firstName: Yup.string().required("First name is required"),
+  middleName: Yup.string(),
   lastName: Yup.string().required("Last name is required"),
   preferredName: Yup.string(),
   phone: Yup.string(),
-  birthday: Yup.date().required("Birthday is required"),
+  employmentType: Yup.string()
+    .oneOf(employmentTypeOptions.map((option) => option.value))
+    .required("Employment type is required"),
+  birthdate: Yup.date().required("birthdate is required"),
   gender: Yup.string()
-    .oneOf(["male", "female", "other"])
+    .oneOf(genderOptions.map((option) => option.value))
     .required("Gender is required"),
 });
 
@@ -25,22 +40,44 @@ const initialProfileValues = {
   lastName: "",
   preferredName: "",
   phone: "",
-  birthday: "",
+  birthdate: "",
   gender: "",
 };
 
 const ProfileUpdate: FC = () => {
+  const queryClient = useQueryClient();
+  const { data: user } = useMe();
+  const init = {
+    ...initialProfileValues,
+    ...user,
+  };
   const profileFormik = useFormik({
-    initialValues: initialProfileValues,
+    initialValues: init,
     validationSchema: profileSchema,
-    onSubmit: (values) => {
-      console.log("🚀 ~ values:", values);
-      profileFormik.resetForm();
+    onSubmit: async (values) => {
+      try {
+        await api.patch("/api/v1/me", values);
+        addToast({
+          title: "Profile updated",
+          description: "Profile updated successfully",
+          color: "success",
+          timeout: 2000,
+          isClosing: true,
+        });
+        queryClient.invalidateQueries({ queryKey: ["me"] });
+      } catch {
+        addToast({
+          title: "Profile update failed",
+          color: "danger",
+          timeout: 2000,
+          isClosing: true,
+        });
+      }
     },
   });
 
-  const birthday = isValid(new Date(profileFormik.values.birthday))
-    ? new Date(profileFormik.values.birthday)
+  const birthdate = isValid(new Date(profileFormik.values.birthdate))
+    ? new Date(profileFormik.values.birthdate)
     : null;
 
   return (
@@ -104,6 +141,29 @@ const ProfileUpdate: FC = () => {
             />
             <Input
               type="text"
+              placeholder="Middle Name"
+              name="middleName"
+              label="Middle Name"
+              isInvalid={
+                !!profileFormik.errors.middleName &&
+                profileFormik.touched.middleName
+              }
+              errorMessage={
+                profileFormik.errors.middleName &&
+                profileFormik.touched.middleName
+                  ? profileFormik.errors.middleName
+                  : ""
+              }
+              value={profileFormik.values.middleName}
+              onValueChange={(value) => {
+                profileFormik.setFieldValue("middleName", value);
+              }}
+              onBlur={() => {
+                profileFormik.setFieldTouched("middleName", true);
+              }}
+            />
+            <Input
+              type="text"
               placeholder="Preferred Name"
               name="preferredName"
               label="Preferred Name"
@@ -114,7 +174,7 @@ const ProfileUpdate: FC = () => {
               errorMessage={
                 profileFormik.errors.preferredName &&
                 profileFormik.touched.preferredName
-                  ? profileFormik.errors.firstName
+                  ? profileFormik.errors.preferredName
                   : ""
               }
               value={profileFormik.values.preferredName}
@@ -125,26 +185,53 @@ const ProfileUpdate: FC = () => {
                 profileFormik.setFieldTouched("preferredName", true);
               }}
             />
+            <Select
+              isRequired
+              label="Employment Type"
+              name="employmentType"
+              placeholder="Select Employment Type"
+              isInvalid={
+                !!profileFormik.errors.employmentType &&
+                profileFormik.touched.employmentType
+              }
+              errorMessage={
+                profileFormik.errors.employmentType &&
+                profileFormik.touched.employmentType
+                  ? profileFormik.errors.employmentType
+                  : ""
+              }
+              selectedKeys={[profileFormik.values.employmentType ?? ""]}
+              onSelectionChange={([value]) => {
+                profileFormik.setFieldValue("employmentType", value as string);
+              }}
+              onBlur={() => {
+                profileFormik.setFieldTouched("employmentType", true);
+              }}
+            >
+              {employmentTypeOptions.map((option) => (
+                <SelectItem key={option.value}>{option.label}</SelectItem>
+              ))}
+            </Select>
             <DatePicker
               showMonthAndYearPickers
               isRequired
-              label="Birthday"
-              name="birthday"
+              label="birthdate"
+              name="birthdate"
               isInvalid={
-                !!profileFormik.errors.birthday &&
-                profileFormik.touched.birthday
+                !!profileFormik.errors.birthdate &&
+                profileFormik.touched.birthdate
               }
               errorMessage={
-                profileFormik.errors.birthday && profileFormik.touched.birthday
-                  ? profileFormik.errors.birthday
+                profileFormik.errors.birthdate && profileFormik.touched.birthdate
+                  ? profileFormik.errors.birthdate
                   : ""
               }
               value={
-                birthday
+                birthdate
                   ? new CalendarDate(
-                      birthday.getFullYear(),
-                      birthday.getMonth() + 1,
-                      birthday.getDate()
+                      birthdate.getFullYear(),
+                      birthdate.getMonth() + 1,
+                      birthdate.getDate()
                     )
                   : null
               }
@@ -154,10 +241,10 @@ const ProfileUpdate: FC = () => {
                       value.day
                     )}`
                   : null;
-                profileFormik.setFieldValue("birthday", val);
+                profileFormik.setFieldValue("birthdate", val);
               }}
               onBlur={() => {
-                profileFormik.setFieldTouched("birthday", true);
+                profileFormik.setFieldTouched("birthdate", true);
               }}
             />
             <Select
@@ -173,7 +260,7 @@ const ProfileUpdate: FC = () => {
                   ? profileFormik.errors.gender
                   : ""
               }
-              value={profileFormik.values.gender}
+              selectedKeys={[profileFormik.values.gender]}
               onSelectionChange={([value]) => {
                 profileFormik.setFieldValue("gender", value as string);
               }}
@@ -181,9 +268,9 @@ const ProfileUpdate: FC = () => {
                 profileFormik.setFieldTouched("gender", true);
               }}
             >
-              <SelectItem key="male">Male</SelectItem>
-              <SelectItem key="female">Female</SelectItem>
-              <SelectItem key="other">Other</SelectItem>
+              {genderOptions.map((option) => (
+                <SelectItem key={option.value}>{option.label}</SelectItem>
+              ))}
             </Select>
             <Input
               type="number"
