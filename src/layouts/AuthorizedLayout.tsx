@@ -14,15 +14,18 @@ const AuthorizedLayout: FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isLoading) return;
-    if (!user) {
-      localStorage.removeItem("auth_token");
-      navigate("/auth/login");
-    }
+    (() => {
+      if (isLoading) return;
+      if (!user) {
+        localStorage.removeItem("auth_token");
+        navigate("/auth/login");
+        return;
+      }
 
-    if (!user?.firstName) {
-      navigate("/auth/profile");
-    }
+      if (!user?.firstName) {
+        navigate("/auth/profile");
+      }
+    })();
   }, [user, isLoading, navigate]);
 
   return (

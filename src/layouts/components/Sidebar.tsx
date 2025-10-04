@@ -9,6 +9,7 @@ import {
   Notebook,
   PersonStanding,
   ScrollText,
+  UsersRound,
 } from "lucide-react";
 import { useWindowSize } from "usehooks-ts";
 import { Accordion, AccordionItem } from "@heroui/react";
@@ -32,7 +33,12 @@ const sidebarItems: SidebarItem[] = [
     key: "scheduler",
     label: "Scheduler",
     to: "/scheduler",
-    roles: [ROLE_IDS.CARER, ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT],
+    roles: [
+      ROLE_IDS.CARER,
+      ROLE_IDS.ADMIN,
+      ROLE_IDS.COORDINATOR,
+      ROLE_IDS.OFFICE_SUPPORT,
+    ],
   },
   {
     icon: Notebook,
@@ -67,21 +73,59 @@ const sidebarItems: SidebarItem[] = [
     key: "staff",
     label: "Staff",
     to: "/staff",
-    roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT, ROLE_IDS.HR],
+    roles: [
+      ROLE_IDS.ADMIN,
+      ROLE_IDS.COORDINATOR,
+      ROLE_IDS.OFFICE_SUPPORT,
+      ROLE_IDS.HR,
+    ],
     children: [
       {
         icon: ChevronsRight,
         key: "staff-list",
         label: "List",
         to: "/staff/list",
-        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT, ROLE_IDS.HR],
+        roles: [
+          ROLE_IDS.ADMIN,
+          ROLE_IDS.COORDINATOR,
+          ROLE_IDS.OFFICE_SUPPORT,
+          ROLE_IDS.HR,
+        ],
       },
       {
         icon: ChevronsRight,
         key: "new-staff",
         label: "New",
         to: "/staff/new",
-        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT, ROLE_IDS.HR],
+        roles: [
+          ROLE_IDS.ADMIN,
+          ROLE_IDS.COORDINATOR,
+          ROLE_IDS.OFFICE_SUPPORT,
+          ROLE_IDS.HR,
+        ],
+      },
+    ],
+  },
+  {
+    icon: UsersRound,
+    key: "clients",
+    label: "Clients",
+    to: "/clients",
+    roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
+    children: [
+      {
+        icon: ChevronsRight,
+        key: "clients-list",
+        label: "List",
+        to: "/clients/list",
+        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
+      },
+      {
+        icon: ChevronsRight,
+        key: "new-clients",
+        label: "New",
+        to: "/clients/new",
+        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
       },
     ],
   },

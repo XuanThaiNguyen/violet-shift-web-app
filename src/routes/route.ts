@@ -18,7 +18,8 @@ const Profile = lazy(() => import("@/pages/profile/Profile"));
 const Scheduler = lazy(() => import("@/pages/scheduler/Scheduler"));
 const StaffList = lazy(() => import("@/pages/staff/StaffList"));
 const AddStaff = lazy(() => import("@/pages/staff/AddStaff"));
-
+const ClientList = lazy(() => import("@/pages/clients/ClientList"));
+const AddClient = lazy(() => import("@/pages/clients/AddClient"));
 
 export const router = createBrowserRouter([
   {
@@ -42,10 +43,23 @@ export const router = createBrowserRouter([
       { path: "scheduler", Component: Scheduler },
       {
         path: "staff",
-        Component: PrivateModule([ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT, ROLE_IDS.HR]),
+        Component: PrivateModule([
+          ROLE_IDS.ADMIN,
+          ROLE_IDS.COORDINATOR,
+          ROLE_IDS.OFFICE_SUPPORT,
+          ROLE_IDS.HR,
+        ]),
         children: [
           { path: "list", Component: StaffList },
           { path: "new", Component: AddStaff },
+        ],
+      },
+      {
+        path: "clients",
+        Component: PrivateModule([ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR]),
+        children: [
+          { path: "list", Component: ClientList },
+          { path: "new", Component: AddClient },
         ],
       },
       { path: "*", Component: NotFound },
