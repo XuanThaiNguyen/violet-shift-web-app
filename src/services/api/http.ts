@@ -4,63 +4,62 @@ import axios from "axios";
 import { addToast } from "@heroui/react";
 
 import type { Axios, AxiosDefaults, AxiosHeaderValue, AxiosRequestConfig, AxiosResponse, HeadersDefaults,  } from "axios"
-import authEventBus, { AUTH_EVENTS } from "@/events/authBus";
 import queryClient from "@/constants/queryClient";
 
 interface HTTPInstance extends Axios {
     <T = any, R = AxiosResponse<T>, D = any>(
       config: AxiosRequestConfig<D>
     ): Promise<T>;
-    <T = any, R = AxiosResponse<T>, D = any>(
+    <T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
   
-    request<T = any, R = AxiosResponse<T>, D = any>(
+    request<T = any, _R = AxiosResponse<T>, D = any>(
       config: AxiosRequestConfig<D>
     ): Promise<T>;
-    get<T = any, R = AxiosResponse<T>, D = any>(
+    get<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
-    delete<T = any, R = AxiosResponse<T>, D = any>(
+    delete<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
-    head<T = any, R = AxiosResponse<T>, D = any>(
+    head<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
-    options<T = any, R = AxiosResponse<T>, D = any>(
+    options<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
-    post<T = any, R = AxiosResponse<T>, D = any>(
-      url: string,
-      data?: D,
-      config?: AxiosRequestConfig<D>
-    ): Promise<T>;
-    put<T = any, R = AxiosResponse<T>, D = any>(
+    post<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       data?: D,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
-    patch<T = any, R = AxiosResponse<T>, D = any>(
+    put<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       data?: D,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
-    postForm<T = any, R = AxiosResponse<T>, D = any>(
+    patch<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       data?: D,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
-    putForm<T = any, R = AxiosResponse<T>, D = any>(
+    postForm<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       data?: D,
       config?: AxiosRequestConfig<D>
     ): Promise<T>;
-    patchForm<T = any, R = AxiosResponse<T>, D = any>(
+    putForm<T = any, _R = AxiosResponse<T>, D = any>(
+      url: string,
+      data?: D,
+      config?: AxiosRequestConfig<D>
+    ): Promise<T>;
+    patchForm<T = any, _R = AxiosResponse<T>, D = any>(
       url: string,
       data?: D,
       config?: AxiosRequestConfig<D>
