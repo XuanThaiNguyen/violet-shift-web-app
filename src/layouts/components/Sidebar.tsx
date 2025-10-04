@@ -7,10 +7,12 @@ import {
   ChevronRight,
   ChevronsRight,
   Notebook,
+  PersonStanding,
   ScrollText,
 } from "lucide-react";
 import { useWindowSize } from "usehooks-ts";
 import { Accordion, AccordionItem } from "@heroui/react";
+import { ROLE_IDS } from "@/constants/roles";
 
 import type { ComponentType, FC } from "react";
 
@@ -20,6 +22,7 @@ interface SidebarItem {
   label: string;
   key: string;
   to: string;
+  roles?: string[]; // empty array means all roles are allowed
   children?: SidebarItem[];
 }
 
@@ -29,6 +32,7 @@ const sidebarItems: SidebarItem[] = [
     key: "scheduler",
     label: "Scheduler",
     to: "/scheduler",
+    roles: [ROLE_IDS.CARER, ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT],
   },
   {
     icon: Notebook,
@@ -55,6 +59,29 @@ const sidebarItems: SidebarItem[] = [
         key: "received-incidents",
         label: "Received Incidents",
         to: "/incidents/received",
+      },
+    ],
+  },
+  {
+    icon: PersonStanding,
+    key: "staff",
+    label: "Staff",
+    to: "/staff",
+    roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT, ROLE_IDS.HR],
+    children: [
+      {
+        icon: ChevronsRight,
+        key: "staff-list",
+        label: "List",
+        to: "/staff/list",
+        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT, ROLE_IDS.HR],
+      },
+      {
+        icon: ChevronsRight,
+        key: "new-staff",
+        label: "New",
+        to: "/staff/new",
+        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT, ROLE_IDS.HR],
       },
     ],
   },

@@ -3,15 +3,22 @@ import AuthorizedLayout from "@/layouts/AuthorizedLayout";
 import { lazy } from "react";
 import PublicLayout from "@/layouts/PublicLayout";
 import NotFound from "@/pages/notfound/NotFound";
+import PrivateModule from "@/hoc/PrivateModule";
+import { ROLE_IDS } from "@/constants/roles";
 
 const Home = lazy(() => import("@/pages/home/Home"));
 const Login = lazy(() => import("@/pages/auth/login/Login"));
 // const Register = lazy(() => import("@/pages/auth/register/Register"));
-const ForgotPassword = lazy(() => import("@/pages/auth/forgot-password/ForgotPassword"));
+const ForgotPassword = lazy(
+  () => import("@/pages/auth/forgot-password/ForgotPassword")
+);
 const NewPassword = lazy(() => import("@/pages/auth/new-password/NewPassword"));
 const ProfileSetup = lazy(() => import("@/pages/auth/profile/Profile"));
 const Profile = lazy(() => import("@/pages/profile/Profile"));
 const Scheduler = lazy(() => import("@/pages/scheduler/Scheduler"));
+const StaffList = lazy(() => import("@/pages/staff/StaffList"));
+const AddStaff = lazy(() => import("@/pages/staff/AddStaff"));
+
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +29,7 @@ export const router = createBrowserRouter([
       { path: "forgot-password", Component: ForgotPassword },
       { path: "new-password", Component: NewPassword },
       { path: "profile", Component: ProfileSetup },
-    //   { path: "register", Component: Register },
+      //   { path: "register", Component: Register },
       { path: "*", Component: NotFound },
     ],
   },
@@ -33,6 +40,14 @@ export const router = createBrowserRouter([
       { index: true, Component: Home },
       { path: "profile", Component: Profile },
       { path: "scheduler", Component: Scheduler },
+      {
+        path: "staff",
+        Component: PrivateModule([ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR, ROLE_IDS.OFFICE_SUPPORT, ROLE_IDS.HR]),
+        children: [
+          { path: "list", Component: StaffList },
+          { path: "new", Component: AddStaff },
+        ],
+      },
       { path: "*", Component: NotFound },
     ],
   },
