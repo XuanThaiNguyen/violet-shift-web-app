@@ -1,5 +1,4 @@
 import { Input } from "@heroui/react";
-import React from "react";
 
 const AddClient = () => {
   return (
