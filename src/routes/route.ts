@@ -13,11 +13,12 @@ const ForgotPassword = lazy(
   () => import("@/pages/auth/forgot-password/ForgotPassword")
 );
 const NewPassword = lazy(() => import("@/pages/auth/new-password/NewPassword"));
+const AcceptInvitation = lazy(() => import("@/pages/auth/accept-invitation/AcceptInvitation"));
 const ProfileSetup = lazy(() => import("@/pages/auth/profile/Profile"));
 const Profile = lazy(() => import("@/pages/profile/Profile"));
 const Scheduler = lazy(() => import("@/pages/scheduler/Scheduler"));
-const StaffList = lazy(() => import("@/pages/staff/StaffList"));
-const AddStaff = lazy(() => import("@/pages/staff/AddStaff"));
+const StaffList = lazy(() => import("@/pages/staffs/StaffList"));
+const AddStaff = lazy(() => import("@/pages/staffs/AddStaff"));
 const ClientList = lazy(() => import("@/pages/clients/ClientList"));
 const AddClient = lazy(() => import("@/pages/clients/AddClient"));
 
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
       { path: "forgot-password", Component: ForgotPassword },
       { path: "new-password", Component: NewPassword },
       { path: "profile", Component: ProfileSetup },
+      { path: "accept-invitation", Component: AcceptInvitation },
       //   { path: "register", Component: Register },
       { path: "*", Component: NotFound },
     ],
@@ -42,7 +44,7 @@ export const router = createBrowserRouter([
       { path: "profile", Component: Profile },
       { path: "scheduler", Component: Scheduler },
       {
-        path: "staff",
+        path: "staffs",
         Component: PrivateModule([
           ROLE_IDS.ADMIN,
           ROLE_IDS.COORDINATOR,

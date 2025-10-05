@@ -22,7 +22,7 @@ const AuthorizedLayout: FC = () => {
         return;
       }
 
-      if (!user?.firstName) {
+      if (!user?.hasSetProfile) {
         navigate("/auth/profile");
       }
     })();

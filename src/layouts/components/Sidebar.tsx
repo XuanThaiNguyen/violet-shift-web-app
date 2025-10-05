@@ -71,9 +71,9 @@ const sidebarItems: SidebarItem[] = [
   },
   {
     icon: PersonStanding,
-    key: "staff",
-    label: "Staff",
-    to: "/staff",
+    key: "staffs",
+    label: "Staffs",
+    to: "/staffs",
     roles: [
       ROLE_IDS.ADMIN,
       ROLE_IDS.COORDINATOR,
@@ -85,7 +85,7 @@ const sidebarItems: SidebarItem[] = [
         icon: ChevronsRight,
         key: "staff-list",
         label: "List",
-        to: "/staff/list",
+        to: "/staffs/list",
         roles: [
           ROLE_IDS.ADMIN,
           ROLE_IDS.COORDINATOR,
@@ -97,7 +97,7 @@ const sidebarItems: SidebarItem[] = [
         icon: ChevronsRight,
         key: "new-staff",
         label: "New",
-        to: "/staff/new",
+        to: "/staffs/new",
         roles: [
           ROLE_IDS.ADMIN,
           ROLE_IDS.COORDINATOR,

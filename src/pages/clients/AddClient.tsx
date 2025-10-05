@@ -128,7 +128,7 @@ const AddClient = () => {
       : null;
 
   return (
-    <div className="px-4 w-full">
+    <div className="container mx-auto mb-10">
       <form
         className="px-4 py-8 mx-auto shadow-lg rounded-lg bg-content1"
         onSubmit={(e) => {
