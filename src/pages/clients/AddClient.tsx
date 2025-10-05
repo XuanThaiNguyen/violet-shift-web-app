@@ -14,7 +14,6 @@ import {
 } from "@heroui/react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import React from "react";
 import { genderOptions } from "@/constants/userOptions";
 import { isValid } from "date-fns";
 import { pad } from "@/utils/strings";
