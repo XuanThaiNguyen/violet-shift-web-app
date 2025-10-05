@@ -27,14 +27,14 @@ import type { FC } from "react";
 import type { User as UserType } from "@/types/user";
 
 const columns = [
-  { name: "Name", uid: "name" },
+  { name: "Name", uid: "name", width: 160, className: "min-w-[160px]" },
   { name: "Gender", uid: "gender" },
   { name: "Role", uid: "role" },
-  { name: "Email", uid: "email", sortable: true },
-  { name: "Phone", uid: "phone" },
-  { name: "Birthdate", uid: "birthdate", sortable: true },
+  { name: "Email", uid: "email", sortable: true, width: 240, className: "min-w-[240px]" },
+  { name: "Phone", uid: "phone", width: 120, className: "min-w-[120px]" },
+  { name: "Birthdate", uid: "birthdate", sortable: true, width: 130, className: "min-w-[130px]" },
   { name: "Employment Type", uid: "employmentType" },
-  { name: "Joined At", uid: "joinedAt", sortable: true },
+  { name: "Joined At", uid: "joinedAt", sortable: true, width: 130, className: "min-w-[130px]" },
   // { name: "actions", uid: "actions" },
 ];
 
@@ -315,6 +315,7 @@ const StaffList: FC = () => {
         </label>
         <Pagination
           showControls
+          size="sm"
           color="primary"
           classNames={{
             item: "cursor-pointer",
@@ -352,7 +353,7 @@ const StaffList: FC = () => {
 
         <Table
           isCompact
-          removeWrapper
+          // removeWrapper
           bottomContent={bottomContent}
           bottomContentPlacement="outside"
           checkboxesProps={{
@@ -362,7 +363,7 @@ const StaffList: FC = () => {
             },
           }}
           classNames={{
-            wrapper: "max-h-[382px] max-w-3xl",
+            wrapper: "max-h-[382px] overflow-x-auto shadow-none thin-scrollbar",
             th: "bg-transparent text-default-500 border-b border-divider",
             td: [
               // changing the rows border radius
@@ -399,6 +400,8 @@ const StaffList: FC = () => {
                 key={column.uid}
                 align={column.uid === "actions" ? "center" : "start"}
                 allowsSorting={column.sortable}
+                width={column.width}
+                className={column.className}
               >
                 {column.name}
               </TableColumn>
