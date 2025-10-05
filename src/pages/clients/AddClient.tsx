@@ -19,35 +19,12 @@ import { isValid } from "date-fns";
 import { pad } from "@/utils/strings";
 import { CalendarDate } from "@internationalized/date";
 import api from "@/services/api/http";
-import { useMutation } from "@tanstack/react-query";
-
-interface IClient {
-  firstName?: string;
-  lastName?: string;
-  middleName?: string;
-  displayName: string;
-  gender?: string;
-  maritialStatus?: string;
-  birthdate?: string;
-  address?: string;
-  phoneNumber?: string;
-  mobileNumber?: string;
-  email?: string;
-  religion?: string;
-  nationality?: string;
-  isProspect: boolean;
-  salutation?: string;
-  useSalutation: boolean;
-}
-
-type ClientSubmitValues = Partial<IClient> &
-  Pick<IClient, "displayName"> &
-  Pick<IClient, "useSalutation"> &
-  Pick<IClient, "isProspect">;
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { ClientSubmitValues, IClient } from "@/types/client";
+import { useNavigate } from "react-router";
 
 const clientSchema = Yup.object({
   useSalutation: Yup.boolean(),
-  isProspect: Yup.boolean(),
   salutation: Yup.string().oneOf(
     salutationTypeOptions.map((option) => option.value)
   ),
@@ -65,18 +42,17 @@ const clientSchema = Yup.object({
   email: Yup.string(),
   apartmentNumber: Yup.string(),
   religion: Yup.string(),
+  status: Yup.string().oneOf(["prospect", "active", "inactive"]),
 });
 
-const initialClientValues = {
+const initialClientValues: IClient = {
   useSalutation: false,
-  isProspect: false,
   salutation: "",
   firstName: "",
   middleName: "",
   lastName: "",
   displayName: "",
   address: "",
-  phone: "",
   birthdate: "",
   gender: "",
   maritialStatus: "",
@@ -86,6 +62,7 @@ const initialClientValues = {
   email: "",
   religion: "",
   nationality: "",
+  status: "active",
 };
 
 const createNewClient = async (values: IClient) => {
@@ -94,20 +71,23 @@ const createNewClient = async (values: IClient) => {
 };
 
 const AddClient = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { mutate, isPending } = useMutation({
     mutationFn: createNewClient,
     onSuccess: () => {
       addToast({
-        title: "Profile updated",
-        description: "Profile updated successfully",
+        title: "Create client successful",
         color: "success",
         timeout: 2000,
         isClosing: true,
       });
+      navigate("/clients/list");
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: () => {
       addToast({
-        title: "Profile update failed",
+        title: "Create client failed",
         color: "danger",
         timeout: 2000,
         isClosing: true,
@@ -119,7 +99,7 @@ const AddClient = () => {
     initialValues: initialClientValues,
     validationSchema: clientSchema,
     onSubmit: async (values) => {
-      const { salutation, useSalutation, displayName, isProspect, ...others } =
+      const { salutation, useSalutation, displayName, status, ...others } =
         values;
 
       const filteredValues = Object.fromEntries(
@@ -133,9 +113,9 @@ const AddClient = () => {
             useSalutation,
             salutation,
             displayName,
-            isProspect,
+            status,
           }
-        : { ...filteredValues, useSalutation, displayName, isProspect };
+        : { ...filteredValues, useSalutation, displayName, status };
 
       mutate(newValues);
     },
@@ -152,8 +132,6 @@ const AddClient = () => {
       <form
         className="px-4 py-8 mx-auto shadow-lg rounded-lg bg-content1"
         onSubmit={(e) => {
-          console.log("444444");
-
           e.preventDefault();
           clientFormik.handleSubmit();
         }}
@@ -583,11 +561,13 @@ const AddClient = () => {
             <Checkbox
               defaultSelected
               size="sm"
-              isSelected={clientFormik.values.isProspect}
+              isSelected={clientFormik.values.status === "prospect"}
               onValueChange={() => {
                 clientFormik.setFieldValue(
-                  "isProspect",
-                  !clientFormik.values.isProspect
+                  "status",
+                  clientFormik.values.status === "prospect"
+                    ? "active"
+                    : "prospect"
                 );
               }}
             >
