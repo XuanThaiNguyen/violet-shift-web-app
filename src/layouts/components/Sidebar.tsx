@@ -14,6 +14,7 @@ import {
 import { useWindowSize } from "usehooks-ts";
 import { Accordion, AccordionItem } from "@heroui/react";
 import { ROLE_IDS } from "@/constants/roles";
+import { useMe } from "@/states/apis/me";
 
 import type { ComponentType, FC } from "react";
 
@@ -140,6 +141,7 @@ const sidebarItems: SidebarItem[] = [
 const Sidebar: FC = () => {
   const { isOpen, setIsOpen } = useSidebarStore();
   const { width } = useWindowSize();
+  const { data: user } = useMe();
 
   const location = useLocation();
   return (
@@ -187,6 +189,11 @@ const Sidebar: FC = () => {
             const isActive = location.pathname?.includes(item.key);
             const Icon = item.icon;
             const isMobile = width < 1024;
+            const isAllowed = item.roles ? item.roles.includes(user?.role ?? "") : true;
+
+            if (!isAllowed) {
+              return null;
+            }
 
             if (item.children) {
               if (!isOpen && !isMobile) {
@@ -229,16 +236,22 @@ const Sidebar: FC = () => {
                   >
                     {item.children.map((child) => {
                       const ChildIcon = child.icon;
+                      const isChildActive = location.pathname?.includes(child.to);
+                      const isChildAllowed = child.roles ? child.roles.includes(user?.role ?? "") : true;
+
+                      if (!isChildAllowed) {
+                        return null;
+                      }
+
                       return (
                         <Link
-                          className="flex items-center gap-2 px-4 py-2 hover:bg-primary/20 hover:text-primary cursor-pointer rounded-md"
+                          className={clsx("flex items-center gap-2 px-4 py-2 hover:bg-primary/20 hover:text-primary cursor-pointer rounded-md", isChildActive && "text-primary")}
                           to={child.to}
                           key={child.key}
                         >
                           <ChildIcon className="flex-shrink-0" size={20} />
                           <span
                             className={clsx(
-                              isActive && "text-primary",
                               isOpen
                                 ? "lg:animate-[fadeIn_ease-in-out_0.3s_forwards]"
                                 : "lg:hidden"
