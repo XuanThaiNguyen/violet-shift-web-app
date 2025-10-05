@@ -1,5 +1,3 @@
-import React from "react";
-
 const AddStaff = () => {
   return <div>AddStaff</div>;
 };

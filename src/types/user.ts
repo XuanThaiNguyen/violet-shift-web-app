@@ -13,6 +13,7 @@ export type User = {
   phone: string;
   birthdate: string;
   gender: string;
+  joinedAt: string;
   createdAt: string;
   updatedAt: string;
 };
