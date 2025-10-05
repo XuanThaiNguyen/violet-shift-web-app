@@ -13,3 +13,9 @@ export const genderOptions = [
   { label: "Unspecified", value: "unspecified" },
   { label: "Prefer not to say", value: "other" },
 ];
+
+export const statusTypeOptions = [
+  { label: "Prospect", value: "prospect" },
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+];
