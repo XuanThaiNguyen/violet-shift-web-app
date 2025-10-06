@@ -3,7 +3,7 @@ import {
   salutationTypeOptions,
 } from "@/constants/clientOptions";
 import { genderOptions } from "@/constants/userOptions";
-import api from "@/services/api/http";
+import { useCreateNewClient } from "@/states/apis/client";
 import type { ClientSubmitValues, IClient } from "@/types/client";
 import { addToast } from "@heroui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,16 +55,11 @@ const initialClientValues: IClient = {
   status: "active",
 };
 
-const createNewClient = async (values: IClient) => {
-  const res = await api.post("/api/v1/clients", values);
-  return res;
-};
-
 const AddClient = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { mutate, isPending } = useMutation({
-    mutationFn: createNewClient,
+    mutationFn: useCreateNewClient,
     onSuccess: (newClient: IClient) => {
       addToast({
         title: "Create client successful",

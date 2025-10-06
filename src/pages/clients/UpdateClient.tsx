@@ -3,17 +3,16 @@ import {
   salutationTypeOptions,
 } from "@/constants/clientOptions";
 import { genderOptions } from "@/constants/userOptions";
-import api from "@/services/api/http";
+import { useClientDetail, useUpdateClient } from "@/states/apis/client";
 import type { ClientSubmitValues, IClient } from "@/types/client";
 import { addToast } from "@heroui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isValid } from "date-fns";
 import { useFormik } from "formik";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import * as Yup from "yup";
 import ClientInfo from "./components/ClientInfo";
-import { useClientDetail } from "@/states/apis/client";
-import { ArrowLeft } from "lucide-react";
 
 const clientSchema = Yup.object({
   useSalutation: Yup.boolean(),
@@ -57,17 +56,6 @@ const initialClientValues: IClient = {
   status: "active",
 };
 
-const updateClient = async ({
-  id,
-  values,
-}: {
-  id: string;
-  values: IClient;
-}) => {
-  const res = await api.put(`/api/v1/clients/${id}`, values);
-  return res;
-};
-
 const UpdateClient = () => {
   const navigate = useNavigate();
   const { id: clientId } = useParams();
@@ -80,7 +68,7 @@ const UpdateClient = () => {
   };
 
   const { mutate, isPending } = useMutation({
-    mutationFn: updateClient,
+    mutationFn: useUpdateClient,
     onSuccess: (updatedClient: IClient) => {
       addToast({
         title: "Update client successful",
