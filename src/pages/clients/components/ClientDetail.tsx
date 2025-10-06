@@ -1,38 +1,42 @@
 import { EMPTY_STRING } from "@/constants/empty";
-import { statusTypeOptions } from "@/constants/userOptions";
-import { useChangeStatusClient, useClientDetail } from "@/states/apis/client";
-import type { ClientStatus, IClient } from "@/types/client";
+import type { IClient } from "@/types/client";
 import { capitalizeFirstLetter } from "@/utils/strings";
-import { addToast, Avatar, Divider, Select, SelectItem } from "@heroui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  addToast,
+  Avatar,
+  Button,
+  Divider,
+  useDisclosure,
+} from "@heroui/react";
 import { format, isValid } from "date-fns";
-import { ArrowLeft, Camera, Mail, Phone, Smartphone } from "lucide-react";
-import { useState } from "react";
+import { Camera, Mail, Phone, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router";
+import ArchiveClientModal from "./ArchiveClientModal";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePostArchiveClient } from "@/states/apis/client";
 
 interface ClientDetailProps {
   clientId: string;
+  detailClient?: IClient;
 }
 
-const ClientDetail = ({ clientId }: ClientDetailProps) => {
+const ClientDetail = ({ clientId, detailClient }: ClientDetailProps) => {
   const navigate = useNavigate();
 
-  const { data: detailClient } = useClientDetail(clientId);
-
-  const [statusType, setStatusType] = useState<string | null>(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
-    mutationFn: useChangeStatusClient,
-    onSuccess: (updatedClient: IClient) => {
+    mutationFn: usePostArchiveClient,
+    onSuccess: () => {
       addToast({
         title: "Update client successful",
         color: "success",
         timeout: 2000,
         isClosing: true,
       });
-      navigate(`/clients/${updatedClient?.id}`);
+      navigate("/clients/list");
       queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: () => {
@@ -45,55 +49,13 @@ const ClientDetail = ({ clientId }: ClientDetailProps) => {
     },
   });
 
-  if (!clientId) return <></>;
+  const handleConfirm = () => {
+    mutate({ id: clientId, isArchived: true });
+    onClose();
+  };
 
   return (
     <div>
-      <div
-        className="flex items-center gap-2 cursor-pointer"
-        onClick={() => navigate("/clients/list")}
-      >
-        <ArrowLeft />
-        <span>Back to Client List</span>
-      </div>
-      <div className="h-4"></div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Avatar
-            className="w-8 h-8 rounded-full object-cover"
-            color={"primary"}
-          />
-          <span className="text-xl">{detailClient?.displayName || ""}</span>
-        </div>
-        <Select
-          size="sm"
-          isLoading={isPending}
-          color={
-            detailClient?.status === "active"
-              ? "primary"
-              : detailClient?.status === "prospect"
-              ? "success"
-              : "default"
-          }
-          selectionMode="single"
-          selectedKeys={statusType ? [statusType] : []}
-          onSelectionChange={(keys) => {
-            const selected = Array.from(keys)[0];
-            setStatusType(selected as string);
-            mutate({
-              status: selected as ClientStatus,
-              id: clientId,
-            });
-          }}
-          className="w-48"
-          classNames={{ trigger: "cursor-pointer" }}
-        >
-          {statusTypeOptions.map((status) => (
-            <SelectItem key={status.value}>{status.label}</SelectItem>
-          ))}
-        </Select>
-      </div>
-      <div className="h-4"></div>
       <div className="p-4 w-full mx-auto shadow-lg rounded-lg bg-content1">
         <div className="flex items-center justify-between">
           <span className="text-2xl font-medium">Demographic Detail</span>
@@ -177,6 +139,28 @@ const ClientDetail = ({ clientId }: ClientDetailProps) => {
           </div>
         </div>
       </div>
+      <div className="h-8"></div>
+      <span>Archive Client</span>
+      <div className="h-4"></div>
+      <div className="p-4 w-full mx-auto shadow-lg rounded-lg bg-content1">
+        <span className="text-sm text-gray-500">
+          This will archive the client and you will not able to see client in
+          your list. If you do wish to access the client, please go to Archive
+          sub-menu.
+        </span>
+        <div className="h-4"></div>
+        <Button onPress={onOpen} size="sm" color="danger">
+          Archive Client
+        </Button>
+      </div>
+
+      <ArchiveClientModal
+        isOpen={isOpen}
+        isPending={isPending}
+        onClose={onClose}
+        onConfirm={handleConfirm}
+        clientName={detailClient?.displayName || ""}
+      />
     </div>
   );
 };

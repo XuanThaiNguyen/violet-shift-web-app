@@ -392,7 +392,7 @@ const ClientList = () => {
         <Table
           isCompact
           // removeWrapper
-          bottomContent={bottomContent} //TODO: add bottomContent
+          bottomContent={bottomContent}
           bottomContentPlacement="outside"
           checkboxesProps={{
             classNames: {
@@ -421,7 +421,7 @@ const ClientList = () => {
             column: filter.sort ?? "joinedAt",
             direction: filter.order === "asc" ? "ascending" : "descending",
           }}
-          topContent={topContent} //TODO: add topContent
+          topContent={topContent}
           topContentPlacement="outside"
           onSelectionChange={setSelectedKeys as (keys: SharedSelection) => void}
           onSortChange={(sortDescriptor) => {
@@ -448,7 +448,7 @@ const ClientList = () => {
           <TableBody
             isLoading={isLoading}
             loadingContent={<Spinner label="Loading..." />}
-            emptyContent={"No users found"}
+            emptyContent={"No clients found"}
             items={clients}
           >
             {(item) => (

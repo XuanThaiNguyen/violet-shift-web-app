@@ -123,6 +123,13 @@ const sidebarItems: SidebarItem[] = [
       },
       {
         icon: ChevronsRight,
+        key: "clients-archived-list",
+        label: "Archived",
+        to: "/clients/archived",
+        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
+      },
+      {
+        icon: ChevronsRight,
         key: "new-clients",
         label: "New",
         to: "/clients/new",
@@ -189,7 +196,9 @@ const Sidebar: FC = () => {
             const isActive = location.pathname?.includes(item.key);
             const Icon = item.icon;
             const isMobile = width < 1024;
-            const isAllowed = item.roles ? item.roles.includes(user?.role ?? "") : true;
+            const isAllowed = item.roles
+              ? item.roles.includes(user?.role ?? "")
+              : true;
 
             if (!isAllowed) {
               return null;
@@ -236,8 +245,12 @@ const Sidebar: FC = () => {
                   >
                     {item.children.map((child) => {
                       const ChildIcon = child.icon;
-                      const isChildActive = location.pathname?.includes(child.to);
-                      const isChildAllowed = child.roles ? child.roles.includes(user?.role ?? "") : true;
+                      const isChildActive = location.pathname?.includes(
+                        child.to
+                      );
+                      const isChildAllowed = child.roles
+                        ? child.roles.includes(user?.role ?? "")
+                        : true;
 
                       if (!isChildAllowed) {
                         return null;
@@ -245,7 +258,10 @@ const Sidebar: FC = () => {
 
                       return (
                         <Link
-                          className={clsx("flex items-center gap-2 px-4 py-2 hover:bg-primary/20 hover:text-primary cursor-pointer rounded-md", isChildActive && "text-primary")}
+                          className={clsx(
+                            "flex items-center gap-2 px-4 py-2 hover:bg-primary/20 hover:text-primary cursor-pointer rounded-md",
+                            isChildActive && "text-primary"
+                          )}
                           to={child.to}
                           key={child.key}
                         >

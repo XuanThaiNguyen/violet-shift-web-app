@@ -28,6 +28,20 @@ export const useClients = (filter: ClientFilter) => {
   return clientsQueryResult;
 };
 
+export const useGetArchivedClients = (filter: ClientFilter) => {
+  const clientsQueryResult = useQuery<PaginationResponse<IClient>>({
+    queryKey: ["clients", filter],
+    queryFn: () => api.get("/api/v1/clients/archived", { params: filter }),
+    enabled: !!localStorage.getItem("auth_token"),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  });
+
+  return clientsQueryResult;
+};
+
 export const useClientDetail = (id: string) => {
   const clientDetailQueryResult = useQuery<IClient>({
     queryKey: ["clients", id],
@@ -69,7 +83,7 @@ export const useChangeStatusClient = async ({
   return res;
 };
 
-export const useArchiveClient = async ({
+export const usePostArchiveClient = async ({
   id,
   isArchived,
 }: {
