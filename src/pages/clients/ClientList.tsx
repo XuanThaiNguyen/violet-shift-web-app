@@ -18,13 +18,18 @@ import {
 } from "@heroui/react";
 import { PlusIcon, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import type { IClient as ClientType } from "@/types/client";
-import { genderOptions, statusTypeOptions } from "@/constants/userOptions";
-import { format, isValid } from "date-fns";
+import {
+  ageTypeOptions,
+  genderOptions,
+  statusTypeOptions,
+} from "@/constants/userOptions";
+import { differenceInYears, isValid } from "date-fns";
 
 const columns = [
   { name: "Name", uid: "name", width: 160, className: "min-w-[160px]" },
+  { name: "", uid: "status", width: 120, className: "min-w-[120px]" },
   { name: "Gender", uid: "gender" },
   { name: "Age", uid: "age" },
   { name: "Mobile", uid: "mobile", width: 120, className: "min-w-[120px]" },
@@ -45,6 +50,8 @@ const genderMap = genderOptions.reduce((acc, option) => {
 }, {} as Record<string, string>);
 
 const ClientList = () => {
+  const navigate = useNavigate();
+
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Set<string> | "all">(
     new Set([])
@@ -60,6 +67,9 @@ const ClientList = () => {
   const [statusTypeFilter, setStatusTypeFilter] = useState<Set<string> | "all">(
     new Set([])
   );
+  const [ageTypeFilter, setAgeTypeFilter] = useState<Set<string> | "all">(
+    new Set([])
+  );
 
   const { data: clientData, isLoading } = useClients(filter);
   const clients = clientData?.data || EMPTY_ARRAY;
@@ -69,89 +79,131 @@ const ClientList = () => {
 
   const hasSearchFilter = Boolean(filter.query);
 
-  const renderCell = useCallback((client: ClientType, columnKey: string) => {
-    const cellValue = client[columnKey as keyof ClientType];
-    const fullName = client.firstName
-      ? `${client.firstName} ${
-          client.middleName ? `${client.middleName} ` : ""
-        }${client.lastName}`
-      : "";
+  const renderCell = useCallback(
+    (client: ClientType, columnKey: string) => {
+      const cellValue = client[columnKey as keyof ClientType];
+      const fullName = client.firstName
+        ? `${client.firstName} ${
+            client.middleName ? `${client.middleName} ` : ""
+          }${client.lastName}`
+        : "";
 
-    switch (columnKey) {
-      case "name":
-        return (
-          <User
-            avatarProps={{
-              radius: "full",
-              size: "sm",
-              src: client.avatar,
-              classNames: {
-                base: "flex-shrink-0",
-              },
-            }}
-            classNames={{
-              description: "text-default-500",
-            }}
-            description={client.displayName ? fullName : ""}
-            name={client.displayName || fullName || ""}
-          >
-            {client.displayName || fullName || ""}
-          </User>
-        );
-      case "gender":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {client?.gender ? genderMap[client?.gender] : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "age":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {client?.birthdate && isValid(new Date(client.birthdate))
-                ? format(client.birthdate, "dd-MM-yyyy")
-                : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "mobile":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {client?.mobileNumber ? client.mobileNumber : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "phone":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {client?.phoneNumber ? client.phoneNumber : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "email":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {client?.email ? client.email : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "address":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {client?.address ? client.address : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      default:
-        return cellValue;
-    }
-  }, []);
+      let _age = EMPTY_STRING;
+      if (client.birthdate && isValid(new Date(client.birthdate))) {
+        _age = differenceInYears(
+          new Date(),
+          new Date(client.birthdate)
+        ).toString();
+      }
+
+      switch (columnKey) {
+        case "name":
+          return (
+            <div
+              className="cursor-pointer"
+              onClick={() => navigate(`/clients/${client.id}`)}
+            >
+              <User
+                avatarProps={{
+                  radius: "full",
+                  size: "sm",
+                  src: client.avatar,
+                  classNames: {
+                    base: "flex-shrink-0",
+                  },
+                }}
+                classNames={{
+                  description: "text-default-500",
+                }}
+                description={client.displayName ? fullName : ""}
+                name={client.displayName || fullName || ""}
+              >
+                {client.displayName || fullName || ""}
+              </User>
+            </div>
+          );
+        case "status":
+          return (
+            <div
+              className={`flex flex-col rounded-md border-[1px] ${
+                client?.status === "active"
+                  ? "bg-green-50"
+                  : client?.status === "inactive"
+                  ? "bg-red-50"
+                  : "bg-blue-30"
+              } items-center ${
+                client?.status === "active"
+                  ? "border-green-500"
+                  : client?.status === "inactive"
+                  ? "border-red-500"
+                  : "border-blue-300"
+              }`}
+            >
+              <p
+                className={`text-bold text-md capitalize ${
+                  client?.status === "active"
+                    ? "text-green-500"
+                    : client?.status === "inactive"
+                    ? "text-red-500"
+                    : "text-blue-500"
+                }`}
+              >
+                {client?.status}
+              </p>
+            </div>
+          );
+        case "gender":
+          return (
+            <div className="flex flex-col">
+              <p className="text-bold text-small capitalize">
+                {client?.gender ? genderMap[client?.gender] : EMPTY_STRING}
+              </p>
+            </div>
+          );
+        case "age":
+          return (
+            <div className="flex flex-col">
+              <p className="text-bold text-small capitalize">{_age}</p>
+            </div>
+          );
+        case "mobile":
+          return (
+            <div className="flex flex-col">
+              <p className="text-bold text-small capitalize">
+                {client?.mobileNumber ? client.mobileNumber : EMPTY_STRING}
+              </p>
+            </div>
+          );
+        case "phone":
+          return (
+            <div className="flex flex-col">
+              <p className="text-bold text-small capitalize">
+                {client?.phoneNumber ? client.phoneNumber : EMPTY_STRING}
+              </p>
+            </div>
+          );
+        case "email":
+          return (
+            <div className="flex flex-col">
+              <p className="text-bold text-small capitalize">
+                {client?.email ? client.email : EMPTY_STRING}
+              </p>
+            </div>
+          );
+        case "address":
+          return (
+            <div className="flex flex-col">
+              <p className="text-bold text-small capitalize">
+                {client?.address ? client.address : EMPTY_STRING}
+              </p>
+            </div>
+          );
+        default:
+          return cellValue;
+      }
+    },
+    [navigate]
+  );
 
   const onRowsPerPageChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -227,7 +279,7 @@ const ClientList = () => {
               items={statusTypeOptions}
               label="Status"
               size="sm"
-              placeholder="Select Type"
+              placeholder="All"
               selectionMode="multiple"
               selectedKeys={statusTypeFilter}
               labelPlacement="outside"
@@ -241,6 +293,24 @@ const ClientList = () => {
                 <SelectItem key={statusType.value}>
                   {statusType.label}
                 </SelectItem>
+              ))}
+            </Select>
+            <Select
+              items={ageTypeOptions}
+              label="Age"
+              size="sm"
+              placeholder="All"
+              selectionMode="multiple"
+              selectedKeys={ageTypeFilter}
+              labelPlacement="outside"
+              onSelectionChange={
+                setAgeTypeFilter as (keys: SharedSelection) => void
+              }
+              className="w-40"
+              classNames={{ trigger: "cursor-pointer" }}
+            >
+              {ageTypeOptions.map((ageType) => (
+                <SelectItem key={ageType.value}>{ageType.label}</SelectItem>
               ))}
             </Select>
             <Button
@@ -265,6 +335,12 @@ const ClientList = () => {
                   } else {
                     delete newFilter.statusTypes;
                   }
+
+                  if (ageTypeFilter !== "all") {
+                    newFilter.ageTypes = Array.from(ageTypeFilter);
+                  } else {
+                    delete newFilter.ageTypes;
+                  }
                   return newFilter;
                 })
               }
@@ -288,7 +364,13 @@ const ClientList = () => {
         </div>
       </div>
     );
-  }, [filterValue, statusTypeFilter, pagination?.total, selectedKeys]);
+  }, [
+    filterValue,
+    statusTypeFilter,
+    ageTypeFilter,
+    pagination?.total,
+    selectedKeys,
+  ]);
 
   return (
     <div className="container mx-auto">
@@ -310,7 +392,7 @@ const ClientList = () => {
         <Table
           isCompact
           // removeWrapper
-          bottomContent={bottomContent} //TODO: add bottomContent
+          bottomContent={bottomContent}
           bottomContentPlacement="outside"
           checkboxesProps={{
             classNames: {
@@ -339,7 +421,7 @@ const ClientList = () => {
             column: filter.sort ?? "joinedAt",
             direction: filter.order === "asc" ? "ascending" : "descending",
           }}
-          topContent={topContent} //TODO: add topContent
+          topContent={topContent}
           topContentPlacement="outside"
           onSelectionChange={setSelectedKeys as (keys: SharedSelection) => void}
           onSortChange={(sortDescriptor) => {
@@ -366,7 +448,7 @@ const ClientList = () => {
           <TableBody
             isLoading={isLoading}
             loadingContent={<Spinner label="Loading..." />}
-            emptyContent={"No users found"}
+            emptyContent={"No clients found"}
             items={clients}
           >
             {(item) => (

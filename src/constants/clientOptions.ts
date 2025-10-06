@@ -9,7 +9,7 @@ export const salutationTypeOptions = [
   { label: "They", value: "they" },
 ];
 
-export const maritialStatusOptions = [
+export const maritalStatusOptions = [
   { label: "Single", value: "single" },
   { label: "Married", value: "married" },
   { label: "De Facto", value: "de_facto" },

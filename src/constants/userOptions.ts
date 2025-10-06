@@ -19,3 +19,8 @@ export const statusTypeOptions = [
   { label: "Active", value: "active" },
   { label: "Inactive", value: "inactive" },
 ];
+
+export const ageTypeOptions = [
+  { label: "Adult", value: "adult" },
+  { label: "Children", value: "children" },
+];

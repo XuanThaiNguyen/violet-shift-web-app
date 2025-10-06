@@ -13,7 +13,9 @@ const ForgotPassword = lazy(
   () => import("@/pages/auth/forgot-password/ForgotPassword")
 );
 const NewPassword = lazy(() => import("@/pages/auth/new-password/NewPassword"));
-const AcceptInvitation = lazy(() => import("@/pages/auth/accept-invitation/AcceptInvitation"));
+const AcceptInvitation = lazy(
+  () => import("@/pages/auth/accept-invitation/AcceptInvitation")
+);
 const ProfileSetup = lazy(() => import("@/pages/auth/profile/Profile"));
 const Profile = lazy(() => import("@/pages/profile/Profile"));
 const Scheduler = lazy(() => import("@/pages/scheduler/Scheduler"));
@@ -21,6 +23,11 @@ const StaffList = lazy(() => import("@/pages/staffs/StaffList"));
 const AddStaff = lazy(() => import("@/pages/staffs/AddStaff"));
 const ClientList = lazy(() => import("@/pages/clients/ClientList"));
 const AddClient = lazy(() => import("@/pages/clients/AddClient"));
+const UpdateClient = lazy(() => import("@/pages/clients/UpdateClient"));
+const ClientProfile = lazy(() => import("@/pages/clients/ClientProfile"));
+const ClientArchivedList = lazy(
+  () => import("@/pages/clients/ClientArchivedList")
+);
 
 export const router = createBrowserRouter([
   {
@@ -61,9 +68,12 @@ export const router = createBrowserRouter([
         Component: PrivateModule([ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR]),
         children: [
           { path: "list", Component: ClientList },
+          { path: "archived", Component: ClientArchivedList },
           { path: "new", Component: AddClient },
         ],
       },
+      { path: "clients/:id", Component: ClientProfile },
+      { path: "clients/:id/update", Component: UpdateClient },
       { path: "*", Component: NotFound },
     ],
   },
