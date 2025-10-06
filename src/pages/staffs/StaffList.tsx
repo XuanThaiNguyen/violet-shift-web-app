@@ -126,7 +126,7 @@ const StaffList: FC = () => {
         return (
           <div className="flex flex-col">
             <p className="text-bold text-small capitalize">
-              {genderMap[user.gender]}
+              {genderMap[user.gender || ""]}
             </p>
           </div>
         );
@@ -134,8 +134,8 @@ const StaffList: FC = () => {
         return (
           <div className="flex flex-col">
             <p className="text-bold text-small capitalize">
-              {isValid(new Date(user.birthdate))
-                ? format(user.birthdate, "dd-MM-yyyy")
+              {isValid(new Date(user.birthdate ?? ""))
+                ? format(user.birthdate!, "dd-MM-yyyy")
                 : user.birthdate}
             </p>
           </div>
@@ -152,8 +152,8 @@ const StaffList: FC = () => {
         return (
           <div className="flex flex-col">
             <p className="text-bold text-small capitalize">
-              {isValid(new Date(user.joinedAt))
-                ? format(user.joinedAt, "dd-MM-yyyy")
+              {isValid(new Date(user.joinedAt ?? ""))
+                ? format(user.joinedAt!, "dd-MM-yyyy")
                 : user.joinedAt}
             </p>
           </div>
