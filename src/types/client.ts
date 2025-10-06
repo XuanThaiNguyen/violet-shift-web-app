@@ -7,7 +7,7 @@ export interface IClient {
   middleName?: string;
   displayName: string;
   gender?: string;
-  maritialStatus?: string;
+  maritalStatus?: string;
   birthdate?: string;
   address?: string;
   phoneNumber?: string;

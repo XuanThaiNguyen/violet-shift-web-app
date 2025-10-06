@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 export type ClientFilter = {
   query?: string;
   statusTypes?: string[];
+  ageTypes?: string[];
   ages?: string[];
   page?: number;
   limit?: number;
@@ -14,8 +15,8 @@ export type ClientFilter = {
 };
 
 export const useClients = (filter: ClientFilter) => {
-  const staffsQueryResult = useQuery<PaginationResponse<IClient>>({
-    queryKey: ["staffs", filter],
+  const clientsQueryResult = useQuery<PaginationResponse<IClient>>({
+    queryKey: ["clients", filter],
     queryFn: () => api.get("/api/v1/clients", { params: filter }),
     enabled: !!localStorage.getItem("auth_token"),
     refetchOnMount: false,
@@ -24,5 +25,19 @@ export const useClients = (filter: ClientFilter) => {
     retry: false,
   });
 
-  return staffsQueryResult;
+  return clientsQueryResult;
+};
+
+export const useClientDetail = (id: string) => {
+  const clientDetailQueryResult = useQuery<IClient>({
+    queryKey: ["clients", id],
+    queryFn: () => api.get(`/api/v1/clients/${id}`),
+    enabled: !!localStorage.getItem("auth_token"),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  });
+
+  return clientDetailQueryResult;
 };

@@ -9,9 +9,11 @@ import { addToast } from "@heroui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isValid } from "date-fns";
 import { useFormik } from "formik";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import * as Yup from "yup";
 import ClientInfo from "./components/ClientInfo";
+import { useClientDetail } from "@/states/apis/client";
+import { ArrowLeft } from "lucide-react";
 
 const clientSchema = Yup.object({
   useSalutation: Yup.boolean(),
@@ -55,29 +57,43 @@ const initialClientValues: IClient = {
   status: "active",
 };
 
-const createNewClient = async (values: IClient) => {
-  const res = await api.post("/api/v1/clients", values);
+const updateClient = async ({
+  id,
+  values,
+}: {
+  id: string;
+  values: IClient;
+}) => {
+  const res = await api.put(`/api/v1/clients/${id}`, values);
   return res;
 };
 
-const AddClient = () => {
+const UpdateClient = () => {
   const navigate = useNavigate();
+  const { id: clientId } = useParams();
   const queryClient = useQueryClient();
+  const { data: dataClient } = useClientDetail(clientId || "");
+
+  const initClient = {
+    ...initialClientValues,
+    ...dataClient,
+  };
+
   const { mutate, isPending } = useMutation({
-    mutationFn: createNewClient,
-    onSuccess: (newClient: IClient) => {
+    mutationFn: updateClient,
+    onSuccess: (updatedClient: IClient) => {
       addToast({
-        title: "Create client successful",
+        title: "Update client successful",
         color: "success",
         timeout: 2000,
         isClosing: true,
       });
-      navigate(`/clients/${newClient?.id}`);
+      navigate(`/clients/${updatedClient?.id}`);
       queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: () => {
       addToast({
-        title: "Create client failed",
+        title: "Update client failed",
         color: "danger",
         timeout: 2000,
         isClosing: true,
@@ -86,7 +102,7 @@ const AddClient = () => {
   });
 
   const clientFormik = useFormik<IClient>({
-    initialValues: initialClientValues,
+    initialValues: initClient,
     validationSchema: clientSchema,
     onSubmit: async (values) => {
       const { salutation, useSalutation, displayName, status, ...others } =
@@ -107,7 +123,7 @@ const AddClient = () => {
           }
         : { ...filteredValues, useSalutation, displayName, status };
 
-      mutate(newValues);
+      mutate({ id: clientId!, values: newValues });
     },
   });
 
@@ -117,16 +133,26 @@ const AddClient = () => {
       ? new Date(clientFormik.values.birthdate)
       : null;
 
+  if (!clientId) return <></>;
+
   return (
     <div className="px-4 w-full">
+      <div
+        className="flex items-center gap-2 cursor-pointer"
+        onClick={() => navigate(`/clients/${clientId}`)}
+      >
+        <ArrowLeft />
+        <span>Back to Client Profile</span>
+      </div>
+      <div className="h-4"></div>
       <ClientInfo
         clientFormik={clientFormik}
         birthdate={birthdate}
         isPending={isPending}
-        mode="add"
+        mode={"update"}
       />
     </div>
   );
 };
 
-export default AddClient;
+export default UpdateClient;

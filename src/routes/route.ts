@@ -20,6 +20,8 @@ const StaffList = lazy(() => import("@/pages/staff/StaffList"));
 const AddStaff = lazy(() => import("@/pages/staff/AddStaff"));
 const ClientList = lazy(() => import("@/pages/clients/ClientList"));
 const AddClient = lazy(() => import("@/pages/clients/AddClient"));
+const UpdateClient = lazy(() => import("@/pages/clients/UpdateClient"));
+const ClientProfile = lazy(() => import("@/pages/clients/ClientProfile"));
 
 export const router = createBrowserRouter([
   {
@@ -62,6 +64,8 @@ export const router = createBrowserRouter([
           { path: "new", Component: AddClient },
         ],
       },
+      { path: "clients/:id", Component: ClientProfile },
+      { path: "clients/:id/update", Component: UpdateClient },
       { path: "*", Component: NotFound },
     ],
   },
