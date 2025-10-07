@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/services/api/http";
-import type { User } from "@/types/user";
+import type { CreateUser, User } from "@/types/user";
 import type { PaginationResponse } from "@/types/common";
 
 export type StaffFilter = {
@@ -25,4 +25,9 @@ export const useStaffs = (filter: StaffFilter) => {
   });
 
   return staffsQueryResult;
+};
+
+export const createNewStaff = async (values: CreateUser) => {
+  const res = await api.post("/api/v1/staffs/invite", values);
+  return res.data;
 };

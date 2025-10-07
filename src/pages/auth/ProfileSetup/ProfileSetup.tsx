@@ -13,7 +13,7 @@ import * as Yup from "yup";
 import { isValid } from "date-fns";
 import { pad } from "@/utils/strings";
 import { useMe } from "@/states/apis/me";
-import { employmentTypeOptions, genderOptions } from "@/constants/userOptions";
+import { genderOptions } from "@/constants/userOptions";
 import api from "@/services/api/http";
 import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,29 +26,25 @@ const schema = Yup.object({
   middleName: Yup.string(),
   lastName: Yup.string().required("Last name is required"),
   preferredName: Yup.string(),
-  phone: Yup.string(),
+  mobile: Yup.string(),
   birthdate: Yup.date().required("birthdate is required"),
   gender: Yup.string()
     .oneOf(genderOptions.map((option) => option.value))
     .required("Gender is required"),
-  employmentType: Yup.string()
-    .oneOf(employmentTypeOptions.map((option) => option.value))
-    .required("Employment type is required"),
 });
 
 const initialValues = {
   avatar: "",
   firstName: "",
   middleName: "",
-  employmentType: "full_time",
   lastName: "",
   preferredName: "",
-  phone: "",
+  mobile: "",
   birthdate: "",
   gender: "",
 };
 
-const Profile: FC = () => {
+const ProfileSetup: FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: user, isLoading } = useMe();
@@ -69,8 +65,8 @@ const Profile: FC = () => {
           timeout: 2000,
           isClosing: true,
         });
-        queryClient.invalidateQueries({ queryKey: ["me"] });
         navigate("/");
+        queryClient.invalidateQueries({ queryKey: ["me"] });
       } catch {
         addToast({
           title: "Profile update failed",
@@ -195,27 +191,24 @@ const Profile: FC = () => {
               />
               <Select
                 isRequired
-                label="Employment Type"
-                name="employmentType"
-                placeholder="Select Employment Type"
-                isInvalid={
-                  !!formik.errors.employmentType &&
-                  formik.touched.employmentType
-                }
+                label="Gender"
+                name="gender"
+                placeholder="Select Gender"
+                isInvalid={!!formik.errors.gender && formik.touched.gender}
                 errorMessage={
-                  formik.errors.employmentType && formik.touched.employmentType
-                    ? formik.errors.employmentType
+                  formik.errors.gender && formik.touched.gender
+                    ? formik.errors.gender
                     : ""
                 }
-                selectedKeys={[formik.values.employmentType]}
+                selectedKeys={[formik.values.gender]}
                 onSelectionChange={([value]) => {
-                  formik.setFieldValue("employmentType", value as string);
+                  formik.setFieldValue("gender", value as string);
                 }}
                 onBlur={() => {
-                  formik.setFieldTouched("employmentType", true);
+                  formik.setFieldTouched("gender", true);
                 }}
               >
-                {employmentTypeOptions.map((option) => (
+                {genderOptions.map((option) => (
                   <SelectItem key={option.value}>{option.label}</SelectItem>
                 ))}
               </Select>
@@ -253,46 +246,42 @@ const Profile: FC = () => {
                   formik.setFieldTouched("birthdate", true);
                 }}
               />
-              <Select
-                isRequired
-                label="Gender"
-                name="gender"
-                placeholder="Select Gender"
-                isInvalid={!!formik.errors.gender && formik.touched.gender}
-                errorMessage={
-                  formik.errors.gender && formik.touched.gender
-                    ? formik.errors.gender
-                    : ""
-                }
-                selectedKeys={[formik.values.gender]}
-                onSelectionChange={([value]) => {
-                  formik.setFieldValue("gender", value as string);
-                }}
-                onBlur={() => {
-                  formik.setFieldTouched("gender", true);
-                }}
-              >
-                {genderOptions.map((option) => (
-                  <SelectItem key={option.value}>{option.label}</SelectItem>
-                ))}
-              </Select>
               <Input
                 type="number"
-                placeholder="Phone"
-                name="phone"
-                label="Phone"
-                isInvalid={!!formik.errors.phone && formik.touched.phone}
+                placeholder="Mobile"
+                name="mobile"
+                label="Mobile"
+                isInvalid={!!formik.errors.mobile && formik.touched.mobile}
                 errorMessage={
-                  formik.errors.phone && formik.touched.phone
-                    ? formik.errors.phone
+                  formik.errors.mobile && formik.touched.mobile
+                    ? formik.errors.mobile
                     : ""
                 }
-                value={formik.values.phone}
+                value={formik.values.mobile}
                 onValueChange={(value) => {
-                  formik.setFieldValue("phone", value);
+                  formik.setFieldValue("mobile", value);
                 }}
                 onBlur={() => {
-                  formik.setFieldTouched("phone", true);
+                  formik.setFieldTouched("mobile", true);
+                }}
+              />
+              <Input
+                type="text"
+                placeholder="Address"
+                name="address"
+                label="Address"
+                isInvalid={!!formik.errors.address && formik.touched.address}
+                errorMessage={
+                  formik.errors.address && formik.touched.address
+                    ? formik.errors.address
+                    : ""
+                }
+                value={formik.values.address}
+                onValueChange={(value) => {
+                  formik.setFieldValue("address", value);
+                }}
+                onBlur={() => {
+                  formik.setFieldTouched("address", true);
                 }}
               />
             </div>
@@ -315,4 +304,4 @@ const Profile: FC = () => {
   );
 };
 
-export default Profile;
+export default ProfileSetup;

@@ -11,20 +11,35 @@ import {
 import { Link, useNavigate } from "react-router";
 import { useMe } from "@/states/apis/me";
 
-import type { FC } from "react";
+import { useState, type FC } from "react";
 
 const Header: FC = () => {
   const { toggleSidebar } = useSidebarStore();
   const navigate = useNavigate();
+
+  const [isOpen, setIsOpen] = useState(false);
+
   const { data: user } = useMe();
-  const avatar = user?.avatar ? user.avatar : "https://i.pravatar.cc/150?u=a042581f4e29026024d";
-  const name = user?.preferredName ? user.preferredName : [user?.firstName, user?.middleName, user?.lastName].join(" ");
+  const avatar = user?.avatar
+    ? user.avatar
+    : "https://i.pravatar.cc/150?u=a042581f4e29026024d";
+  const name = user?.preferredName
+    ? user.preferredName
+    : [user?.firstName, user?.middleName, user?.lastName].join(" ");
+
+  const closePopover = () => {
+    setIsOpen(false);
+  };
 
   return (
     <header className="bg-primary text-primary-foreground py-3 px-4 flex items-center justify-between gap-2 sticky top-0 left-0 z-40 w-full shadow-lg h-14">
       <Menu className="cursor-pointer" size={20} onClick={toggleSidebar} />
       {user && (
-        <Popover placement="bottom-start">
+        <Popover
+          placement="bottom-start"
+          isOpen={isOpen}
+          onOpenChange={setIsOpen}
+        >
           <PopoverTrigger>
             <User
               as="button"
@@ -39,15 +54,14 @@ const Header: FC = () => {
             <div className="w-full flex flex-col justify-center items-center py-4 bg-primary text-primary-foreground gap-2">
               <Avatar src={avatar} />
               <p className="text-sm font-medium">{name}</p>
-              <p className="text-xs text-primary-foreground/50">
-                {user.email}
-              </p>
+              <p className="text-xs text-primary-foreground/50">{user.email}</p>
             </div>
             <div className="flex justify-between items-center gap-2 w-full p-2">
               <Button
                 as={Link}
                 className="px-2 py-1 h-8 rounded-sm"
                 to="/profile"
+                onPress={closePopover}
                 variant="light"
                 startContent={<Cog size={12} />}
               >
@@ -56,7 +70,7 @@ const Header: FC = () => {
               <Button
                 as={Link}
                 className="px-2 py-1 h-8 rounded-sm"
-                onClick={() => {
+                onPress={() => {
                   localStorage.removeItem("auth_token");
                   navigate("/auth/login");
                 }}

@@ -2,13 +2,10 @@ import { Link, useLocation } from "react-router";
 import useSidebarStore from "../../states/app/sidebar";
 import clsx from "clsx";
 import {
-  Accessibility,
   Calendar,
   ChevronRight,
   ChevronsRight,
-  Notebook,
   PersonStanding,
-  ScrollText,
   UsersRound,
 } from "lucide-react";
 import { useWindowSize } from "usehooks-ts";
@@ -39,34 +36,6 @@ const sidebarItems: SidebarItem[] = [
       ROLE_IDS.ADMIN,
       ROLE_IDS.COORDINATOR,
       ROLE_IDS.OFFICE_SUPPORT,
-    ],
-  },
-  {
-    icon: Notebook,
-    key: "forms",
-    label: "Forms",
-    to: "/forms",
-    children: [
-      {
-        icon: ChevronsRight,
-        key: "received-forms",
-        label: "Received Forms",
-        to: "/forms/received",
-      },
-    ],
-  },
-  {
-    icon: Accessibility,
-    key: "incidents",
-    label: "Incidents",
-    to: "/incidents",
-    children: [
-      {
-        icon: ChevronsRight,
-        key: "received-incidents",
-        label: "Received Incidents",
-        to: "/incidents/received",
-      },
     ],
   },
   {
@@ -136,12 +105,6 @@ const sidebarItems: SidebarItem[] = [
         roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
       },
     ],
-  },
-  {
-    icon: ScrollText,
-    key: "certificates",
-    label: "Certificates",
-    to: "/certificates",
   },
 ];
 

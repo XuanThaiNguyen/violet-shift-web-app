@@ -25,17 +25,35 @@ import { format, isValid } from "date-fns";
 
 import type { FC } from "react";
 import type { User as UserType } from "@/types/user";
+import { getFullName } from "@/utils/strings";
 
 const columns = [
-  { name: "Name", uid: "name", width: 160, className: "min-w-[160px]" },
+  { name: "Name", uid: "name", width: 240, className: "min-w-[160px]" },
   { name: "Gender", uid: "gender" },
   { name: "Role", uid: "role" },
-  { name: "Email", uid: "email", sortable: true, width: 240, className: "min-w-[240px]" },
-  { name: "Phone", uid: "phone", width: 120, className: "min-w-[120px]" },
-  { name: "Birthdate", uid: "birthdate", sortable: true, width: 130, className: "min-w-[130px]" },
+  {
+    name: "Email",
+    uid: "email",
+    sortable: true,
+    width: 240,
+    className: "min-w-[240px]",
+  },
+  { name: "Mobile", uid: "mobile", width: 120, className: "min-w-[120px]" },
+  {
+    name: "Birthdate",
+    uid: "birthdate",
+    sortable: true,
+    width: 130,
+    className: "min-w-[130px]",
+  },
   { name: "Employment Type", uid: "employmentType" },
-  { name: "Joined At", uid: "joinedAt", sortable: true, width: 130, className: "min-w-[130px]" },
-  // { name: "actions", uid: "actions" },
+  {
+    name: "Joined At",
+    uid: "joinedAt",
+    sortable: true,
+    width: 130,
+    className: "min-w-[130px]",
+  },
 ];
 
 const roleOptions = [
@@ -87,11 +105,11 @@ const StaffList: FC = () => {
 
   const renderCell = useCallback((user: UserType, columnKey: string) => {
     const cellValue = user[columnKey as keyof UserType];
-    const fullName = user.firstName
-      ? `${user.firstName} ${user.middleName ? `${user.middleName} ` : ""}${
-          user.lastName
-        }`
-      : "";
+    const fullName = getFullName({
+      firstName: user.firstName,
+      middleName: user?.middleName,
+      lastName: user.lastName,
+    });
 
     switch (columnKey) {
       case "name":
@@ -108,11 +126,9 @@ const StaffList: FC = () => {
             classNames={{
               description: "text-default-500",
             }}
-            description={user.preferredName ? fullName : ""}
+            description={fullName || ""}
             name={user.preferredName || fullName || ""}
-          >
-            {user.preferredName || fullName || ""}
-          </User>
+          />
         );
       case "role":
         return (
@@ -122,11 +138,19 @@ const StaffList: FC = () => {
             </p>
           </div>
         );
+      case "mobile":
+        return (
+          <div className="flex flex-col">
+            <p className="text-bold text-small capitalize">
+              {user.mobileNumber ? user.mobileNumber : EMPTY_STRING}
+            </p>
+          </div>
+        );
       case "gender":
         return (
           <div className="flex flex-col">
             <p className="text-bold text-small capitalize">
-              {genderMap[user.gender || ""]}
+              {user.gender ? genderMap[user.gender || ""] : EMPTY_STRING}
             </p>
           </div>
         );
@@ -136,7 +160,7 @@ const StaffList: FC = () => {
             <p className="text-bold text-small capitalize">
               {isValid(new Date(user.birthdate ?? ""))
                 ? format(user.birthdate!, "dd-MM-yyyy")
-                : user.birthdate}
+                : EMPTY_STRING}
             </p>
           </div>
         );
@@ -151,10 +175,14 @@ const StaffList: FC = () => {
       case "joinedAt":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
+            <p
+              className={`text-bold text-small ${
+                isValid(new Date(user.joinedAt ?? "")) ? "" : "text-red-500"
+              }`}
+            >
               {isValid(new Date(user.joinedAt ?? ""))
                 ? format(user.joinedAt!, "dd-MM-yyyy")
-                : user.joinedAt}
+                : "Waiting for response..."}
             </p>
           </div>
         );

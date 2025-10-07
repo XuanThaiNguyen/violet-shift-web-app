@@ -23,7 +23,7 @@ const AuthorizedLayout: FC = () => {
       }
 
       if (!user?.hasSetProfile) {
-        navigate("/auth/profile");
+        navigate("/auth/profile-setup");
       }
     })();
   }, [user, isLoading, navigate]);

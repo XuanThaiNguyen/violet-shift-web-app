@@ -16,8 +16,11 @@ const NewPassword = lazy(() => import("@/pages/auth/new-password/NewPassword"));
 const AcceptInvitation = lazy(
   () => import("@/pages/auth/accept-invitation/AcceptInvitation")
 );
-const ProfileSetup = lazy(() => import("@/pages/auth/profile/Profile"));
+const ProfileSetup = lazy(
+  () => import("@/pages/auth/ProfileSetup/ProfileSetup")
+);
 const Profile = lazy(() => import("@/pages/profile/Profile"));
+const ProfileUpdate = lazy(() => import("@/pages/profile/ProfileUpdate"));
 const Scheduler = lazy(() => import("@/pages/scheduler/Scheduler"));
 const StaffList = lazy(() => import("@/pages/staffs/StaffList"));
 const AddStaff = lazy(() => import("@/pages/staffs/AddStaff"));
@@ -37,7 +40,7 @@ export const router = createBrowserRouter([
       { path: "login", Component: Login },
       { path: "forgot-password", Component: ForgotPassword },
       { path: "new-password", Component: NewPassword },
-      { path: "profile", Component: ProfileSetup },
+      { path: "profile-setup", Component: ProfileSetup },
       { path: "accept-invitation", Component: AcceptInvitation },
       //   { path: "register", Component: Register },
       { path: "*", Component: NotFound },
@@ -49,6 +52,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: "profile", Component: Profile },
+      { path: "profile/update", Component: ProfileUpdate },
       { path: "scheduler", Component: Scheduler },
       {
         path: "staffs",
