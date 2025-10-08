@@ -197,10 +197,10 @@ const ClientArchivedList = () => {
               classNames={{
                 description: "text-default-500",
               }}
-              description={client.displayName ? fullName : ""}
-              name={client.displayName || fullName || ""}
+              description={client.preferredName ? fullName : ""}
+              name={client.preferredName || fullName || ""}
             >
-              {client.displayName || fullName || ""}
+              {client.preferredName || fullName || ""}
             </User>
           );
         case "mobile":

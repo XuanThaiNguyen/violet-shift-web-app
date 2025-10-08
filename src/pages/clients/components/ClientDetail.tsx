@@ -18,9 +18,14 @@ import { usePostArchiveClient } from "@/states/apis/client";
 interface ClientDetailProps {
   clientId: string;
   detailClient?: IClient;
+  clientName: string;
 }
 
-const ClientDetail = ({ clientId, detailClient }: ClientDetailProps) => {
+const ClientDetail = ({
+  clientId,
+  detailClient,
+  clientName = "",
+}: ClientDetailProps) => {
   const navigate = useNavigate();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -74,9 +79,7 @@ const ClientDetail = ({ clientId, detailClient }: ClientDetailProps) => {
         <div className="flex">
           <div className="flex-1 grid grid-cols-[320px_1fr] gap-y-4 text-gray-700">
             <span className="text-gray-500 text-md">Name:</span>
-            <span className="text-md font-semibold">
-              {detailClient?.displayName}
-            </span>
+            <span className="text-md font-semibold">{clientName}</span>
             <span className="font-medium text-gray-500">Contact:</span>
             <div className="flex items-center gap-4">
               <Smartphone size={16} className="text-gray-400" />{" "}
@@ -159,7 +162,7 @@ const ClientDetail = ({ clientId, detailClient }: ClientDetailProps) => {
         isPending={isPending}
         onClose={onClose}
         onConfirm={handleConfirm}
-        clientName={detailClient?.displayName || ""}
+        clientName={detailClient?.preferredName || ""}
       />
     </div>
   );

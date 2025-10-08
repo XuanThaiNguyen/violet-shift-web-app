@@ -2,10 +2,10 @@ export type ClientStatus = "prospect" | "active" | "inactive";
 
 export interface IClient {
   id?: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
   middleName?: string;
-  displayName: string;
+  preferredName?: string;
   gender?: string;
   maritalStatus?: string;
   birthdate?: string;
@@ -19,10 +19,9 @@ export interface IClient {
   nationality?: string;
   status: ClientStatus;
   salutation?: string;
-  useSalutation: boolean;
 }
 
 export type ClientSubmitValues = Partial<IClient> &
-  Pick<IClient, "displayName"> &
-  Pick<IClient, "useSalutation"> &
+  Pick<IClient, "firstName"> &
+  Pick<IClient, "lastName"> &
   Pick<IClient, "status">;

@@ -1,6 +1,7 @@
 import { statusTypeOptions } from "@/constants/userOptions";
 import { useChangeStatusClient, useClientDetail } from "@/states/apis/client";
 import type { ClientStatus, IClient } from "@/types/client";
+import { getDisplayName } from "@/utils/strings";
 import { addToast, Avatar, Select, SelectItem, Tab, Tabs } from "@heroui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
@@ -40,6 +41,14 @@ const ClientProfile = () => {
     },
   });
 
+  const _clientName = getDisplayName({
+    salutation: detailClient?.salutation,
+    firstName: detailClient?.firstName,
+    middleName: detailClient?.middleName,
+    lastName: detailClient?.lastName,
+    preferredName: detailClient?.preferredName,
+  });
+
   if (!clientId) return <></>;
 
   return (
@@ -58,7 +67,7 @@ const ClientProfile = () => {
             className="w-8 h-8 rounded-full object-cover"
             color={"primary"}
           />
-          <span className="text-2xl">{detailClient?.displayName || ""}</span>
+          <span className="text-2xl">{_clientName || ""}</span>
         </div>
         <Select
           size="sm"
@@ -91,7 +100,11 @@ const ClientProfile = () => {
       <div className="h-4"></div>
       <Tabs variant="underlined" color="primary">
         <Tab key="profile" title="Profile">
-          <ClientDetail clientId={clientId || ""} detailClient={detailClient} />
+          <ClientDetail
+            clientId={clientId || ""}
+            detailClient={detailClient}
+            clientName={_clientName}
+          />
         </Tab>
       </Tabs>
     </div>

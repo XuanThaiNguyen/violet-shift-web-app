@@ -25,7 +25,7 @@ export const getDisplayName = ({
     [firstName, middleName, lastName].filter(Boolean).join(" ");
 
   return salutation && salutation?.length > 0
-    ? `${salutation} ${baseName}`.trim()
+    ? `${salutation}. ${baseName}`.trim()
     : baseName;
 };
 

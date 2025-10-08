@@ -14,14 +14,13 @@ import * as Yup from "yup";
 import ClientInfo from "./components/ClientInfo";
 
 const clientSchema = Yup.object({
-  useSalutation: Yup.boolean(),
-  salutation: Yup.string().oneOf(
-    salutationTypeOptions.map((option) => option.value)
-  ),
-  firstName: Yup.string(),
+  salutation: Yup.string()
+    .oneOf(salutationTypeOptions.map((option) => option.label))
+    .optional(),
+  firstName: Yup.string().required("First name is required"),
   middleName: Yup.string(),
-  lastName: Yup.string(),
-  displayName: Yup.string().required("Display name is required"),
+  lastName: Yup.string().required("First name is required"),
+  preferredName: Yup.string(),
   gender: Yup.string().oneOf(genderOptions.map((option) => option.value)),
   maritalStatus: Yup.string().oneOf(
     maritalStatusOptions.map((option) => option.value)
@@ -29,30 +28,17 @@ const clientSchema = Yup.object({
   birthdate: Yup.date(),
   phoneNumber: Yup.string(),
   mobileNumber: Yup.string(),
-  email: Yup.string(),
+  email: Yup.string().email("Invalid email").required("Email is required"),
   apartmentNumber: Yup.string(),
   religion: Yup.string(),
   status: Yup.string().oneOf(["prospect", "active", "inactive"]),
 });
 
 const initialClientValues: IClient = {
-  useSalutation: false,
-  salutation: "",
-  firstName: "",
-  middleName: "",
-  lastName: "",
-  displayName: "",
-  address: "",
-  birthdate: "",
-  gender: "",
-  maritalStatus: "",
-  apartmentNumber: "",
-  phoneNumber: "",
-  mobileNumber: "",
   email: "",
-  religion: "",
-  nationality: "",
   status: "active",
+  firstName: "",
+  lastName: "",
 };
 
 const AddClient = () => {
@@ -80,45 +66,52 @@ const AddClient = () => {
     },
   });
 
-  const clientFormik = useFormik<IClient>({
+  const {
+    values,
+    setFieldValue,
+    handleSubmit,
+    errors,
+    touched,
+    setFieldTouched,
+  } = useFormik<IClient>({
     initialValues: initialClientValues,
     validationSchema: clientSchema,
     onSubmit: async (values) => {
-      const { salutation, useSalutation, displayName, status, ...others } =
-        values;
+      const { firstName, lastName, status, ...others } = values;
 
       const filteredValues = Object.fromEntries(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         Object.entries(others).filter(([_, v]) => v !== "")
       ) as Partial<IClient>;
 
-      const newValues: ClientSubmitValues = useSalutation
-        ? {
-            ...filteredValues,
-            useSalutation,
-            salutation,
-            displayName,
-            status,
-          }
-        : { ...filteredValues, useSalutation, displayName, status };
+      const newValues: ClientSubmitValues = {
+        ...filteredValues,
+        firstName,
+        lastName,
+        status,
+      };
 
       mutate(newValues);
     },
   });
 
   const birthdate =
-    clientFormik.values.birthdate &&
-    isValid(new Date(clientFormik.values.birthdate))
-      ? new Date(clientFormik.values.birthdate)
+    values.birthdate && isValid(new Date(values.birthdate))
+      ? new Date(values.birthdate)
       : null;
 
   return (
-    <div className="px-4 w-full">
+    <div className="container mx-auto">
       <ClientInfo
-        clientFormik={clientFormik}
         birthdate={birthdate}
         isPending={isPending}
         mode="add"
+        values={values}
+        setFieldValue={setFieldValue}
+        setFieldTouched={setFieldTouched}
+        errors={errors}
+        touched={touched}
+        handleSubmit={handleSubmit}
       />
     </div>
   );

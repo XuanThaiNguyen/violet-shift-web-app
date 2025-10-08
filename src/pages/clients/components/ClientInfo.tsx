@@ -15,73 +15,79 @@ import {
   SelectItem,
 } from "@heroui/react";
 import { CalendarDate } from "@internationalized/date";
-import type { FormikProps } from "formik";
+import type { FormikState } from "formik";
 
 interface ClientInfoProps {
-  clientFormik: FormikProps<IClient>;
+  handleSubmit: () => void;
+  setFieldValue: (field: string, value: IClient[keyof IClient]) => void;
+  errors: FormikState<IClient>["errors"];
+  touched: FormikState<IClient>["touched"];
+  values: IClient;
+  setFieldTouched: (field: string, value: boolean) => void;
   birthdate: Date | null;
   isPending: boolean;
   mode: "add" | "update";
 }
 
 const ClientInfo = ({
-  clientFormik,
   birthdate,
   isPending,
   mode = "add",
+  handleSubmit,
+  setFieldValue,
+  errors,
+  touched,
+  values,
+  setFieldTouched,
 }: ClientInfoProps) => {
   return (
     <form
       className="px-4 py-8 mx-auto shadow-lg rounded-lg bg-content1"
       onSubmit={(e) => {
         e.preventDefault();
-        clientFormik.handleSubmit();
+        handleSubmit();
       }}
     >
       <div className="flex">
         <span className="flex-1">Name:</span>
         <div className="flex-5">
           <Checkbox
-            defaultSelected
             size="sm"
-            isRequired={!!clientFormik.errors.useSalutation}
-            isSelected={clientFormik.values.useSalutation}
-            onValueChange={() => {
-              clientFormik.setFieldValue(
-                "useSalutation",
-                !clientFormik.values.useSalutation
-              );
+            isSelected={!!values.salutation}
+            onValueChange={(value) => {
+              if (value) {
+                setFieldValue("salutation", "Mr");
+              } else {
+                setFieldValue("salutation", undefined);
+              }
             }}
           >
             Use salutation
           </Checkbox>
           <div className="h-8"></div>
           <Select
-            isDisabled={!clientFormik.values.useSalutation}
+            isDisabled={values.salutation === undefined}
             label=""
             name="salutation"
             placeholder="Select salutation"
             className="w-72"
-            isInvalid={
-              !!clientFormik.errors.salutation &&
-              clientFormik.touched.salutation
-            }
+            isInvalid={!!errors.salutation && touched.salutation}
             errorMessage={
-              clientFormik.errors.salutation && clientFormik.touched.salutation
-                ? clientFormik.errors.salutation
-                : ""
+              errors.salutation && touched.salutation ? errors.salutation : ""
             }
-            value={clientFormik.values.salutation}
-            selectedKeys={[clientFormik.values.salutation || ""]}
+            selectedKeys={[values.salutation || ""]}
             onSelectionChange={([value]) => {
-              clientFormik.setFieldValue("salutation", value as string);
+              setFieldValue("salutation", value as string);
             }}
             onBlur={() => {
-              clientFormik.setFieldTouched("salutation", true);
+              setFieldTouched("salutation", true);
+            }}
+            classNames={{
+              trigger: "cursor-pointer",
             }}
           >
             {salutationTypeOptions.map((option) => (
-              <SelectItem key={option.value}>{option.label}</SelectItem>
+              <SelectItem key={option.label}>{option.label}</SelectItem>
             ))}
           </Select>
           <div className="h-8"></div>
@@ -91,21 +97,16 @@ const ClientInfo = ({
               type="text"
               placeholder="First Name"
               name="firstName"
-              isInvalid={
-                !!clientFormik.errors.firstName &&
-                clientFormik.touched.firstName
-              }
+              isInvalid={!!errors.firstName && touched.firstName}
               errorMessage={
-                clientFormik.errors.firstName && clientFormik.touched.firstName
-                  ? clientFormik.errors.firstName
-                  : ""
+                errors.firstName && touched.firstName ? errors.firstName : ""
               }
-              value={clientFormik.values.firstName}
+              value={values.firstName}
               onValueChange={(value) => {
-                clientFormik.setFieldValue("firstName", value);
+                setFieldValue("firstName", value);
               }}
               onBlur={() => {
-                clientFormik.setFieldTouched("firstName", true);
+                setFieldTouched("firstName", true);
               }}
             />
             <Input
@@ -113,22 +114,16 @@ const ClientInfo = ({
               type="text"
               placeholder="Middle Name"
               name="middleName"
-              isInvalid={
-                !!clientFormik.errors.middleName &&
-                clientFormik.touched.middleName
-              }
+              isInvalid={!!errors.middleName && touched.middleName}
               errorMessage={
-                clientFormik.errors.middleName &&
-                clientFormik.touched.middleName
-                  ? clientFormik.errors.middleName
-                  : ""
+                errors.middleName && touched.middleName ? errors.middleName : ""
               }
-              value={clientFormik.values.middleName}
+              value={values.middleName}
               onValueChange={(value) => {
-                clientFormik.setFieldValue("middleName", value);
+                setFieldValue("middleName", value);
               }}
               onBlur={() => {
-                clientFormik.setFieldTouched("middleName", true);
+                setFieldTouched("middleName", true);
               }}
             />
             <Input
@@ -136,20 +131,16 @@ const ClientInfo = ({
               type="text"
               placeholder="Last Name"
               name="lastName"
-              isInvalid={
-                !!clientFormik.errors.lastName && clientFormik.touched.lastName
-              }
+              isInvalid={!!errors.lastName && touched.lastName}
               errorMessage={
-                clientFormik.errors.lastName && clientFormik.touched.lastName
-                  ? clientFormik.errors.lastName
-                  : ""
+                errors.lastName && touched.lastName ? errors.lastName : ""
               }
-              value={clientFormik.values.lastName}
+              value={values.lastName}
               onValueChange={(value) => {
-                clientFormik.setFieldValue("lastName", value);
+                setFieldValue("lastName", value);
               }}
               onBlur={() => {
-                clientFormik.setFieldTouched("lastName", true);
+                setFieldTouched("lastName", true);
               }}
             />
           </div>
@@ -157,28 +148,24 @@ const ClientInfo = ({
       </div>
       <div className="h-8"></div>
       <div className="flex items-center">
-        <span className="flex-1">Display Name:</span>
+        <span className="flex-1">Preferred Name:</span>
         <Input
           className="flex-5"
-          isRequired
           type="text"
-          placeholder="Display Name"
-          name="displayName"
-          isInvalid={
-            !!clientFormik.errors.displayName &&
-            clientFormik.touched.displayName
-          }
+          placeholder="Preferred Name"
+          name="preferredName"
+          isInvalid={!!errors.preferredName && touched.preferredName}
           errorMessage={
-            clientFormik.errors.displayName && clientFormik.touched.displayName
-              ? clientFormik.errors.displayName
+            errors.preferredName && touched.preferredName
+              ? errors.preferredName
               : ""
           }
-          value={clientFormik.values.displayName}
+          value={values.preferredName}
           onValueChange={(value) => {
-            clientFormik.setFieldValue("displayName", value);
+            setFieldValue("preferredName", value);
           }}
           onBlur={() => {
-            clientFormik.setFieldTouched("displayName", true);
+            setFieldTouched("preferredName", true);
           }}
         />
       </div>
@@ -191,20 +178,14 @@ const ClientInfo = ({
             name="gender"
             placeholder="Gender"
             className="w-72"
-            isInvalid={
-              !!clientFormik.errors.gender && clientFormik.touched.gender
-            }
-            errorMessage={
-              clientFormik.errors.gender && clientFormik.touched.gender
-                ? clientFormik.errors.gender
-                : ""
-            }
-            selectedKeys={[clientFormik.values.gender || ""]}
+            isInvalid={!!errors.gender && touched.gender}
+            errorMessage={errors.gender && touched.gender ? errors.gender : ""}
+            selectedKeys={[values.gender || ""]}
             onSelectionChange={([value]) => {
-              clientFormik.setFieldValue("gender", value as string);
+              setFieldValue("gender", value as string);
             }}
             onBlur={() => {
-              clientFormik.setFieldTouched("gender", true);
+              setFieldTouched("gender", true);
             }}
           >
             {genderOptions.map((option) => (
@@ -218,14 +199,9 @@ const ClientInfo = ({
               showMonthAndYearPickers
               label=""
               name="birthdate"
-              isInvalid={
-                !!clientFormik.errors.birthdate &&
-                clientFormik.touched.birthdate
-              }
+              isInvalid={!!errors.birthdate && touched.birthdate}
               errorMessage={
-                clientFormik.errors.birthdate && clientFormik.touched.birthdate
-                  ? clientFormik.errors.birthdate
-                  : ""
+                errors.birthdate && touched.birthdate ? errors.birthdate : ""
               }
               value={
                 birthdate
@@ -242,10 +218,10 @@ const ClientInfo = ({
                       value.day
                     )}`
                   : null;
-                clientFormik.setFieldValue("birthdate", val);
+                setFieldValue("birthdate", val as string);
               }}
               onBlur={() => {
-                clientFormik.setFieldTouched("birthdate", true);
+                setFieldTouched("birthdate", true);
               }}
             />
           </div>
@@ -260,20 +236,14 @@ const ClientInfo = ({
           type="text"
           placeholder="Address"
           name="address"
-          isInvalid={
-            !!clientFormik.errors.address && clientFormik.touched.address
-          }
-          errorMessage={
-            clientFormik.errors.address && clientFormik.touched.address
-              ? clientFormik.errors.address
-              : ""
-          }
-          value={clientFormik.values.address}
+          isInvalid={!!errors.address && touched.address}
+          errorMessage={errors.address && touched.address ? errors.address : ""}
+          value={values.address}
           onValueChange={(value) => {
-            clientFormik.setFieldValue("address", value);
+            setFieldValue("address", value);
           }}
           onBlur={() => {
-            clientFormik.setFieldTouched("address", true);
+            setFieldTouched("address", true);
           }}
         />
       </div>
@@ -287,22 +257,18 @@ const ClientInfo = ({
             type="text"
             placeholder="Mobile Number"
             name="mobileNumber"
-            isInvalid={
-              !!clientFormik.errors.mobileNumber &&
-              clientFormik.touched.mobileNumber
-            }
+            isInvalid={!!errors.mobileNumber && touched.mobileNumber}
             errorMessage={
-              clientFormik.errors.mobileNumber &&
-              clientFormik.touched.mobileNumber
-                ? clientFormik.errors.mobileNumber
+              errors.mobileNumber && touched.mobileNumber
+                ? errors.mobileNumber
                 : ""
             }
-            value={clientFormik.values.mobileNumber}
+            value={values.mobileNumber}
             onValueChange={(value) => {
-              clientFormik.setFieldValue("mobileNumber", value);
+              setFieldValue("mobileNumber", value);
             }}
             onBlur={() => {
-              clientFormik.setFieldTouched("mobileNumber", true);
+              setFieldTouched("mobileNumber", true);
             }}
           />
           <Input
@@ -311,22 +277,18 @@ const ClientInfo = ({
             type="text"
             placeholder="Phone Number"
             name="phoneNumber"
-            isInvalid={
-              !!clientFormik.errors.phoneNumber &&
-              clientFormik.touched.phoneNumber
-            }
+            isInvalid={!!errors.phoneNumber && touched.phoneNumber}
             errorMessage={
-              clientFormik.errors.phoneNumber &&
-              clientFormik.touched.phoneNumber
-                ? clientFormik.errors.phoneNumber
+              errors.phoneNumber && touched.phoneNumber
+                ? errors.phoneNumber
                 : ""
             }
-            value={clientFormik.values.phoneNumber}
+            value={values.phoneNumber}
             onValueChange={(value) => {
-              clientFormik.setFieldValue("phoneNumber", value);
+              setFieldValue("phoneNumber", value);
             }}
             onBlur={() => {
-              clientFormik.setFieldTouched("phoneNumber", true);
+              setFieldTouched("phoneNumber", true);
             }}
           />
         </div>
@@ -335,23 +297,20 @@ const ClientInfo = ({
       <div className="flex items-center">
         <span className="flex-1">Email:</span>
         <Input
+          isDisabled={mode === "update"}
           className="flex-5"
           label=""
           type="text"
           placeholder="Email"
           name="email"
-          isInvalid={!!clientFormik.errors.email && clientFormik.touched.email}
-          errorMessage={
-            clientFormik.errors.email && clientFormik.touched.email
-              ? clientFormik.errors.email
-              : ""
-          }
-          value={clientFormik.values.email}
+          isInvalid={!!errors.email && touched.email}
+          errorMessage={errors.email && touched.email ? errors.email : ""}
+          value={values.email}
           onValueChange={(value) => {
-            clientFormik.setFieldValue("email", value);
+            setFieldValue("email", value);
           }}
           onBlur={() => {
-            clientFormik.setFieldTouched("email", true);
+            setFieldTouched("email", true);
           }}
         />
       </div>
@@ -364,20 +323,16 @@ const ClientInfo = ({
           type="text"
           placeholder="Religion"
           name="religion"
-          isInvalid={
-            !!clientFormik.errors.religion && clientFormik.touched.religion
-          }
+          isInvalid={!!errors.religion && touched.religion}
           errorMessage={
-            clientFormik.errors.religion && clientFormik.touched.religion
-              ? clientFormik.errors.religion
-              : ""
+            errors.religion && touched.religion ? errors.religion : ""
           }
-          value={clientFormik.values.religion}
+          value={values.religion}
           onValueChange={(value) => {
-            clientFormik.setFieldValue("religion", value);
+            setFieldValue("religion", value);
           }}
           onBlur={() => {
-            clientFormik.setFieldTouched("religion", true);
+            setFieldTouched("religion", true);
           }}
         />
       </div>
@@ -390,21 +345,16 @@ const ClientInfo = ({
           type="text"
           placeholder="Nationality"
           name="nationality"
-          isInvalid={
-            !!clientFormik.errors.nationality &&
-            clientFormik.touched.nationality
-          }
+          isInvalid={!!errors.nationality && touched.nationality}
           errorMessage={
-            clientFormik.errors.nationality && clientFormik.touched.nationality
-              ? clientFormik.errors.nationality
-              : ""
+            errors.nationality && touched.nationality ? errors.nationality : ""
           }
-          value={clientFormik.values.nationality}
+          value={values.nationality}
           onValueChange={(value) => {
-            clientFormik.setFieldValue("nationality", value);
+            setFieldValue("nationality", value);
           }}
           onBlur={() => {
-            clientFormik.setFieldTouched("nationality", true);
+            setFieldTouched("nationality", true);
           }}
         />
       </div>
@@ -417,23 +367,19 @@ const ClientInfo = ({
             name="maritalStatus"
             placeholder="Maritial Status"
             className="w-72"
-            isInvalid={
-              !!clientFormik.errors.maritalStatus &&
-              clientFormik.touched.maritalStatus
-            }
+            isInvalid={!!errors.maritalStatus && touched.maritalStatus}
             errorMessage={
-              clientFormik.errors.maritalStatus &&
-              clientFormik.touched.maritalStatus
-                ? clientFormik.errors.maritalStatus
+              errors.maritalStatus && touched.maritalStatus
+                ? errors.maritalStatus
                 : ""
             }
-            value={clientFormik.values.maritalStatus}
-            selectedKeys={[clientFormik.values.maritalStatus || ""]}
+            value={values.maritalStatus}
+            selectedKeys={[values.maritalStatus || ""]}
             onSelectionChange={([value]) => {
-              clientFormik.setFieldValue("maritalStatus", value as string);
+              setFieldValue("maritalStatus", value as string);
             }}
             onBlur={() => {
-              clientFormik.setFieldTouched("maritalStatus", true);
+              setFieldTouched("maritalStatus", true);
             }}
           >
             {maritalStatusOptions.map((option) => (
@@ -453,13 +399,11 @@ const ClientInfo = ({
           <Checkbox
             defaultSelected
             size="sm"
-            isSelected={clientFormik.values.status === "prospect"}
+            isSelected={values.status === "prospect"}
             onValueChange={() => {
-              clientFormik.setFieldValue(
+              setFieldValue(
                 "status",
-                clientFormik.values.status === "prospect"
-                  ? "active"
-                  : "prospect"
+                values.status === "prospect" ? "active" : "prospect"
               );
             }}
           >
