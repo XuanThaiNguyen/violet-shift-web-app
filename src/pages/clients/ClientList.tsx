@@ -1,5 +1,5 @@
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
-import { useClients, type ClientFilter } from "@/states/apis/client";
+import { useGetClients, type ClientFilter } from "@/states/apis/client";
 import {
   Button,
   Input,
@@ -71,7 +71,7 @@ const ClientList = () => {
     new Set([])
   );
 
-  const { data: clientData, isLoading } = useClients(filter);
+  const { data: clientData, isLoading } = useGetClients(filter);
   const clients = clientData?.data || EMPTY_ARRAY;
   const pagination = clientData?.pagination;
 
