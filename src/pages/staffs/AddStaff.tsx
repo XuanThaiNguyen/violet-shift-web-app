@@ -76,7 +76,7 @@ const AddStaff = () => {
     mutationFn: createNewStaff,
     onSuccess: () => {
       addToast({
-        title: "Create staff successful",
+        title: "Create staff successfully",
         color: "success",
         timeout: 2000,
         isClosing: true,
