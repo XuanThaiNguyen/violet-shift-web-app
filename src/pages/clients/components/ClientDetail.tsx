@@ -1,4 +1,5 @@
 import { EMPTY_STRING } from "@/constants/empty";
+import { usePostArchiveClient } from "@/states/apis/client";
 import type { IClient } from "@/types/client";
 import { capitalizeFirstLetter } from "@/utils/strings";
 import {
@@ -6,14 +7,20 @@ import {
   Avatar,
   Button,
   Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
   useDisclosure,
 } from "@heroui/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isValid } from "date-fns";
 import { Camera, Mail, Phone, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router";
 import ArchiveClientModal from "./ArchiveClientModal";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { usePostArchiveClient } from "@/states/apis/client";
+import ClientFunding from "./ClientFunding";
 
 interface ClientDetailProps {
   clientId: string;
@@ -36,7 +43,7 @@ const ClientDetail = ({
     mutationFn: usePostArchiveClient,
     onSuccess: () => {
       addToast({
-        title: "Update client successful",
+        title: "Update client successfully",
         color: "success",
         timeout: 2000,
         isClosing: true,
@@ -142,6 +149,43 @@ const ClientDetail = ({
           </div>
         </div>
       </div>
+      <div className="h-8"></div>
+      <ClientFunding clientId={clientId} />
+      <div className="h-8"></div>
+      <div className="flex items-center justify-between">
+        <span>Price Books</span>
+        <span className="text-primary">MANAGE PRICE BOOK</span>
+      </div>
+      <div className="h-4"></div>
+      <Table aria-label="Example static collection table">
+        <TableHeader>
+          <TableColumn>NAME</TableColumn>
+          <TableColumn>ROLE</TableColumn>
+          <TableColumn>STATUS</TableColumn>
+        </TableHeader>
+        <TableBody>
+          <TableRow key="1">
+            <TableCell>Tony Reichert</TableCell>
+            <TableCell>CEO</TableCell>
+            <TableCell>Active</TableCell>
+          </TableRow>
+          <TableRow key="2">
+            <TableCell>Zoey Lang</TableCell>
+            <TableCell>Technical Lead</TableCell>
+            <TableCell>Paused</TableCell>
+          </TableRow>
+          <TableRow key="3">
+            <TableCell>Jane Fisher</TableCell>
+            <TableCell>Senior Developer</TableCell>
+            <TableCell>Active</TableCell>
+          </TableRow>
+          <TableRow key="4">
+            <TableCell>William Howard</TableCell>
+            <TableCell>Community Manager</TableCell>
+            <TableCell>Vacation</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
       <div className="h-8"></div>
       <span>Archive Client</span>
       <div className="h-4"></div>

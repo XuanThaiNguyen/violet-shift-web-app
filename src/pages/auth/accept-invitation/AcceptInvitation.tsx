@@ -26,7 +26,7 @@ const AcceptInvitation: FC = () => {
 
         if (response.token) {
           addToast({
-            title: "Accept invitation successful",
+            title: "Accept invitation successfully",
             description: "Please set a new password",
             color: "success",
             timeout: 2000,

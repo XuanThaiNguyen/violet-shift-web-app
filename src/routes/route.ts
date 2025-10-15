@@ -31,6 +31,7 @@ const ClientProfile = lazy(() => import("@/pages/clients/ClientProfile"));
 const ClientArchivedList = lazy(
   () => import("@/pages/clients/ClientArchivedList")
 );
+const AccountPrices = lazy(() => import("@/pages/account/Prices"));
 
 export const router = createBrowserRouter([
   {
@@ -75,6 +76,11 @@ export const router = createBrowserRouter([
           { path: "archived", Component: ClientArchivedList },
           { path: "new", Component: AddClient },
         ],
+      },
+      {
+        path: "account",
+        Component: PrivateModule([ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR]),
+        children: [{ path: "prices", Component: AccountPrices }],
       },
       { path: "clients/:id", Component: ClientProfile },
       { path: "clients/:id/update", Component: UpdateClient },

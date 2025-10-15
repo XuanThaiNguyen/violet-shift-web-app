@@ -40,3 +40,6 @@ export const getFullName = ({
 }) => {
   return [firstName, middleName, lastName].filter(Boolean).join(" ");
 };
+
+export const generateId = () =>
+  `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
