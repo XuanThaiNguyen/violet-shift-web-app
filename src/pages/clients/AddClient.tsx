@@ -48,7 +48,7 @@ const AddClient = () => {
     mutationFn: useCreateNewClient,
     onSuccess: (newClient: IClient) => {
       addToast({
-        title: "Create client successful",
+        title: "Create client successfully",
         color: "success",
         timeout: 2000,
         isClosing: true,

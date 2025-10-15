@@ -69,7 +69,7 @@ const UpdateClient = () => {
     mutationFn: useUpdateClient,
     onSuccess: (updatedClient: IClient) => {
       addToast({
-        title: "Update client successful",
+        title: "Update client successfully",
         color: "success",
         timeout: 2000,
         isClosing: true,

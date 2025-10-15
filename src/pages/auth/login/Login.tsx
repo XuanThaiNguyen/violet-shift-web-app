@@ -44,7 +44,7 @@ const Login = () => {
               try {
                 const response = await api.post("/api/v1/auth/login", values);
                 addToast({
-                  title: "Login successful",
+                  title: "Login successfully",
                   description: "Redirecting to home page...",
                   color: "success",
                   timeout: 2000,
@@ -54,10 +54,11 @@ const Login = () => {
                 navigate("/");
                 queryClient.invalidateQueries({ queryKey: ["me"] });
               } catch (error) {
-                console.log("🚀 ~ error:", error)
+                console.log("🚀 ~ error:", error);
                 if (error instanceof AxiosError) {
                   const errorCode = error.response?.data?.code;
-                  const msg = ErrorMessages[errorCode] ?? 'Something went wrong';
+                  const msg =
+                    ErrorMessages[errorCode] ?? "Something went wrong";
                   setError(msg);
                 } else {
                   setError("Something went wrong");
@@ -88,7 +89,7 @@ const Login = () => {
                           title: "min-h-0",
                           mainWrapper: "min-h-0 ms-0",
                           closeButton: "min-h-0 w-auto h-auto translate-y-0",
-                          base: "items-center"
+                          base: "items-center",
                         }}
                         isClosable
                       />

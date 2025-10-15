@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ChevronsRight,
   PersonStanding,
+  Settings,
   UsersRound,
 } from "lucide-react";
 import { useWindowSize } from "usehooks-ts";
@@ -102,6 +103,22 @@ const sidebarItems: SidebarItem[] = [
         key: "new-clients",
         label: "New",
         to: "/clients/new",
+        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
+      },
+    ],
+  },
+  {
+    icon: Settings,
+    key: "account",
+    label: "Account",
+    to: "/account",
+    roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
+    children: [
+      {
+        icon: ChevronsRight,
+        key: "clients-list",
+        label: "Prices",
+        to: "/account/prices",
         roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
       },
     ],
