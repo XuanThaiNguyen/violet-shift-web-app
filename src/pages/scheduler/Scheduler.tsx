@@ -1,18 +1,30 @@
 import { Button, useDisclosure } from "@heroui/react";
 import { Plus } from "lucide-react";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import CreateShiftDrawer from "./components/CreateShiftDrawer";
+import SchedulerManagement from "./components/SchedulerManagement";
+import SchedulerMode from "./components/SchedulerMode";
+import type { DayDateInfo, ViewMode } from "./type";
 
 const Scheduler: FC = () => {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+
+  const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const [weekOffset, setWeekOffset] = useState<number>(0);
+  const [dates, setDates] = useState<DayDateInfo[]>([]);
 
   return (
     <>
       <div className="w-full">
-        <div className="py-2 px-4 flex items-center justify-between">
-          <div>
-            <span>October, 2025</span>
-          </div>
+        <div className="bg-content1 py-4 px-4 flex items-center justify-between">
+          <SchedulerMode
+            viewMode={viewMode}
+            weekOffset={weekOffset}
+            setDates={setDates}
+            dates={dates}
+            setViewMode={setViewMode}
+            setWeekOffset={setWeekOffset}
+          />
           <div>
             <Button
               onPress={onOpen}
@@ -24,16 +36,18 @@ const Scheduler: FC = () => {
             </Button>
           </div>
         </div>
-        <div className="w-full h-full flex items-center justify-center bg-content1">
-          <img
-            src="/images/loading.gif"
-            alt="loading"
-            className="w-36 h-36 object-cover"
-          />
-        </div>
+
+        <div className="h-4"></div>
+        <SchedulerManagement viewMode={viewMode} dates={dates} />
       </div>
 
-      <CreateShiftDrawer isOpen={isOpen} onOpenChange={onOpenChange} />
+      <CreateShiftDrawer
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        mode="add"
+        onClose={onClose}
+        isFromCreate
+      />
     </>
   );
 };

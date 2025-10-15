@@ -1,6 +1,5 @@
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, format, fromUnixTime } from "date-fns";
 
-// To filter time for start or end of the day
 export const convertDateToMs = (
   date: Date | string | number,
   type: "startOf" | "endOf" = "startOf"
@@ -10,4 +9,10 @@ export const convertDateToMs = (
   const target = type === "startOf" ? startOfDay(_date) : endOfDay(_date);
 
   return target.getTime();
+};
+
+export const formatTimeRange = (startTs: number, endTs: number) => {
+  const startTime = format(fromUnixTime(startTs), "h:mm a");
+  const endTime = format(fromUnixTime(endTs), "h:mm a");
+  return `${startTime} - ${endTime}`;
 };

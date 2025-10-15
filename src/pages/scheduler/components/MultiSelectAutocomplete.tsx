@@ -6,14 +6,18 @@ interface MultiSelectAutocompleteProps {
     label: string;
     key: string;
   }[];
+  selectedOptionsKeys?: string[];
   onChangeOptions: (keys: string[]) => void;
 }
 
 const MultiSelectAutocomplete = ({
   options,
   onChangeOptions,
+  selectedOptionsKeys,
 }: MultiSelectAutocompleteProps) => {
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(
+    selectedOptionsKeys ? selectedOptionsKeys : []
+  );
 
   const handleSelect = (key: string) => {
     setSelectedKeys((prev) =>

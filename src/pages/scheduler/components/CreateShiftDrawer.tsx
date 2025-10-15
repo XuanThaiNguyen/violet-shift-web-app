@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { EMPTY_ARRAY } from "@/constants/empty";
+import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
 import { useGetClients, type ClientFilter } from "@/states/apis/client";
 import { useStaffs } from "@/states/apis/staff";
 import type { IClient } from "@/types/client";
@@ -23,7 +23,9 @@ import {
 } from "@heroui/react";
 import { useFormik } from "formik";
 import {
+  ArrowLeft,
   Calendar,
+  Edit,
   Milestone,
   Save,
   UserCheck,
@@ -34,7 +36,7 @@ import {
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import MultiSelectAutocomplete from "./MultiSelectAutocomplete";
-import { set } from "date-fns";
+import { format, fromUnixTime, set } from "date-fns";
 import {
   AllowanceOptions,
   ErrorMessages,
@@ -42,15 +44,13 @@ import {
   ShiftTypeKeys,
   ShiftTypeOptions,
 } from "../constant";
-import type {
-  CreateShiftDrawerProps,
-  DateValue,
-  IShiftValues,
-  TimeValue,
-} from "@/types/shift";
-import { useMutation } from "@tanstack/react-query";
-import { createNewShift } from "@/states/apis/shift";
+import type { DateValue, IShiftValues, TimeValue } from "@/types/shift";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNewShift, useGetShiftDetail } from "@/states/apis/shift";
 import { AxiosError } from "axios";
+import { getAllowanceTypeLabel, getShiftTypeLabel } from "../util";
+import { formatTimeRange } from "@/utils/datetime";
+import { parseDate, parseTime } from "@internationalized/date";
 
 const PRICE_BOOK_MOCKUP: any[] = [];
 const FUNDS_MOCKUP: any[] = [];
@@ -93,20 +93,38 @@ const shiftSchema = Yup.object().shape({
   mileageCap: Yup.string().optional(),
 });
 
+interface CreateShiftDrawerProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  selectedShiftId?: string;
+  mode: "add" | "view";
+  onClose: () => void;
+  isFromCreate?: boolean;
+}
+
 const CreateShiftDrawer = ({
   isOpen,
   onOpenChange,
+  selectedShiftId,
+  mode,
+  onClose,
+  isFromCreate,
 }: CreateShiftDrawerProps) => {
+  const [isEdit, setIsEdit] = useState(mode === "add");
+
+  const queryClient = useQueryClient();
+
   const { mutate: mutateAddShift } = useMutation({
     mutationFn: createNewShift,
-    onSuccess: (data) => {
-      console.log("data", data);
+    onSuccess: () => {
       addToast({
         title: "Add shift successfully",
         color: "success",
         timeout: 2000,
         isClosing: true,
       });
+      queryClient.invalidateQueries({ queryKey: ["staffSchedules"] });
+      onClose();
     },
     onError: (error) => {
       if (error instanceof AxiosError) {
@@ -143,13 +161,26 @@ const CreateShiftDrawer = ({
   const clients = dataClients?.data || EMPTY_ARRAY;
   const carers = dataCarers?.data || EMPTY_ARRAY;
 
-  const { values, setValues, handleSubmit, errors } = useFormik<IShiftValues>({
+  const { values, setValues, handleSubmit } = useFormik<IShiftValues>({
     initialValues: initialValues,
     validationSchema: shiftSchema,
     onSubmit: (values) => {
       mutateAddShift(values);
     },
   });
+
+  const {
+    data: dataShiftDetail,
+    isLoading,
+    isSuccess,
+  } = useGetShiftDetail(selectedShiftId);
+
+  useEffect(() => {
+    if (dataShiftDetail && !isLoading && isSuccess) {
+      setValues((prev) => ({ ...prev, ...dataShiftDetail }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataShiftDetail, isLoading, isSuccess]);
 
   const [startTime, setStartTime] = useState<TimeValue | null>(null);
   const [endTime, setEndTime] = useState<TimeValue | null>(null);
@@ -219,42 +250,95 @@ const CreateShiftDrawer = ({
       seconds: 0,
       milliseconds: 0,
     });
-    return combined.getTime(); // returns timestamp in ms
+    return combined.getTime();
   };
 
-  console.log("errors", errors);
-  console.log("values", values);
+  const unixTimestamp = values.timeFrom!; // e.g., 1739385600000 (ms)
+  const jsDate = fromUnixTime(unixTimestamp / 1000);
+  const isoDate = jsDate.toISOString().split("T")[0]; // "2025-07-21"
+  const dateValue = parseDate(isoDate); // DateValue
+
+  const timeFrom = values.timeFrom
+    ? parseTime(
+        fromUnixTime(values.timeFrom / 1000)
+          .toISOString()
+          .split("T")[1]
+          .slice(0, 5)
+      )
+    : null;
+
+  const timeTo = values.timeTo
+    ? parseTime(
+        fromUnixTime(values.timeTo / 1000)
+          .toISOString()
+          .split("T")[1]
+          .slice(0, 5)
+      )
+    : null;
 
   return (
     <Drawer
       isOpen={isOpen}
       closeButton={<></>}
       size="5xl"
-      onOpenChange={onOpenChange}
+      onOpenChange={(open) => {
+        if (!open) {
+          setIsEdit(false);
+        }
+        onOpenChange?.(open);
+      }}
     >
       <DrawerContent>
         {(onClose) => (
           <>
             <DrawerHeader className="flex items-center justify-between bg-conten1">
-              <div>
+              <div className="flex items-center gap-2">
+                {isEdit && !isFromCreate ? (
+                  <Button
+                    size="md"
+                    className="bg-content1 border-1 border-divider"
+                    startContent={<ArrowLeft size={16} />}
+                    onPress={() => setIsEdit(false)}
+                  >
+                    Go Back
+                  </Button>
+                ) : (
+                  <></>
+                )}
                 <Button
                   size="md"
                   className="bg-content1 border-1 border-divider"
                   startContent={<X size={16} />}
-                  onPress={onClose}
+                  onPress={() => {
+                    onClose();
+                    if (!isFromCreate) {
+                      setIsEdit(false);
+                    }
+                  }}
                 >
                   Close
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  size="md"
-                  color={"primary"}
-                  onPress={() => handleSubmit()}
-                  startContent={<Save size={16} />}
-                >
-                  Save
-                </Button>
+                {isEdit ? (
+                  <Button
+                    size="md"
+                    color={"primary"}
+                    onPress={() => handleSubmit()}
+                    startContent={<Save size={16} />}
+                  >
+                    {isFromCreate ? "Save" : "Update"}
+                  </Button>
+                ) : (
+                  <Button
+                    size="md"
+                    color={"default"}
+                    onPress={() => setIsEdit(true)}
+                    startContent={<Edit size={16} />}
+                  >
+                    Edit
+                  </Button>
+                )}
               </div>
             </DrawerHeader>
             <DrawerBody className="bg-background px-3">
@@ -268,84 +352,95 @@ const CreateShiftDrawer = ({
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Choose client</span>
-                  <Autocomplete
-                    size="sm"
-                    className="max-w-xs"
-                    onSelectionChange={(value) => {
-                      setValues((prev) => {
-                        const updatedClientSchedules = [
-                          ...prev.clientSchedules,
-                        ];
+                  {isEdit ? (
+                    <Autocomplete
+                      size="sm"
+                      className="max-w-xs"
+                      onSelectionChange={(value) => {
+                        setValues((prev) => {
+                          const updatedClientSchedules = [
+                            ...prev.clientSchedules,
+                          ];
 
-                        if (updatedClientSchedules.length > 0) {
-                          // Update only the first item
-                          updatedClientSchedules[0] = {
-                            ...updatedClientSchedules[0],
-                            client: value as string,
-                            // Keep existing timeFrom and timeTo intact
+                          if (updatedClientSchedules.length > 0) {
+                            updatedClientSchedules[0] = {
+                              ...updatedClientSchedules[0],
+                              client: value as string,
+                            };
+                          } else {
+                            updatedClientSchedules.push({
+                              client: value as string,
+                              timeFrom: null,
+                              timeTo: null,
+                            });
+                          }
+
+                          return {
+                            ...prev,
+                            clientSchedules: updatedClientSchedules,
                           };
-                        } else {
-                          // If no schedules yet, create one
-                          updatedClientSchedules.push({
-                            client: value as string,
-                            timeFrom: null,
-                            timeTo: null,
-                          });
-                        }
-
-                        return {
-                          ...prev,
-                          clientSchedules: updatedClientSchedules,
-                        };
-                      });
-                    }}
-                    placeholder="Type to search client by name"
-                  >
-                    {clients.map((client: IClient) => {
-                      const _name = getDisplayName({
-                        firstName: client.firstName,
-                        lastName: client.lastName,
-                        preferredName: client.preferredName,
-                        salutation: client.salutation,
-                        middleName: client.middleName,
-                      });
-                      return (
-                        <AutocompleteItem key={client.id}>
-                          {_name}
-                        </AutocompleteItem>
-                      );
-                    })}
-                  </Autocomplete>
+                        });
+                      }}
+                      placeholder="Type to search client by name"
+                    >
+                      {clients.map((client: IClient) => {
+                        const _name = getDisplayName({
+                          firstName: client.firstName,
+                          lastName: client.lastName,
+                          preferredName: client.preferredName,
+                          salutation: client.salutation,
+                          middleName: client.middleName,
+                        });
+                        return (
+                          <AutocompleteItem key={client.id}>
+                            {_name}
+                          </AutocompleteItem>
+                        );
+                      })}
+                    </Autocomplete>
+                  ) : (
+                    <span className="font-medium text-md">{"Client here"}</span>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Price book</span>
-                  <Autocomplete
-                    size="sm"
-                    className="max-w-xs"
-                    placeholder="Select"
-                  >
-                    {PRICE_BOOK_MOCKUP.map((pricebookItem) => (
-                      <AutocompleteItem key={pricebookItem.key}>
-                        {pricebookItem.label}
-                      </AutocompleteItem>
-                    ))}
-                  </Autocomplete>
+                  {isEdit ? (
+                    <Autocomplete
+                      size="sm"
+                      className="max-w-xs"
+                      placeholder="Select"
+                    >
+                      {PRICE_BOOK_MOCKUP.map((pricebookItem) => (
+                        <AutocompleteItem key={pricebookItem.key}>
+                          {pricebookItem.label}
+                        </AutocompleteItem>
+                      ))}
+                    </Autocomplete>
+                  ) : (
+                    <span className="font-medium text-md">
+                      {"Price book here"}
+                    </span>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Funds</span>
-                  <Autocomplete
-                    size="sm"
-                    className="max-w-xs"
-                    placeholder="Select"
-                  >
-                    {FUNDS_MOCKUP.map((fundItem) => (
-                      <AutocompleteItem key={fundItem.key}>
-                        {fundItem.label}
-                      </AutocompleteItem>
-                    ))}
-                  </Autocomplete>
+                  {isEdit ? (
+                    <Autocomplete
+                      size="sm"
+                      className="max-w-xs"
+                      placeholder="Select"
+                    >
+                      {FUNDS_MOCKUP.map((fundItem) => (
+                        <AutocompleteItem key={fundItem.key}>
+                          {fundItem.label}
+                        </AutocompleteItem>
+                      ))}
+                    </Autocomplete>
+                  ) : (
+                    <span className="font-medium text-md">{"Fund here"}</span>
+                  )}
                 </div>
               </div>
               <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
@@ -358,50 +453,86 @@ const CreateShiftDrawer = ({
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Shift Type</span>
-                  <Autocomplete
-                    size="sm"
-                    className="max-w-xs"
-                    isClearable={false}
-                    defaultSelectedKey={`${ShiftTypeOptions[0].key}`}
-                    onSelectionChange={(value) => {
-                      setValues((prev) => ({
-                        ...prev,
-                        shiftType: value as string,
-                      }));
-                    }}
-                  >
-                    {ShiftTypeOptions.map((shiftItem) => (
-                      <AutocompleteItem key={shiftItem.key}>
-                        {shiftItem.label}
-                      </AutocompleteItem>
-                    ))}
-                  </Autocomplete>
+                  {isEdit ? (
+                    <Autocomplete
+                      size="sm"
+                      className="max-w-xs"
+                      isClearable={false}
+                      defaultSelectedKey={
+                        values.shiftType
+                          ? values.shiftType
+                          : `${ShiftTypeOptions[0].key}`
+                      }
+                      onSelectionChange={(value) => {
+                        setValues((prev) => ({
+                          ...prev,
+                          shiftType: value as string,
+                        }));
+                      }}
+                    >
+                      {ShiftTypeOptions.map((shiftItem) => (
+                        <AutocompleteItem key={shiftItem.key}>
+                          {shiftItem.label}
+                        </AutocompleteItem>
+                      ))}
+                    </Autocomplete>
+                  ) : (
+                    <span className="font-medium text-md">
+                      {getShiftTypeLabel(values.shiftType)}
+                    </span>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex justify-between">
                   <span className="text-sm">Additional Shift Types</span>
-                  <MultiSelectAutocomplete
-                    options={ShiftTypeOptions}
-                    onChangeOptions={(values) => {
-                      setValues((prev) => ({
-                        ...prev,
-                        additionalShiftTypes: values,
-                      }));
-                    }}
-                  />
+                  {isEdit ? (
+                    <MultiSelectAutocomplete
+                      selectedOptionsKeys={values.additionalShiftTypes}
+                      options={ShiftTypeOptions}
+                      onChangeOptions={(values) => {
+                        setValues((prev) => ({
+                          ...prev,
+                          additionalShiftTypes: values,
+                        }));
+                      }}
+                    />
+                  ) : (
+                    <div className="max-w-md">
+                      <span className="font-medium text-md flex text-right">
+                        {values.additionalShiftTypes?.length
+                          ? values.additionalShiftTypes
+                              .map(getShiftTypeLabel)
+                              .join(", ")
+                          : EMPTY_STRING}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex justify-between">
                   <span className="text-sm">Allowance</span>
-                  <MultiSelectAutocomplete
-                    options={AllowanceOptions}
-                    onChangeOptions={(values) => {
-                      setValues((prev) => ({
-                        ...prev,
-                        allowances: values,
-                      }));
-                    }}
-                  />
+                  {isEdit ? (
+                    <MultiSelectAutocomplete
+                      selectedOptionsKeys={values.allowances}
+                      options={AllowanceOptions}
+                      onChangeOptions={(values) => {
+                        setValues((prev) => ({
+                          ...prev,
+                          allowances: values,
+                        }));
+                      }}
+                    />
+                  ) : (
+                    <div className="max-w-md">
+                      <span className="font-medium text-md flex text-right">
+                        {values.allowances?.length
+                          ? values.allowances
+                              .map(getAllowanceTypeLabel)
+                              .join(", ")
+                          : EMPTY_STRING}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
@@ -414,82 +545,119 @@ const CreateShiftDrawer = ({
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Date</span>
-                  <DatePicker
-                    className="w-80"
-                    showMonthAndYearPickers
-                    label=""
-                    name="birthdate"
-                    onChange={(date: DateValue | null) => {
-                      if (date && date.year && date.month && date.day) {
-                        setDate(date);
-                      }
-                    }}
-                  />
+                  {isEdit ? (
+                    <DatePicker
+                      className="w-80"
+                      showMonthAndYearPickers
+                      label=""
+                      name="birthdate"
+                      value={values.timeFrom ? dateValue : null}
+                      onChange={(date: DateValue | null) => {
+                        if (date && date.year && date.month && date.day) {
+                          setDate(date);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <span className="font-medium text-md">
+                      {format(
+                        fromUnixTime(values.timeFrom! / 1000),
+                        "EEE, dd MMMM yyyy"
+                      )}
+                    </span>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Time</span>
-                  <div className="flex items-center gap-2">
-                    <TimeInput
-                      className="w-40"
-                      label=""
-                      name="birthdate"
-                      onChange={(time) => {
-                        console.log("timeeee", time);
-                        setStartTime(time);
-                      }}
-                    />
-                    -
-                    <TimeInput
-                      className="w-40"
-                      label=""
-                      name="birthdate"
-                      onChange={(time) => {
-                        console.log("timeeee", time);
-                        setEndTime(time);
-                      }}
-                    />
-                  </div>
+                  {isEdit ? (
+                    <div className="flex items-center gap-2">
+                      <TimeInput
+                        className="w-40"
+                        label=""
+                        name="birthdate"
+                        value={values.timeFrom ? timeFrom : null}
+                        onChange={(time) => {
+                          setStartTime(time);
+                        }}
+                      />
+                      -
+                      <TimeInput
+                        className="w-40"
+                        label=""
+                        name="birthdate"
+                        value={values.timeTo ? timeTo : null}
+                        onChange={(time) => {
+                          setEndTime(time);
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <span className="font-medium text-md">
+                      {formatTimeRange(
+                        values.timeFrom! / 1000,
+                        values.timeTo! / 1000
+                      )}
+                    </span>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Address</span>
-                  <Input
-                    label=""
-                    type="text"
-                    placeholder="Enter Address"
-                    name="address"
-                    className="w-80"
-                    value={values.address}
-                    onValueChange={(value) => {
-                      setValues((prev) => ({ ...prev, address: value }));
-                    }}
-                  />
+                  {isEdit ? (
+                    <Input
+                      label=""
+                      type="text"
+                      placeholder="Enter Address"
+                      name="address"
+                      className="w-80"
+                      value={values.address}
+                      onValueChange={(value) => {
+                        setValues((prev) => ({ ...prev, address: value }));
+                      }}
+                    />
+                  ) : (
+                    <div className="max-w-md">
+                      <span className="font-medium text-md text-right">
+                        {values.address}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Unit/Apartment Number</span>
-                  <Input
-                    label=""
-                    type="text"
-                    placeholder="Enter Unit/Apartment Number"
-                    name="unitNumber"
-                    className="w-80"
-                    value={values.unitNumber}
-                    onValueChange={(value) => {
-                      setValues((prev) => ({ ...prev, unitNumber: value }));
-                    }}
-                  />
+                  {isEdit ? (
+                    <Input
+                      label=""
+                      type="text"
+                      placeholder="Enter Unit/Apartment Number"
+                      name="unitNumber"
+                      className="w-80"
+                      value={values.unitNumber}
+                      onValueChange={(value) => {
+                        setValues((prev) => ({ ...prev, unitNumber: value }));
+                      }}
+                    />
+                  ) : (
+                    <span className="font-medium text-md">
+                      {values.unitNumber}
+                    </span>
+                  )}
                 </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Shift Bonus</span>
-                  <Switch
-                    isSelected={isBonus}
-                    onChange={() => setIsBonus(!isBonus)}
-                  />
-                </div>
-                {isBonus ? (
+                {isEdit && (
+                  <>
+                    <div className="h-4"></div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Shift Bonus</span>
+                      <Switch
+                        isSelected={isBonus}
+                        onChange={() => setIsBonus(!isBonus)}
+                      />
+                    </div>
+                  </>
+                )}
+                {isEdit && isBonus && (
                   <>
                     <div className="h-4"></div>
                     <div className="flex items-center justify-between">
@@ -510,6 +678,17 @@ const CreateShiftDrawer = ({
                       />
                     </div>
                   </>
+                )}
+                {!isEdit ? (
+                  <>
+                    <div className="h-4"></div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Bonus Amount</span>
+                      <span className="font-medium text-md">
+                        ${values.bonus || 0}
+                      </span>
+                    </div>
+                  </>
                 ) : (
                   <></>
                 )}
@@ -524,90 +703,104 @@ const CreateShiftDrawer = ({
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Choose carer</span>
-                  <Autocomplete
-                    size="sm"
-                    className="max-w-xs"
-                    onSelectionChange={(value) => {
-                      setValues((prev) => {
-                        const updatedStaffSchedules = [...prev.staffSchedules];
+                  {isEdit ? (
+                    <Autocomplete
+                      size="sm"
+                      className="max-w-xs"
+                      onSelectionChange={(value) => {
+                        setValues((prev) => {
+                          const updatedStaffSchedules = [
+                            ...prev.staffSchedules,
+                          ];
 
-                        if (updatedStaffSchedules.length > 0) {
-                          updatedStaffSchedules[0] = {
-                            ...updatedStaffSchedules[0],
-                            staff: value as string,
+                          if (updatedStaffSchedules.length > 0) {
+                            updatedStaffSchedules[0] = {
+                              ...updatedStaffSchedules[0],
+                              staff: value as string,
+                            };
+                          } else {
+                            updatedStaffSchedules.push({
+                              staff: value as string,
+                              timeFrom: null,
+                              timeTo: null,
+                              paymentMethod: PayMethodOptions[0].key,
+                            });
+                          }
+
+                          return {
+                            ...prev,
+                            staffSchedules: updatedStaffSchedules,
                           };
-                        } else {
-                          updatedStaffSchedules.push({
-                            staff: value as string,
-                            timeFrom: null,
-                            timeTo: null,
-                            paymentMethod: PayMethodOptions[0].key,
-                          });
-                        }
-
-                        return {
-                          ...prev,
-                          staffSchedules: updatedStaffSchedules,
-                        };
-                      });
-                    }}
-                    placeholder="Type to search carer by name"
-                  >
-                    {carers.map((client: User) => {
-                      const _name = getDisplayName({
-                        firstName: client.firstName,
-                        lastName: client.lastName,
-                        preferredName: client.preferredName,
-                        salutation: client.salutation,
-                        middleName: client.middleName,
-                      });
-                      return (
-                        <AutocompleteItem key={client.id}>
-                          {_name}
-                        </AutocompleteItem>
-                      );
-                    })}
-                  </Autocomplete>
+                        });
+                      }}
+                      placeholder="Type to search carer by name"
+                    >
+                      {carers.map((client: User) => {
+                        const _name = getDisplayName({
+                          firstName: client.firstName,
+                          lastName: client.lastName,
+                          preferredName: client.preferredName,
+                          salutation: client.salutation,
+                          middleName: client.middleName,
+                        });
+                        return (
+                          <AutocompleteItem key={client.id}>
+                            {_name}
+                          </AutocompleteItem>
+                        );
+                      })}
+                    </Autocomplete>
+                  ) : (
+                    <span className="font-medium text-md">{"Staff Here"}</span>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Choose pay group</span>
-                  <Autocomplete
-                    size="sm"
-                    className="max-w-xs"
-                    placeholder="Select"
-                    defaultSelectedKey={`${PayMethodOptions[0].key}`}
-                    onValueChange={(value) => {
-                      setValues((prev) => {
-                        const updatedStaffSchedules = [...prev.staffSchedules];
+                  {isEdit ? (
+                    <Autocomplete
+                      size="sm"
+                      className="max-w-xs"
+                      placeholder="Select"
+                      defaultSelectedKey={`${PayMethodOptions[0].key}`}
+                      onValueChange={(value) => {
+                        setValues((prev) => {
+                          const updatedStaffSchedules = [
+                            ...prev.staffSchedules,
+                          ];
 
-                        if (updatedStaffSchedules.length > 0) {
-                          updatedStaffSchedules[0] = {
-                            ...updatedStaffSchedules[0],
-                            paymentMethod: value as string,
+                          if (updatedStaffSchedules.length > 0) {
+                            updatedStaffSchedules[0] = {
+                              ...updatedStaffSchedules[0],
+                              paymentMethod: value as string,
+                            };
+                          } else {
+                            updatedStaffSchedules.push({
+                              staff: null,
+                              timeFrom: null,
+                              timeTo: null,
+                              paymentMethod: PayMethodOptions[0].key,
+                            });
+                          }
+
+                          return {
+                            ...prev,
+                            staffSchedules: updatedStaffSchedules,
                           };
-                        } else {
-                          updatedStaffSchedules.push({
-                            staff: null,
-                            timeFrom: null,
-                            timeTo: null,
-                            paymentMethod: PayMethodOptions[0].key,
-                          });
-                        }
-
-                        return {
-                          ...prev,
-                          staffSchedules: updatedStaffSchedules,
-                        };
-                      });
-                    }}
-                  >
-                    {PayMethodOptions.map((payGroupItem) => (
-                      <AutocompleteItem key={payGroupItem.key}>
-                        {payGroupItem.label}
-                      </AutocompleteItem>
-                    ))}
-                  </Autocomplete>
+                        });
+                      }}
+                    >
+                      {PayMethodOptions.map((payGroupItem) => (
+                        <AutocompleteItem key={payGroupItem.key}>
+                          {payGroupItem.label}
+                        </AutocompleteItem>
+                      ))}
+                    </Autocomplete>
+                  ) : (
+                    <span className="font-medium text-md">
+                      {"Payment method here"}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
@@ -620,45 +813,63 @@ const CreateShiftDrawer = ({
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Mileage cap</span>
-                  <Input
-                    label=""
-                    type="number"
-                    name="mileageCap"
-                    className="w-80"
-                    defaultValue="0"
-                    value={values.mileageCap}
-                    onValueChange={(value) => {
-                      setValues((prev) => ({ ...prev, mileageCap: value }));
-                    }}
-                  />
+                  {isEdit ? (
+                    <Input
+                      label=""
+                      type="number"
+                      name="mileageCap"
+                      className="w-80"
+                      defaultValue="0"
+                      value={values.mileageCap}
+                      onValueChange={(value) => {
+                        setValues((prev) => ({ ...prev, mileageCap: value }));
+                      }}
+                    />
+                  ) : (
+                    <span className="font-medium text-md">
+                      {values.mileageCap}Km
+                    </span>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Mileage</span>
-                  <Input
-                    label=""
-                    type="number"
-                    name="mileage"
-                    className="w-80"
-                    defaultValue="0"
-                    value={values.mileage}
-                    onValueChange={(value) => {
-                      setValues((prev) => ({ ...prev, mileage: value }));
-                    }}
-                  />
+                  {isEdit ? (
+                    <Input
+                      label=""
+                      type="number"
+                      name="mileage"
+                      className="w-80"
+                      defaultValue="0"
+                      value={values.mileage}
+                      onValueChange={(value) => {
+                        setValues((prev) => ({ ...prev, mileage: value }));
+                      }}
+                    />
+                  ) : (
+                    <span className="font-medium text-md">
+                      {values.mileage}Km
+                    </span>
+                  )}
                 </div>
                 <div className="h-4"></div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Company Vehicle</span>
-                  <Switch
-                    isSelected={values.isCompanyVehicle}
-                    onValueChange={(value) =>
-                      setValues((prev) => ({
-                        ...prev,
-                        isCompanyVehicle: value,
-                      }))
-                    }
-                  />
+                  {isEdit ? (
+                    <Switch
+                      isSelected={values.isCompanyVehicle}
+                      onValueChange={(value) =>
+                        setValues((prev) => ({
+                          ...prev,
+                          isCompanyVehicle: value,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <span className="font-medium text-md">
+                      {values.isCompanyVehicle ? "Yes" : "No"}
+                    </span>
+                  )}
                 </div>
                 <div className="h-2"></div>
               </div>
