@@ -1,12 +1,13 @@
 import { EMPTY_ARRAY } from "@/constants/empty";
 import { useStaffs } from "@/states/apis/staff";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { hours } from "../constant";
 import type { DayDateInfo, ViewMode } from "../type";
 import { formatHour } from "../util";
 import SchedulerManagementItem from "./SchedulerManagementItem";
 import type { User } from "@/types/user";
 import { getDisplayName } from "@/utils/strings";
+import { convertDateToMs } from "@/utils/datetime";
 
 interface SchedulerManagementProps {
   viewMode: ViewMode;
@@ -17,6 +18,39 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
   const { data: dataStaffs } = useStaffs({ limit: 50 });
 
   const _dataStaffs = dataStaffs?.data || EMPTY_ARRAY;
+
+  const [from, setFrom] = useState<number | null>(null);
+  const [to, setTo] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (dates && dates.length === 0) return;
+    if (viewMode === "day") {
+      const fullDate = new Date(
+        dates[0].year,
+        dates[0].month - 1,
+        dates[0].date
+      );
+      const _from = convertDateToMs(fullDate, "startOf");
+      const _to = convertDateToMs(fullDate, "endOf");
+      setFrom(_from);
+      setTo(_to);
+    } else {
+      const fullFromDate = new Date(
+        dates[0].year,
+        dates[0].month - 1,
+        dates[0].date
+      );
+      const _from = convertDateToMs(fullFromDate, "startOf");
+      const fullToDate = new Date(
+        dates[dates.length - 1].year,
+        dates[dates.length - 1].month - 1,
+        dates[dates.length - 1].date
+      );
+      const _to = convertDateToMs(fullToDate, "endOf");
+      setFrom(_from);
+      setTo(_to);
+    }
+  }, [viewMode, dates]);
 
   const gridCols = useMemo(() => {
     return viewMode === "day"
@@ -42,6 +76,8 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
         displayName={_displayName}
         viewMode={viewMode}
         dates={dates}
+        from={from}
+        to={to}
       />
     );
   };
@@ -50,7 +86,6 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
     <div className="px-4">
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
         <div className={`grid ${gridCols} border-b`}>
-          {/* Corner cell */}
           <div className="p-4 bg-gray-50 border-r sticky left-0 z-20">
             <input
               type="text"
@@ -59,7 +94,6 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
             />
           </div>
 
-          {/* Headers */}
           {viewMode === "day"
             ? hours.map((hour) => (
                 <div key={hour} className="p-2 text-center border-r bg-gray-50">
@@ -79,13 +113,6 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
                 </div>
               ))}
         </div>
-
-        {/* <SchedulerManagementItem
-          staffs={_dataStaffs}
-          gridCols={gridCols}
-          dates={dates}
-          viewMode={viewMode}
-        /> */}
 
         {_dataStaffs.map(_renderScheduleByStaff)}
       </div>

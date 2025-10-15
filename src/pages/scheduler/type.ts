@@ -8,18 +8,7 @@ export interface DayDateInfo {
   isToday?: boolean;
 }
 
-export type ViewMode = "day" | "week" | "fortnight";
-
-export interface EventItem {
-  id: number;
-  staffId: number;
-  day: number;
-  hour: number;
-  duration: number;
-  title: string;
-  subtitle?: string;
-  client: string;
-}
+export type ViewMode = "day" | "week" | "fortnight" | "month";
 
 export interface Staff {
   id: number;
@@ -36,13 +25,13 @@ export interface SchedulerManagementProps {
 }
 
 export interface SelectedCell {
-  staffId: number;
+  staffId?: number;
   day: number;
   hour?: number | null;
 }
 
 export interface DragOverCell {
-  staffId: number;
+  staffId?: number;
   day: number;
   hour?: number | null;
 }

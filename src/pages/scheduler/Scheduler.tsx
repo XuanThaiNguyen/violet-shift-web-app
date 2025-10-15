@@ -1,7 +1,9 @@
+import { useRoleCheck } from "@/hooks/useRoleCheck";
 import { Button, useDisclosure } from "@heroui/react";
 import { Plus } from "lucide-react";
 import { useState, type FC } from "react";
 import CreateShiftDrawer from "./components/CreateShiftDrawer";
+import SchedularPersonal from "./components/SchedularPersonal";
 import SchedulerManagement from "./components/SchedulerManagement";
 import SchedulerMode from "./components/SchedulerMode";
 import type { DayDateInfo, ViewMode } from "./type";
@@ -13,6 +15,8 @@ const Scheduler: FC = () => {
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [dates, setDates] = useState<DayDateInfo[]>([]);
 
+  const { isAdmin } = useRoleCheck();
+
   return (
     <>
       <div className="w-full">
@@ -22,6 +26,7 @@ const Scheduler: FC = () => {
             weekOffset={weekOffset}
             setDates={setDates}
             dates={dates}
+            isAdmin={isAdmin}
             setViewMode={setViewMode}
             setWeekOffset={setWeekOffset}
           />
@@ -38,7 +43,11 @@ const Scheduler: FC = () => {
         </div>
 
         <div className="h-4"></div>
-        <SchedulerManagement viewMode={viewMode} dates={dates} />
+        {isAdmin ? (
+          <SchedulerManagement viewMode={viewMode} dates={dates} />
+        ) : (
+          <SchedularPersonal viewMode={viewMode} />
+        )}
       </div>
 
       <CreateShiftDrawer

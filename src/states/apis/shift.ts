@@ -10,11 +10,18 @@ export const createNewShift = async (values: IAddShift) => {
   return res.data;
 };
 
-export const useGetSchedulesByStaffId = (staffId: string) => {
+export const useGetSchedulesByStaffId = (
+  staffId: string,
+  from?: number | null,
+  to?: number | null
+) => {
   const schedulesByStaffId = useQuery<IGetStaffSchedule[]>({
-    queryKey: ["staffSchedules", staffId],
-    queryFn: () => api.get(`/api/v1/staff-schedules/staff/${staffId}`),
-    enabled: !!localStorage.getItem("auth_token"),
+    queryKey: ["staffSchedules", staffId, from, to],
+    queryFn: () =>
+      api.get(`/api/v1/staff-schedules/staff/${staffId}`, {
+        params: { from, to },
+      }),
+    enabled: !!localStorage.getItem("auth_token") && !!staffId,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

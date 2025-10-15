@@ -1,4 +1,4 @@
-import { Button, Select, SelectItem } from "@heroui/react";
+import { Select, SelectItem } from "@heroui/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { getDayDate, getFortnightDates, getWeekDates } from "../util";
@@ -12,12 +12,19 @@ interface SchedulerModeProps {
   dates: DayDateInfo[];
   setViewMode: (viewMode: ViewMode) => void;
   setWeekOffset: (weekOffset: number) => void;
+  isAdmin: boolean;
 }
 
 const ViewModeOptions = [
   { label: "Daily", value: "day" },
   { label: "Weekly", value: "week" },
   { label: "Fornightly", value: "fortnight" },
+];
+
+const ViewCarerModeOptions = [
+  { label: "Daily", value: "day" },
+  { label: "Weekly", value: "week" },
+  { label: "Monthly", value: "month" },
 ];
 
 const SchedulerMode = ({
@@ -27,6 +34,7 @@ const SchedulerMode = ({
   dates,
   setViewMode,
   setWeekOffset,
+  isAdmin,
 }: SchedulerModeProps) => {
   useEffect(() => {
     const _dates =
@@ -95,17 +103,21 @@ const SchedulerMode = ({
         isClearable={false}
         className="w-32"
         value={viewMode}
-        defaultSelectedKeys={[ViewModeOptions[0].label || ""]}
+        defaultSelectedKeys={[
+          (isAdmin ? ViewModeOptions : ViewCarerModeOptions)[0].label || "",
+        ]}
         onSelectionChange={([value]) => {
-          const _viewMode = ViewModeOptions.find((o) => o.label === value);
-          setViewMode(_viewMode?.value as "day" | "week" | "fortnight");
+          const _viewMode = (
+            isAdmin ? ViewModeOptions : ViewCarerModeOptions
+          ).find((o) => o.label === value);
+          setViewMode(_viewMode?.value as ViewMode);
           setWeekOffset(0);
         }}
         classNames={{
           trigger: "cursor-pointer",
         }}
       >
-        {ViewModeOptions.map((option) => (
+        {(isAdmin ? ViewModeOptions : ViewCarerModeOptions).map((option) => (
           <SelectItem key={option.label}>{option.label}</SelectItem>
         ))}
       </Select>

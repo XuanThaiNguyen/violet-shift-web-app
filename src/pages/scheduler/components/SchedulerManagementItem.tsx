@@ -21,6 +21,8 @@ interface SchedulerManagementItemProps {
   gridCols: string;
   staff: User;
   displayName: string;
+  from: number | null;
+  to: number | null;
 }
 
 const SchedulerManagementItem = ({
@@ -29,6 +31,8 @@ const SchedulerManagementItem = ({
   dates,
   gridCols,
   displayName,
+  from,
+  to,
 }: SchedulerManagementItemProps) => {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
@@ -50,7 +54,11 @@ const SchedulerManagementItem = ({
   });
   const [dragOverCell, setDragOverCell] = useState<DragOverCell | null>(null);
 
-  const { data: dataSchedules, isSuccess } = useGetSchedulesByStaffId(staff.id);
+  const { data: dataSchedules, isSuccess } = useGetSchedulesByStaffId(
+    staff.id,
+    from,
+    to
+  );
 
   useEffect(() => {
     if (isSuccess && dataSchedules) {
