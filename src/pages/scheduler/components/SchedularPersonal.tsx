@@ -1,50 +1,80 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { hours, weekDays } from "../constant";
 import { X } from "lucide-react";
-import type { ViewMode } from "../type";
+import type { DayDateInfo, ViewMode } from "../type";
+import { convertDateToMs } from "@/utils/datetime";
+import { useGetSchedulesByStaffId } from "@/states/apis/shift";
+import { useMe } from "@/states/apis/me";
+import type { IGetStaffSchedule } from "@/types/shift";
+import { getShiftTypeLabel } from "../util";
 
 interface SchedularPersonalProps {
   viewMode: ViewMode;
+  dates: DayDateInfo[];
 }
 
-const colors = {
-  teal: {
-    bg: "bg-teal-50",
-    border: "border-teal-400",
-    text: "text-teal-700",
-    solid: "bg-teal-400",
-  },
-  gray: {
-    bg: "bg-gray-100",
-    border: "border-gray-400",
-    text: "text-gray-700",
-    solid: "bg-gray-400",
-  },
-  pink: {
-    bg: "bg-pink-50",
-    border: "border-pink-400",
-    text: "text-pink-700",
-    solid: "bg-pink-400",
-  },
-  blue: {
-    bg: "bg-blue-50",
-    border: "border-blue-400",
-    text: "text-blue-700",
-    solid: "bg-blue-400",
-  },
-  yellow: {
-    bg: "bg-yellow-50",
-    border: "border-yellow-400",
-    text: "text-yellow-700",
-    solid: "bg-yellow-400",
-  },
-};
+const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
+  const { data: user } = useMe();
 
-const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<IGetStaffSchedule[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const isSameDay = (d1, d2) => {
+  const [from, setFrom] = useState<number | null>(null);
+  const [to, setTo] = useState<number | null>(null);
+
+  const {
+    data: dataSchedules,
+    isSuccess,
+    refetch,
+  } = useGetSchedulesByStaffId(user?.id || "", from, to);
+
+  useEffect(() => {
+    if (isSuccess && dataSchedules) {
+      setEvents(dataSchedules);
+    }
+  }, [dataSchedules, isSuccess]);
+
+  useEffect(() => {
+    if (from && to) {
+      refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [from, to]);
+
+  useEffect(() => {
+    if (dates && dates.length === 0) return;
+    if (viewMode === "day") {
+      const fullDate = new Date(
+        dates[0].year,
+        dates[0].month - 1,
+        dates[0].date
+      );
+      const _from = convertDateToMs(fullDate, "startOf");
+      const _to = convertDateToMs(fullDate, "endOf");
+      setFrom(_from);
+      setTo(_to);
+      setCurrentDate(fullDate);
+    } else {
+      const fullFromDate = new Date(
+        dates[0].year,
+        dates[0].month - 1,
+        dates[0].date
+      );
+      const _from = convertDateToMs(fullFromDate, "startOf");
+      const fullToDate = new Date(
+        dates[dates.length - 1].year,
+        dates[dates.length - 1].month - 1,
+        dates[dates.length - 1].date
+      );
+      const _to = convertDateToMs(fullToDate, "endOf");
+      setFrom(_from);
+      setTo(_to);
+    }
+  }, [viewMode, dates]);
+
+  const isSameDay = (d1: Date, d2: Date) => {
+    if (!d1 || !d2) return false;
+
     return (
       d1.getDate() === d2.getDate() &&
       d1.getMonth() === d2.getMonth() &&
@@ -52,13 +82,17 @@ const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
     );
   };
 
-  const getEventsForDate = (date) => {
-    return events.filter((event) => isSameDay(event.start, date));
+  const getEventsForDate = (date: Date) => {
+    return events.filter((event) => isSameDay(new Date(event.timeFrom!), date));
   };
 
-  const getEventPosition = (event, hourHeight = 48) => {
-    const startHour = event.start.getHours() + event.start.getMinutes() / 60;
-    const endHour = event.end.getHours() + event.end.getMinutes() / 60;
+  const getEventPosition = (event: IGetStaffSchedule, hourHeight = 48) => {
+    const startHour =
+      new Date(event.timeFrom!).getHours() +
+      new Date(event.timeFrom!).getMinutes() / 60;
+    const endHour =
+      new Date(event.timeTo!).getHours() +
+      new Date(event.timeTo!).getMinutes() / 60;
     const duration = endHour - startHour;
 
     return {
@@ -67,7 +101,7 @@ const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
     };
   };
 
-  const getWeekDays = (date) => {
+  const getWeekDays = (date: Date) => {
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? -6 : 1);
     const monday = new Date(date);
@@ -82,11 +116,11 @@ const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
     return weekDays;
   };
 
-  const isToday = (date) => {
+  const isToday = (date: Date) => {
     return isSameDay(date, new Date());
   };
 
-  const getDaysInMonth = (date) => {
+  const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -146,38 +180,39 @@ const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
             {hours.map((_, i) => (
               <div key={i} className="h-16 border-t"></div>
             ))}
-            {dayEvents.map((event) => {
+            {dayEvents.map((event, index) => {
+              const _start = new Date(event.timeFrom!);
+              const _end = new Date(event.timeTo!);
               const pos = getEventPosition(event, 64);
+
+              const widthPercent = 100 - index * 10; // e.g. 100%, 90%, 80%
+              const leftPercent = index * 30;
               return (
                 <div
-                  key={event.id}
-                  className={`absolute left-2 right-2 ${
-                    colors[event.color].bg
-                  } ${colors[event.color].border} border-l-4 p-3 rounded group`}
+                  key={event._id}
+                  className={`absolute left-2 right-2 border-l-4 p-3 rounded group bg-background`}
                   style={{
-                    top: `${pos.top + 48}px`,
+                    top: `${pos.top}px`,
                     height: `${pos.height}px`,
+                    width: `${widthPercent}%`,
+                    left: `${leftPercent}%`,
+                    zIndex: dayEvents.length - index, // higher items on top
                   }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div
-                        className={`font-medium ${colors[event.color].text}`}
-                      >
-                        {event.start.getHours()}:
-                        {event.start.getMinutes().toString().padStart(2, "0")} -{" "}
-                        {event.end.getHours()}:
-                        {event.end.getMinutes().toString().padStart(2, "0")}
+                      <div className={`font-medium`}>
+                        {_start.getHours()}:
+                        {_start.getMinutes().toString().padStart(2, "0")} -{" "}
+                        {_end.getHours()}:
+                        {_end.getMinutes().toString().padStart(2, "0")}
                       </div>
-                      <div
-                        className={`${
-                          colors[event.color].text
-                        } font-semibold text-lg`}
-                      >
-                        {event.title}
+                      <div className={`font-semibold text-lg`}>
+                        {getShiftTypeLabel(event.shift.shiftType)}
                       </div>
+                      <div className="h-1"></div>
                       <div className="text-gray-500 text-sm mt-1">
-                        {event.category}
+                        {event.clientNames[0]}
                       </div>
                     </div>
                     <button
@@ -238,7 +273,7 @@ const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
               </div>
             ))}
           </div>
-          {weekDays.map((day, i) => {
+          {_weekDays.map((day, i) => {
             const dayEvents = getEventsForDate(day);
             return (
               <div key={i} className="border-r last:border-r-0 relative">
@@ -246,15 +281,13 @@ const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
                   <div key={j} className="h-12 border-t"></div>
                 ))}
                 {dayEvents.map((event) => {
+                  const _start = new Date(event.timeFrom!);
+                  const _end = new Date(event.timeTo!);
                   const pos = getEventPosition(event);
                   return (
                     <div
-                      key={event.id}
-                      className={`absolute left-1 right-1 ${
-                        colors[event.color].bg
-                      } ${
-                        colors[event.color].border
-                      } border-l-4 p-2 rounded text-xs group`}
+                      key={event._id}
+                      className={`absolute left-1 right-1 border-l-4 p-2 rounded text-xs group bg-background`}
                       style={{
                         top: `${pos.top + 48}px`,
                         height: `${pos.height}px`,
@@ -262,28 +295,17 @@ const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <div
-                            className={`font-medium ${
-                              colors[event.color].text
-                            }`}
-                          >
-                            {event.start.getHours()}:
-                            {event.start
-                              .getMinutes()
-                              .toString()
-                              .padStart(2, "0")}{" "}
-                            - {event.end.getHours()}:
-                            {event.end.getMinutes().toString().padStart(2, "0")}
+                          <div className={`font-medium`}>
+                            {_start.getHours()}:
+                            {_start.getMinutes().toString().padStart(2, "0")} -{" "}
+                            {_end.getHours()}:
+                            {_end.getMinutes().toString().padStart(2, "0")}
                           </div>
-                          <div
-                            className={`${
-                              colors[event.color].text
-                            } font-semibold`}
-                          >
-                            {event.title}
+                          <div className={`font-semibold text-lg truncate`}>
+                            {event.shift.shiftType}
                           </div>
                           <div className="text-gray-500 text-xs">
-                            {event.category}
+                            {event.clientNames[0]}
                           </div>
                         </div>
                         <button
@@ -353,47 +375,41 @@ const SchedularPersonal = ({ viewMode }: SchedularPersonalProps) => {
                   </span>
                 </div>
                 <div className="space-y-1">
-                  {dayEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className={`${colors[event.color].bg} ${
-                        colors[event.color].border
-                      } border-l-4 p-1 text-xs rounded group relative`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div
-                            className={`font-medium ${
-                              colors[event.color].text
-                            } truncate`}
-                          >
-                            {event.start.getHours()}:
-                            {event.start
-                              .getMinutes()
-                              .toString()
-                              .padStart(2, "0")}{" "}
-                            - {event.end.getHours()}:
-                            {event.end.getMinutes().toString().padStart(2, "0")}
+                  {dayEvents.map((event) => {
+                    const _start = new Date(event.timeFrom!);
+                    const _end = new Date(event.timeTo!);
+
+                    return (
+                      <div
+                        key={event._id}
+                        className={`border-l-4 p-1 text-xs rounded group relative bg-background`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className={`font-medium truncate`}>
+                              {_start.getHours()}:
+                              {_start.getMinutes().toString().padStart(2, "0")}{" "}
+                              - {_end.getHours()}:
+                              {_end.getMinutes().toString().padStart(2, "0")}
+                            </div>
+                            <div className={`font-semibold text-lg truncate`}>
+                              {getShiftTypeLabel(event.shift.shiftType)}
+                            </div>
                           </div>
-                          <div
-                            className={`${colors[event.color].text} truncate`}
+                          <button
+                            // onClick={() => deleteEvent(event.id)}
+                            className="opacity-0 group-hover:opacity-100 ml-1"
                           >
-                            {event.title}
-                          </div>
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
-                        <button
-                          // onClick={() => deleteEvent(event.id)}
-                          className="opacity-0 group-hover:opacity-100 ml-1"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                        <div className="text-xs text-gray-500">
+                          {event.clientNames[0]}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {event.category}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );

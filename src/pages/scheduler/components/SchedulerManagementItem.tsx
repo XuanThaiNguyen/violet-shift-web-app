@@ -163,14 +163,8 @@ const SchedulerManagementItem = ({
   const getEventsForCell = (day: number, hour: number | null = null) => {
     if (viewMode === "day" && hour !== null) {
       return events.filter((e) => {
-        const _date = new Date(e.timeFrom! * 1000);
-
-        return (
-          e.staff &&
-          +e.staff === +staff.id &&
-          _date.getDay() === day &&
-          _date.getHours() === hour
-        );
+        const _date = new Date(e.timeFrom!);
+        return _date.getHours() === hour;
       });
     }
 
@@ -219,39 +213,54 @@ const SchedulerManagementItem = ({
                     : "hover:bg-blue-50"
                 }`}
               >
-                {cellEvents.map((event) => (
-                  <div
-                    key={event._id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, event)}
-                    onDragEnd={handleDragEnd}
-                    className={`p-1 rounded text-xs text-white relative group cursor-move ${
-                      draggedEvent && +draggedEvent?._id === +event._id
-                        ? "opacity-50"
-                        : ""
-                    }`}
-                    style={{ backgroundColor: "red" }}
-                  >
-                    <div className="flex items-start gap-1">
-                      <GripVertical
-                        size={10}
-                        className="opacity-50 flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0 text-xs truncate">
-                        {event.title || "Title"}
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteEvent(+event._id);
-                      }}
-                      className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                {cellEvents.map((event) => {
+                  const _timeShift = formatTimeRange(
+                    event.timeFrom! / 1000,
+                    event.timeTo! / 1000
+                  );
+
+                  return (
+                    <div
+                      key={event._id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, event)}
+                      onDragEnd={handleDragEnd}
+                      className={`p-1 rounded text-xs text-white relative group cursor-move mb-1 ${
+                        draggedEvent && +draggedEvent?._id === +event._id
+                          ? "opacity-50"
+                          : ""
+                      }`}
+                      style={{ backgroundColor: "#f7f8fa" }}
                     >
-                      ×
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-start gap-1">
+                        <GripVertical
+                          size={10}
+                          className="opacity-50 flex-shrink-0 text-gray-800"
+                        />
+                        <div className="flex-1 min-w-0 text-xs font-semibold text-gray-800 truncate">
+                          {_timeShift}
+                          <div className="h-1"></div>
+                          <div className="font-medium text-gray-800 truncate">
+                            {event.shift.shiftType || "Personal Care"}
+                          </div>
+                          <div className="h-2"></div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {event.clientNames[0] || "Client"}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteEvent(+event._id);
+                        }}
+                        className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             );
           })
@@ -289,7 +298,7 @@ const SchedulerManagementItem = ({
                             : ""
                         }`}
                         onClick={() => {
-                          setSelectedShiftId(shift.shift);
+                          setSelectedShiftId(shift.shift._id);
                           onOpen();
                         }}
                         style={{
@@ -308,11 +317,11 @@ const SchedulerManagementItem = ({
                             </div>
                             <div className="h-1"></div>
                             <div className="font-medium text-gray-800 truncate">
-                              {shift.shiftType || "Personal Care"}
+                              {shift.shift.shiftType || "Personal Care"}
                             </div>
                             <div className="h-2"></div>
                             <div className="text-xs text-gray-500 truncate">
-                              {shift.client || "Client"}
+                              {shift.clientNames[0] || "Client"}
                             </div>
                           </div>
                         </div>

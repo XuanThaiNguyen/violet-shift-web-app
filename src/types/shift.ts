@@ -40,14 +40,17 @@ export interface IStaffSchedule {
 
 export interface IGetStaffSchedule {
   staff: string | null;
-  shift?: string;
+  shift: {
+    adress?: string;
+    shiftType: string;
+    unitNumber?: string;
+    _id: string;
+  };
+  clientNames: string[];
   timeFrom: number | null;
   timeTo: number | null;
   paymentMethod: PaymentMethodEnum;
   _id: string;
-  title?: string;
-  shiftType?: string;
-  client?: string;
 }
 
 export interface TimeValue {

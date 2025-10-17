@@ -52,6 +52,25 @@ export const getDayDate = (dayOffset = 0) => {
   };
 };
 
+export const getMonthDates = (monthOffset = 0) => {
+  const today = new Date();
+  const month = today.getMonth() + monthOffset;
+  const year = today.getFullYear();
+
+  const lastDay = new Date(year, month + 1, 0);
+  const totalDays = lastDay.getDate();
+
+  return Array.from({ length: totalDays }, (_, i) => {
+    const date = new Date(year, month, i + 1);
+    return {
+      date: date.getDate(),
+      day: weekDays[date.getDay() === 0 ? 6 : date.getDay() - 1],
+      month: date.getMonth() + 1,
+      year: date.getFullYear(),
+    };
+  });
+};
+
 export const formatHour = (hour: number) => {
   if (hour === 0) return "12 AM";
   if (hour === 12) return "12 PM";

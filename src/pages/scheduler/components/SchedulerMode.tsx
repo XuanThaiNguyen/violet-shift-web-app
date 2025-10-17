@@ -1,7 +1,12 @@
 import { Select, SelectItem } from "@heroui/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { getDayDate, getFortnightDates, getWeekDates } from "../util";
+import {
+  getDayDate,
+  getFortnightDates,
+  getMonthDates,
+  getWeekDates,
+} from "../util";
 import type { DayDateInfo, ViewMode } from "../type";
 import { monthNames } from "../constant";
 
@@ -42,6 +47,8 @@ const SchedulerMode = ({
         ? getFortnightDates(weekOffset)
         : viewMode === "week"
         ? getWeekDates(weekOffset)
+        : viewMode === "month"
+        ? getMonthDates(weekOffset)
         : [getDayDate(weekOffset)];
     setDates(_dates);
     // eslint-disable-next-line react-hooks/exhaustive-deps

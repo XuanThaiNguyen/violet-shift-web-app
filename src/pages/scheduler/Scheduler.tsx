@@ -46,7 +46,7 @@ const Scheduler: FC = () => {
         {isAdmin ? (
           <SchedulerManagement viewMode={viewMode} dates={dates} />
         ) : (
-          <SchedularPersonal viewMode={viewMode} />
+          <SchedularPersonal viewMode={viewMode} dates={dates} />
         )}
       </div>
 
