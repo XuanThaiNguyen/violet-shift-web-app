@@ -29,6 +29,8 @@ export interface IClientSchedule {
   client: string | null;
   timeFrom: number | null;
   timeTo: number | null;
+  priceBook: string;
+  fund: string;
 }
 
 export interface IStaffSchedule {

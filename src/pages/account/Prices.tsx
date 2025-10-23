@@ -3,6 +3,7 @@ import {
   addPriceBook,
   useGetPrices,
   type IAddPriceBook,
+  type IAddPriceBookRule,
   type IPrices,
 } from "@/states/apis/prices";
 import { generateId } from "@/utils/strings";
@@ -91,7 +92,7 @@ const Prices = () => {
   }: {
     title: string;
     externalId: string;
-    rules?: any[];
+    rules?: IAddPriceBookRule[];
   }) => {
     const newPriceBook: IAddPriceBook = {
       priceBookId: externalId,

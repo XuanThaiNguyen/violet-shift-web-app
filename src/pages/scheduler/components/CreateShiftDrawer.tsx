@@ -1,9 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
 import { useGetClients, type ClientFilter } from "@/states/apis/client";
+import { useGetFundingsByUser } from "@/states/apis/funding";
+import { useGetPrices } from "@/states/apis/prices";
+import { createNewShift, useGetShiftDetail } from "@/states/apis/shift";
 import { useStaffs } from "@/states/apis/staff";
 import type { IClient } from "@/types/client";
+import type { DateValue, IShiftValues, TimeValue } from "@/types/shift";
 import type { User } from "@/types/user";
+import { formatTimeRange } from "@/utils/datetime";
 import { getDisplayName } from "@/utils/strings";
 import {
   addToast,
@@ -21,6 +25,10 @@ import {
   Switch,
   TimeInput,
 } from "@heroui/react";
+import { parseDate, parseTime } from "@internationalized/date";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
+import { format, fromUnixTime, set } from "date-fns";
 import { useFormik } from "formik";
 import {
   ArrowLeft,
@@ -35,8 +43,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
-import MultiSelectAutocomplete from "./MultiSelectAutocomplete";
-import { format, fromUnixTime, set } from "date-fns";
 import {
   AllowanceOptions,
   ErrorMessages,
@@ -44,16 +50,8 @@ import {
   ShiftTypeKeys,
   ShiftTypeOptions,
 } from "../constant";
-import type { DateValue, IShiftValues, TimeValue } from "@/types/shift";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createNewShift, useGetShiftDetail } from "@/states/apis/shift";
-import { AxiosError } from "axios";
 import { getAllowanceTypeLabel, getShiftTypeLabel } from "../util";
-import { formatTimeRange } from "@/utils/datetime";
-import { parseDate, parseTime } from "@internationalized/date";
-
-const PRICE_BOOK_MOCKUP: any[] = [];
-const FUNDS_MOCKUP: any[] = [];
+import MultiSelectAutocomplete from "./MultiSelectAutocomplete";
 
 const initialValues = {
   clientSchedules: [],
@@ -187,6 +185,14 @@ const CreateShiftDrawer = ({
   const [date, setDate] = useState<DateValue | null>(null);
   const [isBonus, setIsBonus] = useState<boolean>(false);
 
+  const { data: dataPriceBooks } = useGetPrices();
+  const _dataPriceBooks = dataPriceBooks || [];
+
+  const { data: dataFunds } = useGetFundingsByUser({
+    userId: values?.clientSchedules[0]?.client || "",
+  });
+  const _dataFunds = dataFunds || [];
+
   useEffect(() => {
     if (!date) return;
 
@@ -213,6 +219,8 @@ const CreateShiftDrawer = ({
           client: null,
           timeFrom: newTimeFrom,
           timeTo: newTimeTo,
+          priceBook: "",
+          fund: "",
         });
       }
 
@@ -366,12 +374,16 @@ const CreateShiftDrawer = ({
                             updatedClientSchedules[0] = {
                               ...updatedClientSchedules[0],
                               client: value as string,
+                              fund: "",
+                              priceBook: "",
                             };
                           } else {
                             updatedClientSchedules.push({
                               client: value as string,
                               timeFrom: null,
                               timeTo: null,
+                              priceBook: "",
+                              fund: "",
                             });
                           }
 
@@ -410,10 +422,21 @@ const CreateShiftDrawer = ({
                       size="sm"
                       className="max-w-xs"
                       placeholder="Select"
+                      onSelectionChange={(value) => {
+                        setValues((prev) => ({
+                          ...prev,
+                          clientSchedules: prev.clientSchedules.map(
+                            (item, index) =>
+                              index === 0
+                                ? { ...item, priceBook: value as string }
+                                : item
+                          ),
+                        }));
+                      }}
                     >
-                      {PRICE_BOOK_MOCKUP.map((pricebookItem) => (
-                        <AutocompleteItem key={pricebookItem.key}>
-                          {pricebookItem.label}
+                      {_dataPriceBooks.map((pricebookItem) => (
+                        <AutocompleteItem key={pricebookItem.priceBookId}>
+                          {pricebookItem.priceBookTitle}
                         </AutocompleteItem>
                       ))}
                     </Autocomplete>
@@ -431,10 +454,21 @@ const CreateShiftDrawer = ({
                       size="sm"
                       className="max-w-xs"
                       placeholder="Select"
+                      onSelectionChange={(value) => {
+                        setValues((prev) => ({
+                          ...prev,
+                          clientSchedules: prev.clientSchedules.map(
+                            (item, index) =>
+                              index === 0
+                                ? { ...item, fund: value as string }
+                                : item
+                          ),
+                        }));
+                      }}
                     >
-                      {FUNDS_MOCKUP.map((fundItem) => (
-                        <AutocompleteItem key={fundItem.key}>
-                          {fundItem.label}
+                      {_dataFunds.map((fundItem) => (
+                        <AutocompleteItem key={fundItem.id}>
+                          {fundItem.name}
                         </AutocompleteItem>
                       ))}
                     </Autocomplete>

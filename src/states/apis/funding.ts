@@ -25,7 +25,7 @@ export const useGetFundingsByUser = ({ userId }: { userId: string }) => {
   const reponse = useQuery<IFunding[]>({
     queryKey: ["fundings", userId],
     queryFn: () => api.get(`/api/v1/fundings/${userId}`),
-    enabled: !!localStorage.getItem("auth_token"),
+    enabled: !!localStorage.getItem("auth_token") && !!userId,
   });
 
   return reponse;
