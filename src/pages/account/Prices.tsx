@@ -3,6 +3,7 @@ import {
   addPriceBook,
   useGetPrices,
   type IAddPriceBook,
+  type IAddPriceBookRule,
   type IPrices,
 } from "@/states/apis/prices";
 import { generateId } from "@/utils/strings";
@@ -91,7 +92,7 @@ const Prices = () => {
   }: {
     title: string;
     externalId: string;
-    rules?: any[];
+    rules?: IAddPriceBookRule[];
   }) => {
     const newPriceBook: IAddPriceBook = {
       priceBookId: externalId,
@@ -116,7 +117,7 @@ const Prices = () => {
   };
 
   return (
-    <div className="container mx-auto mb-10">
+    <div className="container mx-auto mb-10 pt-4">
       <div className="flex items-center justify-between">
         <span className="text-2xl">Prices</span>
         <Button

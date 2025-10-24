@@ -246,7 +246,7 @@ const ClientArchivedList = () => {
   );
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto pt-4">
       <div className="bg-content1 shadow-md rounded-lg p-4">
         <h1 className="text-2xl font-bold">Archived Clients</h1>
         <div className="h-4"></div>
@@ -263,7 +263,7 @@ const ClientArchivedList = () => {
             },
           }}
           classNames={{
-            wrapper: "max-h-[382px] overflow-x-auto shadow-none thin-scrollbar",
+            wrapper: "max-h-[552px] overflow-x-auto shadow-none thin-scrollbar",
             th: "bg-transparent text-default-500 border-b border-divider",
             td: [
               // changing the rows border radius

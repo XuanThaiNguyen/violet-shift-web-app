@@ -14,7 +14,7 @@ export type ClientFilter = {
   order?: string;
 };
 
-export const useClients = (filter: ClientFilter) => {
+export const useGetClients = (filter: ClientFilter) => {
   const clientsQueryResult = useQuery<PaginationResponse<IClient>>({
     queryKey: ["clients", filter],
     queryFn: () => api.get("/api/v1/clients", { params: filter }),

@@ -42,8 +42,6 @@ const AuthorizedLayout: FC = () => {
         id="app-content"
       >
         <Header />
-        <div className="mt-8"></div>
-
         {isLoading ? (
           <div className="w-full h-[calc(100vh-6rem)] px-4">
             <div className="w-full h-full flex items-center justify-center">

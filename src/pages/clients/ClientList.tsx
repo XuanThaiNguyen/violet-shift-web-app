@@ -1,5 +1,5 @@
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
-import { useClients, type ClientFilter } from "@/states/apis/client";
+import { useGetClients, type ClientFilter } from "@/states/apis/client";
 import {
   Button,
   Input,
@@ -71,7 +71,7 @@ const ClientList = () => {
     new Set([])
   );
 
-  const { data: clientData, isLoading } = useClients(filter);
+  const { data: clientData, isLoading } = useGetClients(filter);
   const clients = clientData?.data || EMPTY_ARRAY;
   const pagination = clientData?.pagination;
 
@@ -373,7 +373,7 @@ const ClientList = () => {
   ]);
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto pt-4">
       <div className="bg-content1 shadow-md rounded-lg p-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Clients</h1>
@@ -401,7 +401,7 @@ const ClientList = () => {
             },
           }}
           classNames={{
-            wrapper: "max-h-[382px] overflow-x-auto shadow-none thin-scrollbar",
+            wrapper: "max-h-[552px] overflow-x-auto shadow-none thin-scrollbar",
             th: "bg-transparent text-default-500 border-b border-divider",
             td: [
               // changing the rows border radius

@@ -363,13 +363,13 @@ const StaffList: FC = () => {
   }, [onRowsPerPageChange, hasSearchFilter, filter.page, pages]);
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto pt-4">
       <div className="bg-content1 shadow-md rounded-lg p-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Staffs</h1>
           <Button
             as={Link}
-            to="/staff/new"
+            to="/staffs/new"
             color="primary"
             size="sm"
             endContent={<PlusIcon size={16} />}
@@ -391,7 +391,7 @@ const StaffList: FC = () => {
             },
           }}
           classNames={{
-            wrapper: "max-h-[382px] overflow-x-auto shadow-none thin-scrollbar",
+            wrapper: "max-h-[552px] overflow-x-auto shadow-none thin-scrollbar",
             th: "bg-transparent text-default-500 border-b border-divider",
             td: [
               // changing the rows border radius
