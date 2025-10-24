@@ -108,7 +108,7 @@ const AddStaff = () => {
       : null;
 
   return (
-    <div className="container mx-auto mb-10">
+    <div className="container mx-auto mb-10 pt-4">
       <form
         className="p-4 mx-auto shadow-lg rounded-lg bg-content1"
         onSubmit={(e) => {

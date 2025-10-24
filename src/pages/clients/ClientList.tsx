@@ -373,7 +373,7 @@ const ClientList = () => {
   ]);
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto pt-4">
       <div className="bg-content1 shadow-md rounded-lg p-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Clients</h1>
@@ -401,7 +401,7 @@ const ClientList = () => {
             },
           }}
           classNames={{
-            wrapper: "max-h-[382px] overflow-x-auto shadow-none thin-scrollbar",
+            wrapper: "max-h-[552px] overflow-x-auto shadow-none thin-scrollbar",
             th: "bg-transparent text-default-500 border-b border-divider",
             td: [
               // changing the rows border radius

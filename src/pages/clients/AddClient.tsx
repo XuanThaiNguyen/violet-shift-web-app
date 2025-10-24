@@ -101,7 +101,7 @@ const AddClient = () => {
       : null;
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto pt-4">
       <ClientInfo
         birthdate={birthdate}
         isPending={isPending}

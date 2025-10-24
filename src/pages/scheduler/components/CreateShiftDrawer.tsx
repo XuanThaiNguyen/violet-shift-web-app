@@ -14,6 +14,7 @@ import {
   Autocomplete,
   AutocompleteItem,
   Button,
+  Checkbox,
   DatePicker,
   Divider,
   Drawer,
@@ -33,6 +34,7 @@ import { useFormik } from "formik";
 import {
   ArrowLeft,
   Calendar,
+  ClipboardList,
   Edit,
   Milestone,
   Save,
@@ -63,6 +65,7 @@ const initialValues = {
   timeTo: null,
   paymentMethod: PayMethodOptions[0].key,
   isCompanyVehicle: false,
+  tasks: [],
 };
 
 const clientScheduleSchema = Yup.object().shape({
@@ -184,6 +187,13 @@ const CreateShiftDrawer = ({
   const [endTime, setEndTime] = useState<TimeValue | null>(null);
   const [date, setDate] = useState<DateValue | null>(null);
   const [isBonus, setIsBonus] = useState<boolean>(false);
+  const [task, setTask] = useState<{
+    name: string;
+    isMandatory: boolean;
+  }>({
+    name: "",
+    isMandatory: false,
+  });
 
   const { data: dataPriceBooks } = useGetPrices();
   const _dataPriceBooks = dataPriceBooks || [];
@@ -287,7 +297,7 @@ const CreateShiftDrawer = ({
   return (
     <Drawer
       isOpen={isOpen}
-      closeButton={<></>}
+      closeButton={<div></div>}
       size="5xl"
       onOpenChange={(open) => {
         if (!open) {
@@ -479,7 +489,7 @@ const CreateShiftDrawer = ({
               </div>
               <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
                 <div className="flex items-center gap-2">
-                  <UserCheck size={20} color={"green"} />
+                  <UserCheck size={20} color={"black"} />
                   <span className="font-medium text-md">Shift</span>
                 </div>
                 <div className="h-2"></div>
@@ -836,6 +846,84 @@ const CreateShiftDrawer = ({
                     </span>
                   )}
                 </div>
+              </div>
+              <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+                <div className="flex items-center gap-2">
+                  <ClipboardList size={20} color={"pink"} />
+                  <span className="font-medium text-md">Tasks</span>
+                </div>
+                <div className="h-2"></div>
+                <Divider />
+                <div className="h-4"></div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Input
+                      label=""
+                      type="text"
+                      className="w-80"
+                      value={task.name}
+                      onValueChange={(value) => {
+                        setTask((prev) => ({ ...prev, name: value }));
+                      }}
+                    />
+                    <Checkbox
+                      isSelected={task.isMandatory}
+                      onValueChange={(value) =>
+                        setTask((prev) => ({ ...prev, isMandatory: value }))
+                      }
+                    >
+                      Mandatory
+                    </Checkbox>
+                  </div>
+                  <Button
+                    color="primary"
+                    isDisabled={!task.name}
+                    size="sm"
+                    onPress={() => {
+                      setValues((prev) => ({
+                        ...prev,
+                        tasks: [...prev.tasks, task],
+                      }));
+                      setTask({
+                        name: "",
+                        isMandatory: false,
+                      });
+                    }}
+                  >
+                    <p className={`text-bold text-md capitalize`}>Add</p>
+                  </Button>
+                </div>
+                <div className="h-2"></div>
+                {values.tasks.length === 0 ? (
+                  <></>
+                ) : (
+                  values.tasks.map((_task, index) => (
+                    <div
+                      key={`${_task.name}-${index}`}
+                      className="flex items-center justify-between py-2"
+                    >
+                      <span className="flex-1">{_task.name}</span>
+                      <div className="flex items-center gap-8">
+                        <span className="justify-start">
+                          <span className="font-semibold">Mandatory: </span>
+                          {_task.isMandatory ? "Yes" : "No"}
+                        </span>
+                        <Button
+                          color="danger"
+                          size="sm"
+                          onPress={() => {
+                            setValues((prev) => ({
+                              ...prev,
+                              tasks: prev.tasks.filter((_, i) => i !== index),
+                            }));
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
               <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
                 <div className="flex items-center gap-2">

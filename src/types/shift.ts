@@ -23,6 +23,13 @@ export interface IShiftValues {
   mileage?: string;
   mileageCap?: string;
   isCompanyVehicle?: boolean;
+  tasks: ITask[];
+}
+
+export interface ITask {
+  name: string;
+  isMandatory: boolean;
+  isCompleted?: boolean;
 }
 
 export interface IClientSchedule {

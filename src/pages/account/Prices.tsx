@@ -117,7 +117,7 @@ const Prices = () => {
   };
 
   return (
-    <div className="container mx-auto mb-10">
+    <div className="container mx-auto mb-10 pt-4">
       <div className="flex items-center justify-between">
         <span className="text-2xl">Prices</span>
         <Button
