@@ -8,7 +8,6 @@ import SchedulerManagementItem from "./SchedulerManagementItem";
 import type { User } from "@/types/user";
 import { getDisplayName } from "@/utils/strings";
 import { convertDateToMs } from "@/utils/datetime";
-import { ROLE_IDS } from "@/constants/roles";
 import { useDebounceValue } from "usehooks-ts";
 
 interface SchedulerManagementProps {
@@ -24,7 +23,7 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
   const queryParams = useMemo(() => {
     return {
       limit: 50,
-      roles: [ROLE_IDS.CARER],
+      // roles: [ROLE_IDS.CARER],
       query: query,
     };
   }, [query]);
