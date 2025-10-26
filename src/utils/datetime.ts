@@ -16,3 +16,7 @@ export const formatTimeRange = (startTs: number, endTs: number) => {
   const endTime = format(fromUnixTime(endTs), "h:mm a");
   return `${startTime} - ${endTime}`;
 };
+
+export const wait = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};

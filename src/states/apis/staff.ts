@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import api from "@/services/api/http";
 import type { CreateUser, User } from "@/types/user";
 import type { PaginationResponse } from "@/types/common";
@@ -22,6 +22,7 @@ export const useStaffs = (filter: StaffFilter) => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
+    placeholderData: keepPreviousData,
   });
 
   return staffsQueryResult;

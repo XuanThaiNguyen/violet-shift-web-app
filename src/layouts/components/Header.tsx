@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Cog, DoorOpen, Menu } from "lucide-react";
 import useSidebarStore from "../../states/app/sidebar";
 import {
@@ -10,12 +11,14 @@ import {
 } from "@heroui/react";
 import { Link, useNavigate } from "react-router";
 import { useMe } from "@/states/apis/me";
+import { useQueryClient } from "@tanstack/react-query";
 
-import { useState, type FC } from "react";
+import type { FC } from "react";
 
 const Header: FC = () => {
   const { toggleSidebar } = useSidebarStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -73,6 +76,7 @@ const Header: FC = () => {
                 onPress={() => {
                   localStorage.removeItem("auth_token");
                   navigate("/auth/login");
+                  queryClient.clear();
                 }}
                 startContent={<DoorOpen size={12} />}
                 variant="light"

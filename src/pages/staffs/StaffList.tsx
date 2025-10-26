@@ -92,7 +92,7 @@ const StaffList: FC = () => {
     page: 1,
     limit: 10,
     sort: "createdAt",
-    order: "asc",
+    order: "desc",
   });
 
   const { data: staffData, isLoading } = useStaffs(filter);
@@ -333,6 +333,7 @@ const StaffList: FC = () => {
           <select
             className="bg-transparent outline-solid outline-transparent text-default-400 text-small"
             onChange={onRowsPerPageChange}
+            value={filter.limit ?? 10}
           >
             <option value="10">10</option>
             <option value="20">20</option>
@@ -360,7 +361,7 @@ const StaffList: FC = () => {
         />
       </div>
     );
-  }, [onRowsPerPageChange, hasSearchFilter, filter.page, pages]);
+  }, [onRowsPerPageChange, filter.limit, filter.page, hasSearchFilter, pages]);
 
   return (
     <div className="container mx-auto pt-4">

@@ -1,7 +1,7 @@
 import api from "@/services/api/http";
 import type { ClientStatus, IClient } from "@/types/client";
 import type { PaginationResponse } from "@/types/common";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 export type ClientFilter = {
   query?: string;
@@ -23,6 +23,7 @@ export const useGetClients = (filter: ClientFilter) => {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
+    placeholderData: keepPreviousData,
   });
 
   return clientsQueryResult;

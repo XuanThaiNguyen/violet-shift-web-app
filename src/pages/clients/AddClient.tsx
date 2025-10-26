@@ -54,7 +54,7 @@ const AddClient = () => {
         isClosing: true,
       });
       navigate(`/clients/${newClient?.id}`);
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] === "clients" });
     },
     onError: () => {
       addToast({

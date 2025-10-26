@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   addToast,
   Button,
@@ -17,6 +17,9 @@ import { genderOptions } from "@/constants/userOptions";
 import api from "@/services/api/http";
 import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { MultiSelect } from "@/components/multi-select/MultiSelect";
+import { useGetLanguages } from "@/states/apis/languagues";
+import { EMPTY_ARRAY } from "@/constants/empty";
 
 import type { FC } from "react";
 
@@ -31,6 +34,7 @@ const schema = Yup.object({
   gender: Yup.string()
     .oneOf(genderOptions.map((option) => option.value))
     .required("Gender is required"),
+  languages: Yup.array().of(Yup.string()).optional(),
 });
 
 const initialValues = {
@@ -42,10 +46,12 @@ const initialValues = {
   mobile: "",
   birthdate: "",
   gender: "",
+  languages: [],
 };
 
 const ProfileSetup: FC = () => {
   const navigate = useNavigate();
+  const { data: languages } = useGetLanguages();
   const queryClient = useQueryClient();
   const { data: user, isLoading } = useMe();
   const init = {
@@ -57,7 +63,10 @@ const ProfileSetup: FC = () => {
     validationSchema: schema,
     onSubmit: async (values) => {
       try {
-        await api.patch("/api/v1/me", values);
+        const res = await api.patch("/api/v1/me", values);
+        queryClient.invalidateQueries({ queryKey: ["me"], stale: true });
+        queryClient.setQueriesData({ queryKey: ["me"] }, res);
+        navigate("/");
         addToast({
           title: "Profile updated",
           description: "Profile updated successfully",
@@ -65,8 +74,6 @@ const ProfileSetup: FC = () => {
           timeout: 2000,
           isClosing: true,
         });
-        navigate("/");
-        queryClient.invalidateQueries({ queryKey: ["me"] });
       } catch {
         addToast({
           title: "Profile update failed",
@@ -77,6 +84,13 @@ const ProfileSetup: FC = () => {
       }
     },
   });
+
+  const languageOptions = useMemo(() => {
+    return languages?.map((language) => ({
+      label: language.name,
+      value: language.key,
+    })) || EMPTY_ARRAY;
+  }, [languages]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -251,6 +265,7 @@ const ProfileSetup: FC = () => {
                 placeholder="Mobile"
                 name="mobile"
                 label="Mobile"
+                className="col-span-2"
                 isInvalid={!!formik.errors.mobile && formik.touched.mobile}
                 errorMessage={
                   formik.errors.mobile && formik.touched.mobile
@@ -265,7 +280,25 @@ const ProfileSetup: FC = () => {
                   formik.setFieldTouched("mobile", true);
                 }}
               />
+              <MultiSelect
+                maxCount={1}
+                label="Languages"
+                // name="languages"
+                placeholder="Select Languages"
+                options={languageOptions}
+                placement="top-end"
+                className="col-span-2"
+                classNames={{
+                  content: "max-w-md",
+                }}
+                value={formik.values.languages || EMPTY_ARRAY}
+                onValueChange={(value) => {
+                  formik.setFieldValue("languages", value);
+                }}
+
+              />
               <Input
+                className="col-span-2"
                 type="text"
                 placeholder="Address"
                 name="address"

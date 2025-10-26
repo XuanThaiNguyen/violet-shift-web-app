@@ -13,6 +13,8 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import * as Yup from "yup";
 import ClientInfo from "./components/ClientInfo";
+import type { PaginationResponse } from "@/types/common";
+import { useEffect } from "react";
 
 const clientSchema = Yup.object({
   alutation: Yup.string()
@@ -33,6 +35,7 @@ const clientSchema = Yup.object({
   apartmentNumber: Yup.string(),
   religion: Yup.string(),
   status: Yup.string().oneOf(["prospect", "active", "inactive"]),
+  languages: Yup.array().of(Yup.string()).optional(),
 });
 
 const initialClientValues: IClient = {
@@ -51,6 +54,7 @@ const initialClientValues: IClient = {
   email: "",
   religion: "",
   nationality: "",
+  languages: [],
   status: "active",
 };
 
@@ -58,7 +62,7 @@ const UpdateClient = () => {
   const navigate = useNavigate();
   const { id: clientId } = useParams();
   const queryClient = useQueryClient();
-  const { data: dataClient } = useClientDetail(clientId || "");
+  const { data: dataClient, isLoading } = useClientDetail(clientId || "");
 
   const initClient = {
     ...initialClientValues,
@@ -74,8 +78,38 @@ const UpdateClient = () => {
         timeout: 2000,
         isClosing: true,
       });
+      queryClient.setQueryData(["clients", clientId], (old: IClient) => ({
+        ...old,
+        ...updatedClient,
+      }));
+      // when lagged update is reported, just clear all the queries data related to client list
+      queryClient.setQueriesData(
+        {
+          predicate: (query) =>
+            query.queryKey[0] === "clients" &&
+            typeof query.queryKey[1] === "object",
+        },
+        (old: PaginationResponse<IClient>) => {
+          if (Array.isArray(old?.data)) {
+            const newData = old.data.map((item) => {
+              if (item.id === clientId) {
+                return {
+                  ...item,
+                  ...updatedClient,
+                };
+              }
+              return item;
+            });
+            return {
+              ...old,
+              data: newData,
+            };
+          }
+          return old;
+        }
+      );
+
       navigate(`/clients/${updatedClient?.id}`);
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: () => {
       addToast({
@@ -88,6 +122,7 @@ const UpdateClient = () => {
   });
 
   const {
+    setValues,
     values,
     setFieldValue,
     handleSubmit,
@@ -121,10 +156,18 @@ const UpdateClient = () => {
       ? new Date(values.birthdate)
       : null;
 
+  useEffect(() => {
+    if (isLoading) return;
+    if (dataClient) {
+      setValues(initClient);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, dataClient]);
+
   if (!clientId) return <></>;
 
   return (
-    <div className="px-4 w-full">
+    <div className="container mx-auto mt-4">
       <div
         className="flex items-center gap-2 cursor-pointer"
         onClick={() => navigate(`/clients/${clientId}`)}

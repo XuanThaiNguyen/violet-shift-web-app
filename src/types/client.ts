@@ -17,6 +17,7 @@ export interface IClient {
   email?: string;
   religion?: string;
   nationality?: string;
+  languages?: string[];
   status: ClientStatus;
   salutation?: string;
 }
