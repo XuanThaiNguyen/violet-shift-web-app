@@ -41,7 +41,7 @@ const columns = [
     width: 240,
     className: "min-w-[240px]",
   },
-  { name: "Address", uid: "address", width: 240, className: "min-w-[240]" },
+  { name: "Address", uid: "address", width: 240, className: "min-w-[240px]" },
 ];
 
 const genderMap = genderOptions.reduce((acc, option) => {

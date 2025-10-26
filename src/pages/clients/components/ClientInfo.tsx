@@ -3,6 +3,7 @@ import {
   salutationTypeOptions,
 } from "@/constants/clientOptions";
 import { genderOptions } from "@/constants/userOptions";
+import { useGetLanguages } from "@/states/apis/languagues";
 import type { IClient } from "@/types/client";
 import { pad } from "@/utils/strings";
 import {
@@ -40,6 +41,8 @@ const ClientInfo = ({
   values,
   setFieldTouched,
 }: ClientInfoProps) => {
+  const { data: languages } = useGetLanguages();
+
   return (
     <form
       className="px-4 py-8 mx-auto shadow-lg rounded-lg bg-content1"
@@ -357,6 +360,39 @@ const ClientInfo = ({
             setFieldTouched("nationality", true);
           }}
         />
+      </div>
+      <div className="h-8"></div>
+      <div className="flex items-center">
+        <span className="flex-1">Languages:</span>
+        <Select
+          className="flex-5"
+          label=""
+          placeholder="Languages"
+          name="speakingLanguages"
+          isInvalid={!!errors.languages && touched.languages}
+          errorMessage={
+            errors.languages && touched.languages ? errors.phoneNumber : ""
+          }
+          selectionMode="multiple"
+          selectedKeys={
+            values.languages ? new Set(values.languages) : new Set()
+          }
+          onSelectionChange={(value) => {
+            const selected = Array.from(value);
+            setFieldValue("languages", selected as string[]);
+          }}
+          onBlur={() => {
+            setFieldTouched("languages", true);
+          }}
+        >
+          {languages
+            ? languages.map((language) => (
+                <SelectItem className="truncate" key={language.key}>
+                  {language.name}
+                </SelectItem>
+              ))
+            : null}
+        </Select>
       </div>
       <div className="h-8"></div>
       <div className="flex items-center">

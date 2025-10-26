@@ -1,7 +1,15 @@
 import api from "@/services/api/http";
 import { useMe } from "@/states/apis/me";
+import { useGetLanguages } from "@/states/apis/languagues";
 import { pad } from "@/utils/strings";
-import { addToast, Button, DatePicker, Input } from "@heroui/react";
+import {
+  addToast,
+  Button,
+  DatePicker,
+  Input,
+  Select,
+  SelectItem,
+} from "@heroui/react";
 import { CalendarDate } from "@internationalized/date";
 import { useQueryClient } from "@tanstack/react-query";
 import { isValid } from "date-fns";
@@ -18,6 +26,7 @@ interface ProfileSubmitValues {
   birthdate?: string;
   mobileNumber?: string;
   phoneNumber?: string;
+  languages?: string[];
 }
 
 const initialClientValues = {
@@ -45,6 +54,7 @@ const ProfileUpdate = () => {
   const queryClient = useQueryClient();
 
   const { data: profileUser } = useMe();
+  const { data: languages } = useGetLanguages();
   const init: ProfileSubmitValues = {
     ...initialClientValues,
     firstName: profileUser?.firstName,
@@ -89,7 +99,7 @@ const ProfileUpdate = () => {
       : null;
 
   return (
-    <div className="px-4 w-full">
+    <div className="container mx-auto mt-4">
       <div
         className="flex items-center gap-2 cursor-pointer"
         onClick={() => navigate("/profile")}
@@ -302,6 +312,47 @@ const ProfileUpdate = () => {
               profileFormik.setFieldTouched("phoneNumber", true);
             }}
           />
+        </div>
+        <div className="h-8"></div>
+        <div className="flex flex-col">
+          <span className="flex-1">Languages:</span>
+          <div className="h-2"></div>
+          <Select
+            label=""
+            placeholder="Languages"
+            name="speakingLanguages"
+            isInvalid={
+              !!profileFormik.errors.phoneNumber &&
+              profileFormik.touched.languages
+            }
+            errorMessage={
+              profileFormik.errors.languages &&
+              profileFormik.touched.phoneNumber
+                ? profileFormik.errors.phoneNumber
+                : ""
+            }
+            selectionMode="multiple"
+            selectedKeys={
+              profileFormik.values.languages
+                ? new Set(profileFormik.values.languages)
+                : new Set()
+            }
+            onSelectionChange={(value) => {
+              const selected = Array.from(value);
+              profileFormik.setFieldValue("languages", selected);
+            }}
+            onBlur={() => {
+              profileFormik.setFieldTouched("languages", true);
+            }}
+          >
+            {languages
+              ? languages.map((language) => (
+                  <SelectItem className="truncate" key={language.key}>
+                    {language.name}
+                  </SelectItem>
+                ))
+              : null}
+          </Select>
         </div>
         <div className="h-8"></div>
         <div className="flex justify-end">

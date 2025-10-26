@@ -5,7 +5,7 @@ import ProfilePassword from "./components/ProfilePassword";
 
 const Profile: FC = () => {
   return (
-    <div className="px-4">
+    <div className="container mx-auto mt-4">
       <div className="flex items-center gap-2">
         <Avatar
           className="w-8 h-8 rounded-full object-cover"

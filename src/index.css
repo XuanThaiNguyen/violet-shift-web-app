@@ -24,6 +24,15 @@
   }
 }
 
+
+.hidden-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Hide number input arrows */
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,

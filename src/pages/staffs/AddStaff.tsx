@@ -81,7 +81,7 @@ const AddStaff = () => {
         timeout: 2000,
         isClosing: true,
       });
-      queryClient.invalidateQueries({ queryKey: ["staffs"] });
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] === "staffs" });
       navigate("/staffs/list");
     },
     onError: () => {
