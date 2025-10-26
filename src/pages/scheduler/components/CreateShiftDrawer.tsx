@@ -2,7 +2,12 @@ import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
 import { useGetClients, type ClientFilter } from "@/states/apis/client";
 import { useGetFundingsByUser } from "@/states/apis/funding";
 import { useGetPrices } from "@/states/apis/prices";
-import { createNewShift, useGetShiftDetail } from "@/states/apis/shift";
+import {
+  createNewShift,
+  deleteShift,
+  useGetShiftDetail,
+  useGetStaffSchedulesByShift,
+} from "@/states/apis/shift";
 import { useStaffs } from "@/states/apis/staff";
 import type { IClient } from "@/types/client";
 import type { DateValue, IShiftValues, TimeValue } from "@/types/shift";
@@ -54,6 +59,7 @@ import {
 } from "../constant";
 import { getAllowanceTypeLabel, getShiftTypeLabel } from "../util";
 import MultiSelectAutocomplete from "./MultiSelectAutocomplete";
+import DeleteConfirm from "./DeleteConfirm";
 
 const initialValues = {
   clientSchedules: [],
@@ -112,6 +118,7 @@ const CreateShiftDrawer = ({
   isFromCreate,
 }: CreateShiftDrawerProps) => {
   const [isEdit, setIsEdit] = useState(mode === "add");
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -124,7 +131,20 @@ const CreateShiftDrawer = ({
         timeout: 2000,
         isClosing: true,
       });
-      queryClient.invalidateQueries({ queryKey: ["staffSchedules"] });
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const firstKey = query.queryKey[0];
+          const secondKey = query.queryKey[1];
+          if (firstKey === "staffSchedules") {
+            return (
+              staffSchedules?.some(
+                (schedule) => schedule.staff === secondKey
+              ) || false
+            );
+          }
+          return false;
+        },
+      });
       onClose();
     },
     onError: (error) => {
@@ -140,6 +160,61 @@ const CreateShiftDrawer = ({
       } else {
         addToast({
           title: "Add shift failed",
+          color: "danger",
+          timeout: 2000,
+          isClosing: true,
+        });
+      }
+    },
+  });
+
+  const {
+    data: dataShiftDetail,
+    isLoading,
+    isSuccess,
+  } = useGetShiftDetail(selectedShiftId);
+
+  const {
+    data: staffSchedules,
+    // isLoading: staffScheduleLoading,
+  } = useGetStaffSchedulesByShift(selectedShiftId || "");
+
+  const { mutate: mutateDeleteShift } = useMutation({
+    mutationFn: deleteShift,
+    onSuccess: () => {
+      addToast({
+        title: "Delete shift successfully",
+        color: "success",
+      });
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const firstKey = query.queryKey[0];
+          const secondKey = query.queryKey[1];
+          if (firstKey === "shiftDetail") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "staffSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "staffSchedules") {
+            return (
+              staffSchedules?.some(
+                (schedule) => schedule.staff === secondKey
+              ) || false
+            );
+          }
+          return false;
+        },
+      });
+      setIsDeleteConfirmOpen(false);
+      onClose();
+    },
+    onError: (error) => {
+      if (error instanceof AxiosError) {
+        const errorCode = error.response?.data?.code;
+        const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+        addToast({
+          title: msg,
           color: "danger",
           timeout: 2000,
           isClosing: true,
@@ -170,12 +245,6 @@ const CreateShiftDrawer = ({
     },
   });
 
-  const {
-    data: dataShiftDetail,
-    isLoading,
-    isSuccess,
-  } = useGetShiftDetail(selectedShiftId);
-
   useEffect(() => {
     if (dataShiftDetail && !isLoading && isSuccess) {
       setValues((prev) => ({ ...prev, ...dataShiftDetail }));
@@ -196,7 +265,7 @@ const CreateShiftDrawer = ({
   });
 
   const { data: dataPriceBooks } = useGetPrices();
-  const _dataPriceBooks = dataPriceBooks || [];
+  const _dataPriceBooks = dataPriceBooks || EMPTY_ARRAY;
 
   const { data: dataFunds } = useGetFundingsByUser({
     userId: values?.clientSchedules[0]?.client || "",
@@ -295,714 +364,738 @@ const CreateShiftDrawer = ({
     : null;
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      closeButton={<div></div>}
-      size="5xl"
-      onOpenChange={(open) => {
-        if (!open) {
-          setIsEdit(false);
-        }
-        onOpenChange?.(open);
-      }}
-    >
-      <DrawerContent>
-        {(onClose) => (
-          <>
-            <DrawerHeader className="flex items-center justify-between bg-conten1">
-              <div className="flex items-center gap-2">
-                {isEdit && !isFromCreate ? (
+    <>
+      <Drawer
+        isOpen={isOpen}
+        closeButton={<div></div>}
+        size="5xl"
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsEdit(false);
+          }
+          onOpenChange?.(open);
+        }}
+      >
+        <DrawerContent>
+          {(onClose) => (
+            <>
+              <DrawerHeader className="flex items-center justify-between bg-conten1">
+                <div className="flex items-center gap-2">
+                  {isEdit && !isFromCreate ? (
+                    <Button
+                      size="md"
+                      className="bg-content1 border-1 border-divider"
+                      startContent={<ArrowLeft size={16} />}
+                      onPress={() => setIsEdit(false)}
+                    >
+                      Go Back
+                    </Button>
+                  ) : (
+                    <></>
+                  )}
                   <Button
                     size="md"
                     className="bg-content1 border-1 border-divider"
-                    startContent={<ArrowLeft size={16} />}
-                    onPress={() => setIsEdit(false)}
-                  >
-                    Go Back
-                  </Button>
-                ) : (
-                  <></>
-                )}
-                <Button
-                  size="md"
-                  className="bg-content1 border-1 border-divider"
-                  startContent={<X size={16} />}
-                  onPress={() => {
-                    onClose();
-                    if (!isFromCreate) {
-                      setIsEdit(false);
-                    }
-                  }}
-                >
-                  Close
-                </Button>
-              </div>
-              <div className="flex items-center gap-2">
-                {isEdit ? (
-                  <Button
-                    size="md"
-                    color={"primary"}
-                    onPress={() => handleSubmit()}
-                    startContent={<Save size={16} />}
-                  >
-                    {isFromCreate ? "Save" : "Update"}
-                  </Button>
-                ) : (
-                  <Button
-                    size="md"
-                    color={"default"}
-                    onPress={() => setIsEdit(true)}
-                    startContent={<Edit size={16} />}
-                  >
-                    Edit
-                  </Button>
-                )}
-              </div>
-            </DrawerHeader>
-            <DrawerBody className="bg-background px-3">
-              <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                <div className="flex items-center gap-2">
-                  <Users size={20} color={"green"} />
-                  <span className="font-medium text-md">Client</span>
-                </div>
-                <div className="h-2"></div>
-                <Divider />
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Choose client</span>
-                  {isEdit ? (
-                    <Autocomplete
-                      size="sm"
-                      className="max-w-xs"
-                      onSelectionChange={(value) => {
-                        setValues((prev) => {
-                          const updatedClientSchedules = [
-                            ...prev.clientSchedules,
-                          ];
-
-                          if (updatedClientSchedules.length > 0) {
-                            updatedClientSchedules[0] = {
-                              ...updatedClientSchedules[0],
-                              client: value as string,
-                              fund: "",
-                              priceBook: "",
-                            };
-                          } else {
-                            updatedClientSchedules.push({
-                              client: value as string,
-                              timeFrom: null,
-                              timeTo: null,
-                              priceBook: "",
-                              fund: "",
-                            });
-                          }
-
-                          return {
-                            ...prev,
-                            clientSchedules: updatedClientSchedules,
-                          };
-                        });
-                      }}
-                      placeholder="Type to search client by name"
-                    >
-                      {clients.map((client: IClient) => {
-                        const _name = getDisplayName({
-                          firstName: client.firstName,
-                          lastName: client.lastName,
-                          preferredName: client.preferredName,
-                          salutation: client.salutation,
-                          middleName: client.middleName,
-                        });
-                        return (
-                          <AutocompleteItem key={client.id}>
-                            {_name}
-                          </AutocompleteItem>
-                        );
-                      })}
-                    </Autocomplete>
-                  ) : (
-                    <span className="font-medium text-md">{"Client here"}</span>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Price book</span>
-                  {isEdit ? (
-                    <Autocomplete
-                      size="sm"
-                      className="max-w-xs"
-                      placeholder="Select"
-                      onSelectionChange={(value) => {
-                        setValues((prev) => ({
-                          ...prev,
-                          clientSchedules: prev.clientSchedules.map(
-                            (item, index) =>
-                              index === 0
-                                ? { ...item, priceBook: value as string }
-                                : item
-                          ),
-                        }));
-                      }}
-                    >
-                      {_dataPriceBooks.map((pricebookItem) => (
-                        <AutocompleteItem key={pricebookItem.priceBookId}>
-                          {pricebookItem.priceBookTitle}
-                        </AutocompleteItem>
-                      ))}
-                    </Autocomplete>
-                  ) : (
-                    <span className="font-medium text-md">
-                      {"Price book here"}
-                    </span>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Funds</span>
-                  {isEdit ? (
-                    <Autocomplete
-                      size="sm"
-                      className="max-w-xs"
-                      placeholder="Select"
-                      onSelectionChange={(value) => {
-                        setValues((prev) => ({
-                          ...prev,
-                          clientSchedules: prev.clientSchedules.map(
-                            (item, index) =>
-                              index === 0
-                                ? { ...item, fund: value as string }
-                                : item
-                          ),
-                        }));
-                      }}
-                    >
-                      {_dataFunds.map((fundItem) => (
-                        <AutocompleteItem key={fundItem.id}>
-                          {fundItem.name}
-                        </AutocompleteItem>
-                      ))}
-                    </Autocomplete>
-                  ) : (
-                    <span className="font-medium text-md">{"Fund here"}</span>
-                  )}
-                </div>
-              </div>
-              <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                <div className="flex items-center gap-2">
-                  <UserCheck size={20} color={"black"} />
-                  <span className="font-medium text-md">Shift</span>
-                </div>
-                <div className="h-2"></div>
-                <Divider />
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Shift Type</span>
-                  {isEdit ? (
-                    <Autocomplete
-                      size="sm"
-                      className="max-w-xs"
-                      isClearable={false}
-                      defaultSelectedKey={
-                        values.shiftType
-                          ? values.shiftType
-                          : `${ShiftTypeOptions[0].key}`
+                    startContent={<X size={16} />}
+                    onPress={() => {
+                      onClose();
+                      if (!isFromCreate) {
+                        setIsEdit(false);
                       }
-                      onSelectionChange={(value) => {
+                    }}
+                  >
+                    Close
+                  </Button>
+                </div>
+                {isEdit ? (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="md"
+                      color={"primary"}
+                      onPress={() => handleSubmit()}
+                      startContent={<Save size={16} />}
+                    >
+                      {isFromCreate ? "Save" : "Update"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="md"
+                      color="danger"
+                      onPress={() => setIsDeleteConfirmOpen(true)}
+                    >
+                      Delete
+                    </Button>
+                    <Button
+                      size="md"
+                      color={"default"}
+                      onPress={() => setIsEdit(true)}
+                      startContent={<Edit size={16} />}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                )}
+              </DrawerHeader>
+              <DrawerBody className="bg-background px-3">
+                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+                  <div className="flex items-center gap-2">
+                    <Users size={20} color={"green"} />
+                    <span className="font-medium text-md">Client</span>
+                  </div>
+                  <div className="h-2"></div>
+                  <Divider />
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Choose client</span>
+                    {isEdit ? (
+                      <Autocomplete
+                        size="sm"
+                        className="max-w-xs"
+                        onSelectionChange={(value) => {
+                          setValues((prev) => {
+                            const updatedClientSchedules = [
+                              ...prev.clientSchedules,
+                            ];
+
+                            if (updatedClientSchedules.length > 0) {
+                              updatedClientSchedules[0] = {
+                                ...updatedClientSchedules[0],
+                                client: value as string,
+                                fund: "",
+                                priceBook: "",
+                              };
+                            } else {
+                              updatedClientSchedules.push({
+                                client: value as string,
+                                timeFrom: null,
+                                timeTo: null,
+                                priceBook: "",
+                                fund: "",
+                              });
+                            }
+
+                            return {
+                              ...prev,
+                              clientSchedules: updatedClientSchedules,
+                            };
+                          });
+                        }}
+                        placeholder="Type to search client by name"
+                      >
+                        {clients.map((client: IClient) => {
+                          const _name = getDisplayName({
+                            firstName: client.firstName,
+                            lastName: client.lastName,
+                            preferredName: client.preferredName,
+                            salutation: client.salutation,
+                            middleName: client.middleName,
+                          });
+                          return (
+                            <AutocompleteItem key={client.id}>
+                              {_name}
+                            </AutocompleteItem>
+                          );
+                        })}
+                      </Autocomplete>
+                    ) : (
+                      <span className="font-medium text-md">
+                        {"Client here"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Price book</span>
+                    {isEdit ? (
+                      <Autocomplete
+                        size="sm"
+                        className="max-w-xs"
+                        placeholder="Select"
+                        onSelectionChange={(value) => {
+                          setValues((prev) => ({
+                            ...prev,
+                            clientSchedules: prev.clientSchedules.map(
+                              (item, index) =>
+                                index === 0
+                                  ? { ...item, priceBook: value as string }
+                                  : item
+                            ),
+                          }));
+                        }}
+                      >
+                        {_dataPriceBooks.map((pricebookItem) => (
+                          <AutocompleteItem key={pricebookItem.id}>
+                            {pricebookItem.priceBookTitle}
+                          </AutocompleteItem>
+                        ))}
+                      </Autocomplete>
+                    ) : (
+                      <span className="font-medium text-md">
+                        {"Price book here"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Funds</span>
+                    {isEdit ? (
+                      <Autocomplete
+                        size="sm"
+                        className="max-w-xs"
+                        placeholder="Select"
+                        onSelectionChange={(value) => {
+                          setValues((prev) => ({
+                            ...prev,
+                            clientSchedules: prev.clientSchedules.map(
+                              (item, index) =>
+                                index === 0
+                                  ? { ...item, fund: value as string }
+                                  : item
+                            ),
+                          }));
+                        }}
+                      >
+                        {_dataFunds.map((fundItem) => (
+                          <AutocompleteItem key={fundItem.id}>
+                            {fundItem.name}
+                          </AutocompleteItem>
+                        ))}
+                      </Autocomplete>
+                    ) : (
+                      <span className="font-medium text-md">{"Fund here"}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+                  <div className="flex items-center gap-2">
+                    <UserCheck size={20} color={"black"} />
+                    <span className="font-medium text-md">Shift</span>
+                  </div>
+                  <div className="h-2"></div>
+                  <Divider />
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Shift Type</span>
+                    {isEdit ? (
+                      <Autocomplete
+                        size="sm"
+                        className="max-w-xs"
+                        isClearable={false}
+                        defaultSelectedKey={
+                          values.shiftType
+                            ? values.shiftType
+                            : `${ShiftTypeOptions[0].key}`
+                        }
+                        onSelectionChange={(value) => {
+                          setValues((prev) => ({
+                            ...prev,
+                            shiftType: value as string,
+                          }));
+                        }}
+                      >
+                        {ShiftTypeOptions.map((shiftItem) => (
+                          <AutocompleteItem key={shiftItem.key}>
+                            {shiftItem.label}
+                          </AutocompleteItem>
+                        ))}
+                      </Autocomplete>
+                    ) : (
+                      <span className="font-medium text-md">
+                        {getShiftTypeLabel(values.shiftType)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Additional Shift Types</span>
+                    {isEdit ? (
+                      <MultiSelectAutocomplete
+                        selectedOptionsKeys={values.additionalShiftTypes}
+                        options={ShiftTypeOptions}
+                        onChangeOptions={(values) => {
+                          setValues((prev) => ({
+                            ...prev,
+                            additionalShiftTypes: values,
+                          }));
+                        }}
+                      />
+                    ) : (
+                      <div className="max-w-md">
+                        <span className="font-medium text-md flex text-right">
+                          {values.additionalShiftTypes?.length
+                            ? values.additionalShiftTypes
+                                .map(getShiftTypeLabel)
+                                .join(", ")
+                            : EMPTY_STRING}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Allowance</span>
+                    {isEdit ? (
+                      <MultiSelectAutocomplete
+                        selectedOptionsKeys={values.allowances}
+                        options={AllowanceOptions}
+                        onChangeOptions={(values) => {
+                          setValues((prev) => ({
+                            ...prev,
+                            allowances: values,
+                          }));
+                        }}
+                      />
+                    ) : (
+                      <div className="max-w-md">
+                        <span className="font-medium text-md flex text-right">
+                          {values.allowances?.length
+                            ? values.allowances
+                                .map(getAllowanceTypeLabel)
+                                .join(", ")
+                            : EMPTY_STRING}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={20} color={"red"} />
+                    <span className="font-medium text-md">Time & Location</span>
+                  </div>
+                  <div className="h-2"></div>
+                  <Divider />
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Date</span>
+                    {isEdit ? (
+                      <DatePicker
+                        className="w-80"
+                        showMonthAndYearPickers
+                        label=""
+                        name="birthdate"
+                        value={values.timeFrom ? dateValue : null}
+                        onChange={(date: DateValue | null) => {
+                          if (date && date.year && date.month && date.day) {
+                            setDate(date);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="font-medium text-md">
+                        {format(
+                          fromUnixTime(values.timeFrom! / 1000),
+                          "EEE, dd MMMM yyyy"
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Time</span>
+                    {isEdit ? (
+                      <div className="flex items-center gap-2">
+                        <TimeInput
+                          className="w-40"
+                          label=""
+                          name="birthdate"
+                          value={values.timeFrom ? timeFrom : null}
+                          onChange={(time) => {
+                            setStartTime(time);
+                          }}
+                        />
+                        -
+                        <TimeInput
+                          className="w-40"
+                          label=""
+                          name="birthdate"
+                          value={values.timeTo ? timeTo : null}
+                          onChange={(time) => {
+                            setEndTime(time);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <span className="font-medium text-md">
+                        {formatTimeRange(
+                          values.timeFrom! / 1000,
+                          values.timeTo! / 1000
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Address</span>
+                    {isEdit ? (
+                      <Input
+                        label=""
+                        type="text"
+                        placeholder="Enter Address"
+                        name="address"
+                        className="w-80"
+                        value={values.address}
+                        onValueChange={(value) => {
+                          setValues((prev) => ({ ...prev, address: value }));
+                        }}
+                      />
+                    ) : (
+                      <div className="max-w-md">
+                        <span className="font-medium text-md text-right">
+                          {values.address}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Unit/Apartment Number</span>
+                    {isEdit ? (
+                      <Input
+                        label=""
+                        type="text"
+                        placeholder="Enter Unit/Apartment Number"
+                        name="unitNumber"
+                        className="w-80"
+                        value={values.unitNumber}
+                        onValueChange={(value) => {
+                          setValues((prev) => ({ ...prev, unitNumber: value }));
+                        }}
+                      />
+                    ) : (
+                      <span className="font-medium text-md">
+                        {values.unitNumber}
+                      </span>
+                    )}
+                  </div>
+                  {isEdit && (
+                    <>
+                      <div className="h-4"></div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Shift Bonus</span>
+                        <Switch
+                          isSelected={isBonus}
+                          onChange={() => setIsBonus(!isBonus)}
+                        />
+                      </div>
+                    </>
+                  )}
+                  {isEdit && isBonus && (
+                    <>
+                      <div className="h-4"></div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Bonus Amount</span>
+                        <Input
+                          label=""
+                          type="number"
+                          placeholder="Enter Bonus Amount"
+                          startContent={
+                            <span className="text-default-400 text-small">
+                              $
+                            </span>
+                          }
+                          name="bonus"
+                          className="w-80"
+                          value={values.bonus}
+                          onValueChange={(value) => {
+                            setValues((prev) => ({ ...prev, bonus: value }));
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                  {!isEdit ? (
+                    <>
+                      <div className="h-4"></div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Bonus Amount</span>
+                        <span className="font-medium text-md">
+                          ${values.bonus || 0}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <></>
+                  )}
+                </div>
+                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+                  <div className="flex items-center gap-2">
+                    <UserIcon size={20} color={"blue"} />
+                    <span className="font-medium text-md">Carer</span>
+                  </div>
+                  <div className="h-2"></div>
+                  <Divider />
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Choose carer</span>
+                    {isEdit ? (
+                      <Autocomplete
+                        size="sm"
+                        className="max-w-xs"
+                        onSelectionChange={(value) => {
+                          setValues((prev) => {
+                            const updatedStaffSchedules = [
+                              ...prev.staffSchedules,
+                            ];
+
+                            if (updatedStaffSchedules.length > 0) {
+                              updatedStaffSchedules[0] = {
+                                ...updatedStaffSchedules[0],
+                                staff: value as string,
+                              };
+                            } else {
+                              updatedStaffSchedules.push({
+                                staff: value as string,
+                                timeFrom: null,
+                                timeTo: null,
+                                paymentMethod: PayMethodOptions[0].key,
+                              });
+                            }
+
+                            return {
+                              ...prev,
+                              staffSchedules: updatedStaffSchedules,
+                            };
+                          });
+                        }}
+                        placeholder="Type to search carer by name"
+                      >
+                        {carers.map((client: User) => {
+                          const _name = getDisplayName({
+                            firstName: client.firstName,
+                            lastName: client.lastName,
+                            preferredName: client.preferredName,
+                            salutation: client.salutation,
+                            middleName: client.middleName,
+                          });
+                          return (
+                            <AutocompleteItem key={client.id}>
+                              {_name}
+                            </AutocompleteItem>
+                          );
+                        })}
+                      </Autocomplete>
+                    ) : (
+                      <span className="font-medium text-md">
+                        {"Staff Here"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Choose pay group</span>
+                    {isEdit ? (
+                      <Autocomplete
+                        size="sm"
+                        className="max-w-xs"
+                        placeholder="Select"
+                        defaultSelectedKey={`${PayMethodOptions[0].key}`}
+                        onValueChange={(value) => {
+                          setValues((prev) => {
+                            const updatedStaffSchedules = [
+                              ...prev.staffSchedules,
+                            ];
+
+                            if (updatedStaffSchedules.length > 0) {
+                              updatedStaffSchedules[0] = {
+                                ...updatedStaffSchedules[0],
+                                paymentMethod: value as string,
+                              };
+                            } else {
+                              updatedStaffSchedules.push({
+                                staff: null,
+                                timeFrom: null,
+                                timeTo: null,
+                                paymentMethod: PayMethodOptions[0].key,
+                              });
+                            }
+
+                            return {
+                              ...prev,
+                              staffSchedules: updatedStaffSchedules,
+                            };
+                          });
+                        }}
+                      >
+                        {PayMethodOptions.map((payGroupItem) => (
+                          <AutocompleteItem key={payGroupItem.key}>
+                            {payGroupItem.label}
+                          </AutocompleteItem>
+                        ))}
+                      </Autocomplete>
+                    ) : (
+                      <span className="font-medium text-md">
+                        {"Payment method here"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+                  <div className="flex items-center gap-2">
+                    <ClipboardList size={20} color={"pink"} />
+                    <span className="font-medium text-md">Tasks</span>
+                  </div>
+                  <div className="h-2"></div>
+                  <Divider />
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        label=""
+                        type="text"
+                        className="w-80"
+                        value={task.name}
+                        onValueChange={(value) => {
+                          setTask((prev) => ({ ...prev, name: value }));
+                        }}
+                      />
+                      <Checkbox
+                        isSelected={task.isMandatory}
+                        onValueChange={(value) =>
+                          setTask((prev) => ({ ...prev, isMandatory: value }))
+                        }
+                      >
+                        Mandatory
+                      </Checkbox>
+                    </div>
+                    <Button
+                      color="primary"
+                      isDisabled={!task.name}
+                      size="sm"
+                      onPress={() => {
                         setValues((prev) => ({
                           ...prev,
-                          shiftType: value as string,
+                          tasks: [...prev.tasks, task],
                         }));
+                        setTask({
+                          name: "",
+                          isMandatory: false,
+                        });
                       }}
                     >
-                      {ShiftTypeOptions.map((shiftItem) => (
-                        <AutocompleteItem key={shiftItem.key}>
-                          {shiftItem.label}
-                        </AutocompleteItem>
-                      ))}
-                    </Autocomplete>
+                      <p className={`text-bold text-md capitalize`}>Add</p>
+                    </Button>
+                  </div>
+                  <div className="h-2"></div>
+                  {values.tasks.length === 0 ? (
+                    <></>
                   ) : (
-                    <span className="font-medium text-md">
-                      {getShiftTypeLabel(values.shiftType)}
-                    </span>
+                    values.tasks.map((_task, index) => (
+                      <div
+                        key={`${_task.name}-${index}`}
+                        className="flex items-center justify-between py-2"
+                      >
+                        <span className="flex-1">{_task.name}</span>
+                        <div className="flex items-center gap-8">
+                          <span className="justify-start">
+                            <span className="font-semibold">Mandatory: </span>
+                            {_task.isMandatory ? "Yes" : "No"}
+                          </span>
+                          <Button
+                            color="danger"
+                            size="sm"
+                            onPress={() => {
+                              setValues((prev) => ({
+                                ...prev,
+                                tasks: prev.tasks.filter((_, i) => i !== index),
+                              }));
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
-                <div className="h-4"></div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Additional Shift Types</span>
-                  {isEdit ? (
-                    <MultiSelectAutocomplete
-                      selectedOptionsKeys={values.additionalShiftTypes}
-                      options={ShiftTypeOptions}
-                      onChangeOptions={(values) => {
-                        setValues((prev) => ({
-                          ...prev,
-                          additionalShiftTypes: values,
-                        }));
-                      }}
-                    />
-                  ) : (
-                    <div className="max-w-md">
-                      <span className="font-medium text-md flex text-right">
-                        {values.additionalShiftTypes?.length
-                          ? values.additionalShiftTypes
-                              .map(getShiftTypeLabel)
-                              .join(", ")
-                          : EMPTY_STRING}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Allowance</span>
-                  {isEdit ? (
-                    <MultiSelectAutocomplete
-                      selectedOptionsKeys={values.allowances}
-                      options={AllowanceOptions}
-                      onChangeOptions={(values) => {
-                        setValues((prev) => ({
-                          ...prev,
-                          allowances: values,
-                        }));
-                      }}
-                    />
-                  ) : (
-                    <div className="max-w-md">
-                      <span className="font-medium text-md flex text-right">
-                        {values.allowances?.length
-                          ? values.allowances
-                              .map(getAllowanceTypeLabel)
-                              .join(", ")
-                          : EMPTY_STRING}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                <div className="flex items-center gap-2">
-                  <Calendar size={20} color={"red"} />
-                  <span className="font-medium text-md">Time & Location</span>
-                </div>
-                <div className="h-2"></div>
-                <Divider />
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Date</span>
-                  {isEdit ? (
-                    <DatePicker
-                      className="w-80"
-                      showMonthAndYearPickers
-                      label=""
-                      name="birthdate"
-                      value={values.timeFrom ? dateValue : null}
-                      onChange={(date: DateValue | null) => {
-                        if (date && date.year && date.month && date.day) {
-                          setDate(date);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <span className="font-medium text-md">
-                      {format(
-                        fromUnixTime(values.timeFrom! / 1000),
-                        "EEE, dd MMMM yyyy"
-                      )}
-                    </span>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Time</span>
-                  {isEdit ? (
-                    <div className="flex items-center gap-2">
-                      <TimeInput
-                        className="w-40"
-                        label=""
-                        name="birthdate"
-                        value={values.timeFrom ? timeFrom : null}
-                        onChange={(time) => {
-                          setStartTime(time);
-                        }}
-                      />
-                      -
-                      <TimeInput
-                        className="w-40"
-                        label=""
-                        name="birthdate"
-                        value={values.timeTo ? timeTo : null}
-                        onChange={(time) => {
-                          setEndTime(time);
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <span className="font-medium text-md">
-                      {formatTimeRange(
-                        values.timeFrom! / 1000,
-                        values.timeTo! / 1000
-                      )}
-                    </span>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Address</span>
-                  {isEdit ? (
-                    <Input
-                      label=""
-                      type="text"
-                      placeholder="Enter Address"
-                      name="address"
-                      className="w-80"
-                      value={values.address}
-                      onValueChange={(value) => {
-                        setValues((prev) => ({ ...prev, address: value }));
-                      }}
-                    />
-                  ) : (
-                    <div className="max-w-md">
-                      <span className="font-medium text-md text-right">
-                        {values.address}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Unit/Apartment Number</span>
-                  {isEdit ? (
-                    <Input
-                      label=""
-                      type="text"
-                      placeholder="Enter Unit/Apartment Number"
-                      name="unitNumber"
-                      className="w-80"
-                      value={values.unitNumber}
-                      onValueChange={(value) => {
-                        setValues((prev) => ({ ...prev, unitNumber: value }));
-                      }}
-                    />
-                  ) : (
-                    <span className="font-medium text-md">
-                      {values.unitNumber}
-                    </span>
-                  )}
-                </div>
-                {isEdit && (
-                  <>
-                    <div className="h-4"></div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Shift Bonus</span>
-                      <Switch
-                        isSelected={isBonus}
-                        onChange={() => setIsBonus(!isBonus)}
-                      />
-                    </div>
-                  </>
-                )}
-                {isEdit && isBonus && (
-                  <>
-                    <div className="h-4"></div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Bonus Amount</span>
+                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+                  <div className="flex items-center gap-2">
+                    <Milestone size={20} color={"green"} />
+                    <span className="font-medium text-md">Mileage</span>
+                  </div>
+                  <div className="h-2"></div>
+                  <Divider />
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Mileage cap</span>
+                    {isEdit ? (
                       <Input
                         label=""
                         type="number"
-                        placeholder="Enter Bonus Amount"
-                        startContent={
-                          <span className="text-default-400 text-small">$</span>
-                        }
-                        name="bonus"
+                        name="mileageCap"
                         className="w-80"
-                        value={values.bonus}
+                        defaultValue="0"
+                        value={values.mileageCap}
                         onValueChange={(value) => {
-                          setValues((prev) => ({ ...prev, bonus: value }));
+                          setValues((prev) => ({ ...prev, mileageCap: value }));
                         }}
                       />
-                    </div>
-                  </>
-                )}
-                {!isEdit ? (
-                  <>
-                    <div className="h-4"></div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Bonus Amount</span>
+                    ) : (
                       <span className="font-medium text-md">
-                        ${values.bonus || 0}
+                        {values.mileageCap}Km
                       </span>
-                    </div>
-                  </>
-                ) : (
-                  <></>
-                )}
-              </div>
-              <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                <div className="flex items-center gap-2">
-                  <UserIcon size={20} color={"blue"} />
-                  <span className="font-medium text-md">Carer</span>
-                </div>
-                <div className="h-2"></div>
-                <Divider />
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Choose carer</span>
-                  {isEdit ? (
-                    <Autocomplete
-                      size="sm"
-                      className="max-w-xs"
-                      onSelectionChange={(value) => {
-                        setValues((prev) => {
-                          const updatedStaffSchedules = [
-                            ...prev.staffSchedules,
-                          ];
-
-                          if (updatedStaffSchedules.length > 0) {
-                            updatedStaffSchedules[0] = {
-                              ...updatedStaffSchedules[0],
-                              staff: value as string,
-                            };
-                          } else {
-                            updatedStaffSchedules.push({
-                              staff: value as string,
-                              timeFrom: null,
-                              timeTo: null,
-                              paymentMethod: PayMethodOptions[0].key,
-                            });
-                          }
-
-                          return {
-                            ...prev,
-                            staffSchedules: updatedStaffSchedules,
-                          };
-                        });
-                      }}
-                      placeholder="Type to search carer by name"
-                    >
-                      {carers.map((client: User) => {
-                        const _name = getDisplayName({
-                          firstName: client.firstName,
-                          lastName: client.lastName,
-                          preferredName: client.preferredName,
-                          salutation: client.salutation,
-                          middleName: client.middleName,
-                        });
-                        return (
-                          <AutocompleteItem key={client.id}>
-                            {_name}
-                          </AutocompleteItem>
-                        );
-                      })}
-                    </Autocomplete>
-                  ) : (
-                    <span className="font-medium text-md">{"Staff Here"}</span>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Choose pay group</span>
-                  {isEdit ? (
-                    <Autocomplete
-                      size="sm"
-                      className="max-w-xs"
-                      placeholder="Select"
-                      defaultSelectedKey={`${PayMethodOptions[0].key}`}
-                      onValueChange={(value) => {
-                        setValues((prev) => {
-                          const updatedStaffSchedules = [
-                            ...prev.staffSchedules,
-                          ];
-
-                          if (updatedStaffSchedules.length > 0) {
-                            updatedStaffSchedules[0] = {
-                              ...updatedStaffSchedules[0],
-                              paymentMethod: value as string,
-                            };
-                          } else {
-                            updatedStaffSchedules.push({
-                              staff: null,
-                              timeFrom: null,
-                              timeTo: null,
-                              paymentMethod: PayMethodOptions[0].key,
-                            });
-                          }
-
-                          return {
-                            ...prev,
-                            staffSchedules: updatedStaffSchedules,
-                          };
-                        });
-                      }}
-                    >
-                      {PayMethodOptions.map((payGroupItem) => (
-                        <AutocompleteItem key={payGroupItem.key}>
-                          {payGroupItem.label}
-                        </AutocompleteItem>
-                      ))}
-                    </Autocomplete>
-                  ) : (
-                    <span className="font-medium text-md">
-                      {"Payment method here"}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                <div className="flex items-center gap-2">
-                  <ClipboardList size={20} color={"pink"} />
-                  <span className="font-medium text-md">Tasks</span>
-                </div>
-                <div className="h-2"></div>
-                <Divider />
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Input
-                      label=""
-                      type="text"
-                      className="w-80"
-                      value={task.name}
-                      onValueChange={(value) => {
-                        setTask((prev) => ({ ...prev, name: value }));
-                      }}
-                    />
-                    <Checkbox
-                      isSelected={task.isMandatory}
-                      onValueChange={(value) =>
-                        setTask((prev) => ({ ...prev, isMandatory: value }))
-                      }
-                    >
-                      Mandatory
-                    </Checkbox>
+                    )}
                   </div>
-                  <Button
-                    color="primary"
-                    isDisabled={!task.name}
-                    size="sm"
-                    onPress={() => {
-                      setValues((prev) => ({
-                        ...prev,
-                        tasks: [...prev.tasks, task],
-                      }));
-                      setTask({
-                        name: "",
-                        isMandatory: false,
-                      });
-                    }}
-                  >
-                    <p className={`text-bold text-md capitalize`}>Add</p>
-                  </Button>
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Mileage</span>
+                    {isEdit ? (
+                      <Input
+                        label=""
+                        type="number"
+                        name="mileage"
+                        className="w-80"
+                        defaultValue="0"
+                        value={values.mileage}
+                        onValueChange={(value) => {
+                          setValues((prev) => ({ ...prev, mileage: value }));
+                        }}
+                      />
+                    ) : (
+                      <span className="font-medium text-md">
+                        {values.mileage}Km
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-4"></div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Company Vehicle</span>
+                    {isEdit ? (
+                      <Switch
+                        isSelected={values.isCompanyVehicle}
+                        onValueChange={(value) =>
+                          setValues((prev) => ({
+                            ...prev,
+                            isCompanyVehicle: value,
+                          }))
+                        }
+                      />
+                    ) : (
+                      <span className="font-medium text-md">
+                        {values.isCompanyVehicle ? "Yes" : "No"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-2"></div>
                 </div>
+              </DrawerBody>
+              <DrawerFooter className="bg-background">
                 <div className="h-2"></div>
-                {values.tasks.length === 0 ? (
-                  <></>
-                ) : (
-                  values.tasks.map((_task, index) => (
-                    <div
-                      key={`${_task.name}-${index}`}
-                      className="flex items-center justify-between py-2"
-                    >
-                      <span className="flex-1">{_task.name}</span>
-                      <div className="flex items-center gap-8">
-                        <span className="justify-start">
-                          <span className="font-semibold">Mandatory: </span>
-                          {_task.isMandatory ? "Yes" : "No"}
-                        </span>
-                        <Button
-                          color="danger"
-                          size="sm"
-                          onPress={() => {
-                            setValues((prev) => ({
-                              ...prev,
-                              tasks: prev.tasks.filter((_, i) => i !== index),
-                            }));
-                          }}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                <div className="flex items-center gap-2">
-                  <Milestone size={20} color={"green"} />
-                  <span className="font-medium text-md">Mileage</span>
-                </div>
-                <div className="h-2"></div>
-                <Divider />
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Mileage cap</span>
-                  {isEdit ? (
-                    <Input
-                      label=""
-                      type="number"
-                      name="mileageCap"
-                      className="w-80"
-                      defaultValue="0"
-                      value={values.mileageCap}
-                      onValueChange={(value) => {
-                        setValues((prev) => ({ ...prev, mileageCap: value }));
-                      }}
-                    />
-                  ) : (
-                    <span className="font-medium text-md">
-                      {values.mileageCap}Km
-                    </span>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Mileage</span>
-                  {isEdit ? (
-                    <Input
-                      label=""
-                      type="number"
-                      name="mileage"
-                      className="w-80"
-                      defaultValue="0"
-                      value={values.mileage}
-                      onValueChange={(value) => {
-                        setValues((prev) => ({ ...prev, mileage: value }));
-                      }}
-                    />
-                  ) : (
-                    <span className="font-medium text-md">
-                      {values.mileage}Km
-                    </span>
-                  )}
-                </div>
-                <div className="h-4"></div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Company Vehicle</span>
-                  {isEdit ? (
-                    <Switch
-                      isSelected={values.isCompanyVehicle}
-                      onValueChange={(value) =>
-                        setValues((prev) => ({
-                          ...prev,
-                          isCompanyVehicle: value,
-                        }))
-                      }
-                    />
-                  ) : (
-                    <span className="font-medium text-md">
-                      {values.isCompanyVehicle ? "Yes" : "No"}
-                    </span>
-                  )}
-                </div>
-                <div className="h-2"></div>
-              </div>
-            </DrawerBody>
-            <DrawerFooter className="bg-background">
-              <div className="h-2"></div>
-            </DrawerFooter>
-          </>
-        )}
-      </DrawerContent>
-    </Drawer>
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
+      <DeleteConfirm
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={async () => {
+          await mutateDeleteShift(selectedShiftId || "");
+        }}
+      />
+    </>
   );
 };
 

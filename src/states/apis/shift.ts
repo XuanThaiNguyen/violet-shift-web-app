@@ -10,6 +10,11 @@ export const createNewShift = async (values: IAddShift) => {
   return res.data;
 };
 
+export const deleteShift = async (shiftId: string) => {
+  const res = await api.delete(`/api/v1/shifts/${shiftId}`);
+  return res.data;
+};
+
 export const useGetSchedulesByStaffId = (
   staffId: string,
   from?: number | null,
@@ -22,6 +27,23 @@ export const useGetSchedulesByStaffId = (
         params: { from, to },
       }),
     enabled: !!localStorage.getItem("auth_token") && !!staffId,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  });
+
+  return schedulesByStaffId;
+};
+
+export const useGetStaffSchedulesByShift = (
+  shiftId: string
+) => {
+  const schedulesByStaffId = useQuery<IGetStaffSchedule[]>({
+    queryKey: ["staffSchedulesByShift", shiftId],
+    queryFn: () =>
+      api.get(`/api/v1/shifts/${shiftId}/staff-schedules`),
+    enabled: !!localStorage.getItem("auth_token") && !!shiftId,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

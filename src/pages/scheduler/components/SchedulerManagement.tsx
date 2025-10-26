@@ -8,6 +8,8 @@ import SchedulerManagementItem from "./SchedulerManagementItem";
 import type { User } from "@/types/user";
 import { getDisplayName } from "@/utils/strings";
 import { convertDateToMs } from "@/utils/datetime";
+import { ROLE_IDS } from "@/constants/roles";
+import { useDebounceValue } from "usehooks-ts";
 
 interface SchedulerManagementProps {
   viewMode: ViewMode;
@@ -15,12 +17,20 @@ interface SchedulerManagementProps {
 }
 
 const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
-  const { data: dataStaffs } = useStaffs({ limit: 50 });
-
-  const _dataStaffs = dataStaffs?.data || EMPTY_ARRAY;
-
+  const [query, setQuery] = useDebounceValue<string>("", 300);
   const [from, setFrom] = useState<number | null>(null);
   const [to, setTo] = useState<number | null>(null);
+
+  const queryParams = useMemo(() => {
+    return {
+      limit: 50,
+      roles: [ROLE_IDS.CARER],
+      query: query,
+    };
+  }, [query]);
+
+  const { data: dataStaffs } = useStaffs(queryParams);
+  const _dataStaffs = dataStaffs?.data || EMPTY_ARRAY;
 
   useEffect(() => {
     if (dates && dates.length === 0) return;
@@ -91,6 +101,7 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
               type="text"
               placeholder="Search by team, staff..."
               className="w-full px-3 py-2 border rounded-lg text-sm"
+              onChange={(e) => setQuery(e.target.value)}
             />
           </div>
 
