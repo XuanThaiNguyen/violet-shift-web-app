@@ -24,6 +24,10 @@ const ProfileUpdate = lazy(() => import("@/pages/profile/ProfileUpdate"));
 const Scheduler = lazy(() => import("@/pages/scheduler/Scheduler"));
 const StaffList = lazy(() => import("@/pages/staffs/StaffList"));
 const AddStaff = lazy(() => import("@/pages/staffs/AddStaff"));
+const StaffProfile = lazy(() => import("@/pages/staffs/StaffProfile"));
+const StaffArchivedList = lazy(
+  () => import("@/pages/staffs/StaffArchivedList")
+);
 const ClientList = lazy(() => import("@/pages/clients/ClientList"));
 const AddClient = lazy(() => import("@/pages/clients/AddClient"));
 const UpdateClient = lazy(() => import("@/pages/clients/UpdateClient"));
@@ -65,6 +69,7 @@ export const router = createBrowserRouter([
         ]),
         children: [
           { path: "list", Component: StaffList },
+          { path: "archived", Component: StaffArchivedList },
           { path: "new", Component: AddStaff },
         ],
       },
@@ -82,6 +87,7 @@ export const router = createBrowserRouter([
         Component: PrivateModule([ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR]),
         children: [{ path: "prices", Component: AccountPrices }],
       },
+      { path: "staffs/:id", Component: StaffProfile },
       { path: "clients/:id", Component: ClientProfile },
       { path: "clients/:id/update", Component: UpdateClient },
       { path: "*", Component: NotFound },

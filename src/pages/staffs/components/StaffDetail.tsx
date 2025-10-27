@@ -1,6 +1,9 @@
 import { EMPTY_STRING } from "@/constants/empty";
-import { usePostArchiveClient } from "@/states/apis/client";
-import type { IClient } from "@/types/client";
+import { ROLES } from "@/constants/roles";
+import ArchiveModal from "@/pages/clients/components/ArchiveModal";
+import { useMe } from "@/states/apis/me";
+import { usePostArchiveStaff } from "@/states/apis/staff";
+import type { User } from "@/types/user";
 import { capitalizeFirstLetter } from "@/utils/strings";
 import {
   addToast,
@@ -13,41 +16,40 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isValid } from "date-fns";
 import { Camera, Mail, Phone, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router";
-import ArchiveModal from "./ArchiveModal";
-import ClientFunding from "./ClientFunding";
 
-interface ClientDetailProps {
-  clientId: string;
-  detailClient?: IClient;
-  clientName: string;
+interface StaffDetailProps {
+  staffId: string;
+  detailStaff?: User;
+  staffName: string;
 }
 
-const ClientDetail = ({
-  clientId,
-  detailClient,
-  clientName = "",
-}: ClientDetailProps) => {
-  const navigate = useNavigate();
-
+const StaffDetail = ({
+  detailStaff,
+  staffName = "",
+  staffId,
+}: StaffDetailProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  const { data: user } = useMe();
+
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
-    mutationFn: usePostArchiveClient,
+    mutationFn: usePostArchiveStaff,
     onSuccess: () => {
       addToast({
-        title: "Update client successfully",
+        title: "Update staff successfully",
         color: "success",
         timeout: 2000,
         isClosing: true,
       });
-      navigate("/clients/list");
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      navigate("/staffs/list");
+      queryClient.invalidateQueries({ queryKey: ["staffs"] });
     },
     onError: () => {
       addToast({
-        title: "Update client failed",
+        title: "Update staff failed",
         color: "danger",
         timeout: 2000,
         isClosing: true,
@@ -56,76 +58,56 @@ const ClientDetail = ({
   });
 
   const handleConfirm = () => {
-    mutate({ id: clientId, isArchived: true });
+    mutate({ id: staffId, isArchived: true });
     onClose();
   };
 
   return (
     <div>
       <div className="p-4 w-full mx-auto shadow-lg rounded-lg bg-content1">
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-medium">Demographic Detail</span>
-          <div
-            className="cursor-pointer"
-            onClick={() => {
-              navigate(`/clients/${clientId}/update`);
-            }}
-          >
-            <span className="text-blue-400 text-md font-medium">EDIT</span>
-          </div>
-        </div>
+        <span className="text-2xl font-medium">Demographic Detail</span>
         <div className="h-4"></div>
         <Divider />
         <div className="h-4"></div>
         <div className="flex">
           <div className="flex-1 grid grid-cols-[320px_1fr] gap-y-4 text-gray-700">
             <span className="text-gray-500 text-md">Name:</span>
-            <span className="text-md font-semibold">{clientName}</span>
+            <span className="text-md font-semibold">{staffName}</span>
+            <span className="text-gray-500 text-md">Role:</span>
+            <span className="text-md font-semibold">
+              {ROLES[detailStaff?.role as keyof typeof ROLES]}
+            </span>
             <span className="font-medium text-gray-500">Contact:</span>
             <div className="flex items-center gap-4">
               <Smartphone size={16} className="text-gray-400" />{" "}
               <span className="text-md font-semibold">
-                {detailClient?.mobileNumber || EMPTY_STRING}
+                {detailStaff?.mobileNumber || EMPTY_STRING}
               </span>
               <Phone size={16} className="text-gray-400" />{" "}
               <span className="text-md font-semibold">
-                {detailClient?.phoneNumber || EMPTY_STRING}
+                {detailStaff?.phoneNumber || EMPTY_STRING}
               </span>
               <Mail size={16} className="text-gray-400" />{" "}
               <span className="text-md font-semibold">
-                {detailClient?.email || EMPTY_STRING}
+                {detailStaff?.email || EMPTY_STRING}
               </span>
             </div>
             <span className="text-gray-500 text-md">Address:</span>
             <span className="text-md font-semibold">
-              {detailClient?.address || EMPTY_STRING}
+              {detailStaff?.address || EMPTY_STRING}
             </span>
             <span className="text-gray-500 text-md">Gender:</span>
             <span className="text-md font-semibold">
-              {detailClient?.gender
-                ? capitalizeFirstLetter(detailClient.gender)
+              {detailStaff?.gender
+                ? capitalizeFirstLetter(detailStaff.gender)
                 : EMPTY_STRING}
             </span>
             <span className="text-gray-500 text-md">DOB:</span>
             <span className="text-md font-semibold">
-              {detailClient?.birthdate &&
-              isValid(new Date(detailClient.birthdate))
-                ? format(detailClient?.birthdate, "dd-MM-yyyy")
+              {detailStaff?.birthdate &&
+              isValid(new Date(detailStaff.birthdate))
+                ? format(detailStaff?.birthdate, "dd-MM-yyyy")
                 : EMPTY_STRING}
-            </span>
-            <span className="text-gray-500 text-md">Maritial Status:</span>
-            <span className="text-md font-semibold">
-              {detailClient?.maritalStatus
-                ? capitalizeFirstLetter(detailClient.maritalStatus)
-                : EMPTY_STRING}
-            </span>
-            <span className="text-gray-500 text-md">Religion:</span>
-            <span className="text-md font-semibold">
-              {detailClient?.religion || EMPTY_STRING}
-            </span>
-            <span className="text-gray-500 text-md">Nationality:</span>
-            <span className="text-md font-semibold">
-              {detailClient?.nationality || EMPTY_STRING}
             </span>
             <span className="text-gray-500 text-md">Language Spoken:</span>
             <span className="">{EMPTY_STRING}</span>
@@ -143,33 +125,37 @@ const ClientDetail = ({
           </div>
         </div>
       </div>
-      <div className="h-8"></div>
-      <ClientFunding clientId={clientId} />
-      <div className="h-8"></div>
-      <span>Archive Client</span>
-      <div className="h-4"></div>
-      <div className="p-4 w-full mx-auto shadow-lg rounded-lg bg-content1">
-        <span className="text-sm text-gray-500">
-          This will archive the client and you will not able to see client in
-          your list. If you do wish to access the client, please go to Archive
-          sub-menu.
-        </span>
-        <div className="h-4"></div>
-        <Button onPress={onOpen} size="sm" color="danger">
-          Archive Client
-        </Button>
-      </div>
+      {staffId === user?.id ? (
+        <></>
+      ) : (
+        <>
+          <div className="h-8"></div>
+          <span>Archive Staff</span>
+          <div className="h-4"></div>
+          <div className="p-4 w-full mx-auto shadow-lg rounded-lg bg-content1">
+            <span className="text-sm text-gray-500">
+              This will archive the staff and you will not able to see staff in
+              your list. If you do wish to access the staff, please go to
+              Archive sub-menu.
+            </span>
+            <div className="h-4"></div>
+            <Button onPress={onOpen} size="sm" color="danger">
+              Archive Staff
+            </Button>
+          </div>
+        </>
+      )}
 
       <ArchiveModal
-        mode={"client"}
+        mode={"staff"}
         isOpen={isOpen}
         isPending={isPending}
         onClose={onClose}
         onConfirm={handleConfirm}
-        clientName={detailClient?.preferredName || ""}
+        clientName={detailStaff?.preferredName || ""}
       />
     </div>
   );
 };
 
-export default ClientDetail;
+export default StaffDetail;
