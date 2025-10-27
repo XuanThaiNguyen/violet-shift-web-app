@@ -33,6 +33,7 @@ export interface ITask {
 }
 
 export interface IClientSchedule {
+  id?: string;
   client: string | null;
   timeFrom: number | null;
   timeTo: number | null;

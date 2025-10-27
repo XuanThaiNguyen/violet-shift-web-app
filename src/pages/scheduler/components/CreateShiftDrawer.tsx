@@ -9,7 +9,6 @@ import {
   useGetStaffSchedulesByShift,
 } from "@/states/apis/shift";
 import { useStaffs } from "@/states/apis/staff";
-import type { IClient } from "@/types/client";
 import type { DateValue, IShiftValues, TimeValue } from "@/types/shift";
 import type { User } from "@/types/user";
 import { formatTimeRange } from "@/utils/datetime";
@@ -60,6 +59,7 @@ import {
 import { getAllowanceTypeLabel, getShiftTypeLabel } from "../util";
 import MultiSelectAutocomplete from "./MultiSelectAutocomplete";
 import DeleteConfirm from "./DeleteConfirm";
+import ClientForm from "./SimpleCreateShiftDrawer/ClientForm";
 
 const initialValues = {
   clientSchedules: [],
@@ -230,11 +230,8 @@ const CreateShiftDrawer = ({
     sort: "createdAt",
     order: "asc",
   });
-
-  const { data: dataClients } = useGetClients(filter);
   const { data: dataCarers } = useStaffs(filter);
 
-  const clients = dataClients?.data || EMPTY_ARRAY;
   const carers = dataCarers?.data || EMPTY_ARRAY;
 
   const { values, setValues, handleSubmit } = useFormik<IShiftValues>({
@@ -439,135 +436,7 @@ const CreateShiftDrawer = ({
                 )}
               </DrawerHeader>
               <DrawerBody className="bg-background px-3">
-                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                  <div className="flex items-center gap-2">
-                    <Users size={20} color={"green"} />
-                    <span className="font-medium text-md">Client</span>
-                  </div>
-                  <div className="h-2"></div>
-                  <Divider />
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Choose client</span>
-                    {isEdit ? (
-                      <Autocomplete
-                        size="sm"
-                        className="max-w-xs"
-                        onSelectionChange={(value) => {
-                          setValues((prev) => {
-                            const updatedClientSchedules = [
-                              ...prev.clientSchedules,
-                            ];
-
-                            if (updatedClientSchedules.length > 0) {
-                              updatedClientSchedules[0] = {
-                                ...updatedClientSchedules[0],
-                                client: value as string,
-                                fund: "",
-                                priceBook: "",
-                              };
-                            } else {
-                              updatedClientSchedules.push({
-                                client: value as string,
-                                timeFrom: null,
-                                timeTo: null,
-                                priceBook: "",
-                                fund: "",
-                              });
-                            }
-
-                            return {
-                              ...prev,
-                              clientSchedules: updatedClientSchedules,
-                            };
-                          });
-                        }}
-                        placeholder="Type to search client by name"
-                      >
-                        {clients.map((client: IClient) => {
-                          const _name = getDisplayName({
-                            firstName: client.firstName,
-                            lastName: client.lastName,
-                            preferredName: client.preferredName,
-                            salutation: client.salutation,
-                            middleName: client.middleName,
-                          });
-                          return (
-                            <AutocompleteItem key={client.id}>
-                              {_name}
-                            </AutocompleteItem>
-                          );
-                        })}
-                      </Autocomplete>
-                    ) : (
-                      <span className="font-medium text-md">
-                        {"Client here"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Price book</span>
-                    {isEdit ? (
-                      <Autocomplete
-                        size="sm"
-                        className="max-w-xs"
-                        placeholder="Select"
-                        onSelectionChange={(value) => {
-                          setValues((prev) => ({
-                            ...prev,
-                            clientSchedules: prev.clientSchedules.map(
-                              (item, index) =>
-                                index === 0
-                                  ? { ...item, priceBook: value as string }
-                                  : item
-                            ),
-                          }));
-                        }}
-                      >
-                        {_dataPriceBooks.map((pricebookItem) => (
-                          <AutocompleteItem key={pricebookItem.id}>
-                            {pricebookItem.priceBookTitle}
-                          </AutocompleteItem>
-                        ))}
-                      </Autocomplete>
-                    ) : (
-                      <span className="font-medium text-md">
-                        {"Price book here"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Funds</span>
-                    {isEdit ? (
-                      <Autocomplete
-                        size="sm"
-                        className="max-w-xs"
-                        placeholder="Select"
-                        onSelectionChange={(value) => {
-                          setValues((prev) => ({
-                            ...prev,
-                            clientSchedules: prev.clientSchedules.map(
-                              (item, index) =>
-                                index === 0
-                                  ? { ...item, fund: value as string }
-                                  : item
-                            ),
-                          }));
-                        }}
-                      >
-                        {_dataFunds.map((fundItem) => (
-                          <AutocompleteItem key={fundItem.id}>
-                            {fundItem.name}
-                          </AutocompleteItem>
-                        ))}
-                      </Autocomplete>
-                    ) : (
-                      <span className="font-medium text-md">{"Fund here"}</span>
-                    )}
-                  </div>
-                </div>
+                <ClientForm values={values} setValues={setValues} />
                 <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
                   <div className="flex items-center gap-2">
                     <UserCheck size={20} color={"black"} />
