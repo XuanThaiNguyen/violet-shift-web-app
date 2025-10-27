@@ -82,7 +82,7 @@ const ClientProfile = () => {
   if (!clientId) return <></>;
 
   return (
-    <div className="px-4">
+    <div className="px-4 mt-4">
       <div
         className="flex items-center gap-2 cursor-pointer"
         onClick={() => navigate("/clients/list")}

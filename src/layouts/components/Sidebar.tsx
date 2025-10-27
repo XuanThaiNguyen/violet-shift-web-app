@@ -65,6 +65,13 @@ const sidebarItems: SidebarItem[] = [
       },
       {
         icon: ChevronsRight,
+        key: "staff-archived-list",
+        label: "Archived",
+        to: "/staffs/archived",
+        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
+      },
+      {
+        icon: ChevronsRight,
         key: "new-staff",
         label: "New",
         to: "/staffs/new",
