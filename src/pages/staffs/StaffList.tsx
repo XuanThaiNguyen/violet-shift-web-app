@@ -16,7 +16,7 @@ import {
   Spinner,
 } from "@heroui/react";
 import { PlusIcon, Search } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ROLE_IDS, ROLES } from "@/constants/roles";
 import { useStaffs, type StaffFilter } from "@/states/apis/staff";
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
@@ -75,6 +75,8 @@ const employmentTypeMap = employmentTypeOptions.reduce((acc, option) => {
 }, {} as Record<string, string>);
 
 const StaffList: FC = () => {
+  const navigate = useNavigate();
+
   const [filterValue, setFilterValue] = useState("");
   const [selectedKeys, setSelectedKeys] = useState<Set<string> | "all">(
     new Set([])
@@ -114,21 +116,26 @@ const StaffList: FC = () => {
     switch (columnKey) {
       case "name":
         return (
-          <User
-            avatarProps={{
-              radius: "full",
-              size: "sm",
-              src: user.avatar,
-              classNames: {
-                base: "flex-shrink-0",
-              },
-            }}
-            classNames={{
-              description: "text-default-500",
-            }}
-            description={fullName || ""}
-            name={user.preferredName || fullName || ""}
-          />
+          <div
+            className="cursor-pointer"
+            onClick={() => navigate(`/staffs/${user.id}`)}
+          >
+            <User
+              avatarProps={{
+                radius: "full",
+                size: "sm",
+                src: user.avatar,
+                classNames: {
+                  base: "flex-shrink-0",
+                },
+              }}
+              classNames={{
+                description: "text-default-500",
+              }}
+              description={fullName || ""}
+              name={user.preferredName || fullName || ""}
+            />
+          </div>
         );
       case "role":
         return (
@@ -189,6 +196,7 @@ const StaffList: FC = () => {
       default:
         return cellValue;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onRowsPerPageChange = useCallback(

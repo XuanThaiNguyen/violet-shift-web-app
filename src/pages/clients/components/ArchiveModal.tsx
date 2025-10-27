@@ -8,28 +8,30 @@ import {
   Divider,
 } from "@heroui/react";
 
-interface ArchiveClientModalProps {
+interface ArchiveModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   clientName: string;
   isPending: boolean;
+  mode: "staff" | "client";
 }
 
-const ArchiveClientModal = ({
+const ArchiveModal = ({
   isOpen,
   onClose,
   onConfirm,
   clientName,
   isPending,
-}: ArchiveClientModalProps) => {
+  mode,
+}: ArchiveModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="2xl" placement="top">
       <ModalContent>
         {(onClose) => (
           <>
             <ModalHeader className="text-lg font-semibold">
-              Archive Client
+              Archive {mode === "client" ? "Client" : "Staff"}
             </ModalHeader>
             <Divider />
             <div className="h-2"></div>
@@ -58,7 +60,7 @@ const ArchiveClientModal = ({
                 Cancel
               </Button>
               <Button color="danger" onPress={onConfirm} isLoading={isPending}>
-                Archive Client
+                Archive {mode === "client" ? "Client" : "Staff"}
               </Button>
             </ModalFooter>
           </>
@@ -68,4 +70,4 @@ const ArchiveClientModal = ({
   );
 };
 
-export default ArchiveClientModal;
+export default ArchiveModal;
