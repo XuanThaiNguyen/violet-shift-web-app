@@ -25,6 +25,7 @@ const Scheduler = lazy(() => import("@/pages/scheduler/Scheduler"));
 const StaffList = lazy(() => import("@/pages/staffs/StaffList"));
 const AddStaff = lazy(() => import("@/pages/staffs/AddStaff"));
 const StaffProfile = lazy(() => import("@/pages/staffs/StaffProfile"));
+const UpdateStaff = lazy(() => import("@/pages/staffs/UpdateStaff"));
 const StaffArchivedList = lazy(
   () => import("@/pages/staffs/StaffArchivedList")
 );
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
         children: [{ path: "prices", Component: AccountPrices }],
       },
       { path: "staffs/:id", Component: StaffProfile },
+      { path: "staffs/:id/update", Component: UpdateStaff },
       { path: "clients/:id", Component: ClientProfile },
       { path: "clients/:id/update", Component: UpdateClient },
       { path: "*", Component: NotFound },

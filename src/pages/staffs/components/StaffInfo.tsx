@@ -1,10 +1,10 @@
+import { salutationTypeOptions } from "@/constants/clientOptions";
 import {
-  maritalStatusOptions,
-  salutationTypeOptions,
-} from "@/constants/clientOptions";
-import { genderOptions } from "@/constants/userOptions";
-import { useGetLanguages } from "@/states/apis/languagues";
-import type { IClient } from "@/types/client";
+  employmentTypeOptions,
+  genderOptions,
+  roleOptions,
+} from "@/constants/userOptions";
+import type { CreateUser } from "@/types/user";
 import { pad } from "@/utils/strings";
 import {
   Button,
@@ -14,26 +14,27 @@ import {
   Input,
   Select,
   SelectItem,
+  SelectSection,
 } from "@heroui/react";
-import { CalendarDate } from "@internationalized/date";
 import type { FormikState } from "formik";
+import { CalendarDate } from "@internationalized/date";
 import { useNavigate } from "react-router";
 
-interface ClientInfoProps {
+interface StaffInfoProps {
   handleSubmit: () => void;
-  setFieldValue: (field: string, value: IClient[keyof IClient]) => void;
-  errors: FormikState<IClient>["errors"];
-  touched: FormikState<IClient>["touched"];
-  values: IClient;
+  setFieldValue: (field: string, value: CreateUser[keyof CreateUser]) => void;
+  errors: FormikState<CreateUser>["errors"];
+  touched: FormikState<CreateUser>["touched"];
+  values: CreateUser;
   setFieldTouched: (field: string, value: boolean) => void;
   birthdate: Date | null;
   isPending: boolean;
   mode: "add" | "update";
-  clientId?: string;
+  staffId?: string;
 }
 
-const ClientInfo = ({
-  clientId,
+const StaffInfo = ({
+  staffId,
   birthdate,
   isPending,
   mode = "add",
@@ -43,21 +44,26 @@ const ClientInfo = ({
   touched,
   values,
   setFieldTouched,
-}: ClientInfoProps) => {
+}: StaffInfoProps) => {
   const navigate = useNavigate();
-
-  const { data: languages } = useGetLanguages();
 
   return (
     <form
-      className="px-4 py-8 mx-auto shadow-lg rounded-lg bg-content1"
+      className="p-4 mx-auto shadow-lg rounded-lg bg-content1"
       onSubmit={(e) => {
         e.preventDefault();
         handleSubmit();
       }}
     >
+      <h1 className="text-2xl font-bold">
+        {mode === "add" ? "Add" : "Update"} Staff
+      </h1>
+      <div className="h-8"></div>
+
       <div className="flex">
-        <span className="flex-1">Name:</span>
+        <span className="flex-1">
+          Name <span className="text-sm text-danger">*</span>:
+        </span>
         <div className="flex-5">
           <Checkbox
             size="sm"
@@ -303,9 +309,10 @@ const ClientInfo = ({
       </div>
       <div className="h-8"></div>
       <div className="flex items-center">
-        <span className="flex-1">Email:</span>
+        <span className="flex-1">
+          Email <span className="text-sm text-danger">*</span>:
+        </span>
         <Input
-          isDisabled={mode === "update"}
           className="flex-5"
           label=""
           type="text"
@@ -324,106 +331,30 @@ const ClientInfo = ({
       </div>
       <div className="h-8"></div>
       <div className="flex items-center">
-        <span className="flex-1">Religion:</span>
-        <Input
-          className="flex-5"
-          label=""
-          type="text"
-          placeholder="Religion"
-          name="religion"
-          isInvalid={!!errors.religion && touched.religion}
-          errorMessage={
-            errors.religion && touched.religion ? errors.religion : ""
-          }
-          value={values.religion}
-          onValueChange={(value) => {
-            setFieldValue("religion", value);
-          }}
-          onBlur={() => {
-            setFieldTouched("religion", true);
-          }}
-        />
-      </div>
-      <div className="h-8"></div>
-      <div className="flex items-center">
-        <span className="flex-1">Nationality:</span>
-        <Input
-          className="flex-5"
-          label=""
-          type="text"
-          placeholder="Nationality"
-          name="nationality"
-          isInvalid={!!errors.nationality && touched.nationality}
-          errorMessage={
-            errors.nationality && touched.nationality ? errors.nationality : ""
-          }
-          value={values.nationality}
-          onValueChange={(value) => {
-            setFieldValue("nationality", value);
-          }}
-          onBlur={() => {
-            setFieldTouched("nationality", true);
-          }}
-        />
-      </div>
-      <div className="h-8"></div>
-      <div className="flex items-center">
         <span className="flex-1">Languages:</span>
-        <Select
-          className="flex-5"
-          label=""
-          placeholder="Languages"
-          name="speakingLanguages"
-          isInvalid={!!errors.languages && touched.languages}
-          errorMessage={
-            errors.languages && touched.languages ? errors.phoneNumber : ""
-          }
-          selectionMode="multiple"
-          selectedKeys={
-            values.languages ? new Set(values.languages) : new Set()
-          }
-          onSelectionChange={(value) => {
-            const selected = Array.from(value);
-            setFieldValue("languages", selected as string[]);
-          }}
-          onBlur={() => {
-            setFieldTouched("languages", true);
-          }}
-        >
-          {languages
-            ? languages.map((language) => (
-                <SelectItem className="truncate" key={language.key}>
-                  {language.name}
-                </SelectItem>
-              ))
-            : null}
-        </Select>
       </div>
       <div className="h-8"></div>
       <div className="flex items-center">
-        <span className="flex-1">Maritial Status:</span>
+        <span className="flex-1">
+          Employment Type <span className="text-sm text-danger">*</span>:{" "}
+        </span>
         <div className="flex-5">
           <Select
             label=""
-            name="maritalStatus"
-            placeholder="Maritial Status"
-            className="w-72"
-            isInvalid={!!errors.maritalStatus && touched.maritalStatus}
-            errorMessage={
-              errors.maritalStatus && touched.maritalStatus
-                ? errors.maritalStatus
-                : ""
-            }
-            value={values.maritalStatus}
-            selectedKeys={[values.maritalStatus || ""]}
+            name="employmentType"
+            placeholder="Select employment type"
+            classNames={{
+              trigger: "cursor-pointer",
+            }}
+            selectedKeys={[values.employmentType || ""]}
             onSelectionChange={([value]) => {
-              setFieldValue("maritalStatus", value as string);
+              setFieldValue("employmentType", value as string);
             }}
             onBlur={() => {
-              setFieldTouched("maritalStatus", true);
+              setFieldTouched("employmentType", true);
             }}
           >
-            {maritalStatusOptions.map((option) => (
+            {employmentTypeOptions.map((option) => (
               <SelectItem key={option.value}>{option.label}</SelectItem>
             ))}
           </Select>
@@ -431,25 +362,40 @@ const ClientInfo = ({
       </div>
       <div className="h-8"></div>
       <div className="flex items-center">
-        <span className="flex-1">Languages:</span>
-      </div>
-      <div className="h-8"></div>
-      <div className="flex items-center">
-        <span className="flex-1">Client Status:</span>
+        <span className="flex-1">
+          Role <span className="text-sm text-danger">*</span>:{" "}
+        </span>
         <div className="flex-5">
-          <Checkbox
-            defaultSelected
+          <Select
+            label=""
+            name="role"
             size="sm"
-            isSelected={values.status === "prospect"}
-            onValueChange={() => {
-              setFieldValue(
-                "status",
-                values.status === "prospect" ? "active" : "prospect"
-              );
+            placeholder="Select role"
+            selectionMode="single"
+            isInvalid={!!errors.role && touched.role}
+            selectedKeys={[values.role || ""]}
+            onSelectionChange={([value]) => {
+              setFieldValue("role", value as string);
+            }}
+            onBlur={() => {
+              setFieldTouched("role", true);
+            }}
+            classNames={{
+              trigger: "cursor-pointer",
             }}
           >
-            Client is a prospect
-          </Checkbox>
+            <SelectSection showDivider title="">
+              {roleOptions.carer.map((role) => (
+                <SelectItem key={role.value}>{role.name}</SelectItem>
+              ))}
+            </SelectSection>
+
+            <SelectSection title="Office User">
+              {roleOptions.officer.map((role) => (
+                <SelectItem key={role.value}>{role.name}</SelectItem>
+              ))}
+            </SelectSection>
+          </Select>
         </div>
       </div>
       <div className="h-8"></div>
@@ -459,9 +405,7 @@ const ClientInfo = ({
         {mode === "add" ? (
           <></>
         ) : (
-          <Button onPress={() => navigate(`/clients/${clientId}`)}>
-            Cancel
-          </Button>
+          <Button onPress={() => navigate(`/staffs/${staffId}`)}>Cancel</Button>
         )}
         <Button type="submit" color="primary" isLoading={isPending}>
           {mode === "add" ? "Create" : "Update"}
@@ -471,4 +415,4 @@ const ClientInfo = ({
   );
 };
 
-export default ClientInfo;
+export default StaffInfo;

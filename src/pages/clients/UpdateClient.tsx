@@ -177,6 +177,7 @@ const UpdateClient = () => {
       </div>
       <div className="h-4"></div>
       <ClientInfo
+        clientId={clientId}
         values={values}
         setFieldValue={setFieldValue}
         setFieldTouched={setFieldTouched}
