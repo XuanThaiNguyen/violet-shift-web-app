@@ -17,7 +17,21 @@ export type ClientFilter = {
 export const useGetClients = (filter: ClientFilter) => {
   const clientsQueryResult = useQuery<PaginationResponse<IClient>>({
     queryKey: ["clients", filter],
-    queryFn: () => api.get("/api/v1/clients", { params: filter }),
+    queryFn: async () => {
+      const response: PaginationResponse<IClient> = await api.get(
+        "/api/v1/clients",
+        { params: filter }
+      );
+      const list = response.data;
+      const map = list.reduce((acc, item) => {
+        acc[item.id!] = item;
+        return acc;
+      }, {} as Record<string, IClient>);
+      return {
+        ...response,
+        map: map,
+      };
+    },
     enabled: !!localStorage.getItem("auth_token"),
     refetchOnMount: false,
     refetchOnWindowFocus: false,

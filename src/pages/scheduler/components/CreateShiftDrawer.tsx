@@ -61,6 +61,7 @@ import MultiSelectAutocomplete from "./MultiSelectAutocomplete";
 import DeleteConfirm from "./DeleteConfirm";
 import ClientForm from "./SimpleCreateShiftDrawer/ClientForm";
 import ShiftInfoForm from "./SimpleCreateShiftDrawer/ShiftInfoForm";
+import CarerForm from "./SimpleCreateShiftDrawer/CarerForm";
 
 const initialValues = {
   clientSchedules: [],
@@ -441,101 +442,11 @@ const CreateShiftDrawer = ({
 
                 <div className="h-2"></div>
 
-                {/* <div className="py-4 px-3 rounded-lg bg-content1">
-                  <div className="flex items-center gap-2">
-                    <UserCheck size={20} color={"black"} />
-                    <span className="font-medium text-md">Shift</span>
-                  </div>
-                  <div className="h-2"></div>
-                  <Divider />
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Shift Type</span>
-                    {isEdit ? (
-                      <Autocomplete
-                        size="sm"
-                        className="max-w-xs"
-                        isClearable={false}
-                        defaultSelectedKey={
-                          values.shiftType
-                            ? values.shiftType
-                            : `${ShiftTypeOptions[0].key}`
-                        }
-                        onSelectionChange={(value) => {
-                          setValues((prev) => ({
-                            ...prev,
-                            shiftType: value as string,
-                          }));
-                        }}
-                      >
-                        {ShiftTypeOptions.map((shiftItem) => (
-                          <AutocompleteItem key={shiftItem.key}>
-                            {shiftItem.label}
-                          </AutocompleteItem>
-                        ))}
-                      </Autocomplete>
-                    ) : (
-                      <span className="font-medium text-md">
-                        {getShiftTypeLabel(values.shiftType)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Additional Shift Types</span>
-                    {isEdit ? (
-                      <MultiSelectAutocomplete
-                        selectedOptionsKeys={values.additionalShiftTypes}
-                        options={ShiftTypeOptions}
-                        onChangeOptions={(values) => {
-                          setValues((prev) => ({
-                            ...prev,
-                            additionalShiftTypes: values,
-                          }));
-                        }}
-                      />
-                    ) : (
-                      <div className="max-w-md">
-                        <span className="font-medium text-md flex text-right">
-                          {values.additionalShiftTypes?.length
-                            ? values.additionalShiftTypes
-                                .map(getShiftTypeLabel)
-                                .join(", ")
-                            : EMPTY_STRING}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Allowance</span>
-                    {isEdit ? (
-                      <MultiSelectAutocomplete
-                        selectedOptionsKeys={values.allowances}
-                        options={AllowanceOptions}
-                        onChangeOptions={(values) => {
-                          setValues((prev) => ({
-                            ...prev,
-                            allowances: values,
-                          }));
-                        }}
-                      />
-                    ) : (
-                      <div className="max-w-md">
-                        <span className="font-medium text-md flex text-right">
-                          {values.allowances?.length
-                            ? values.allowances
-                                .map(getAllowanceTypeLabel)
-                                .join(", ")
-                            : EMPTY_STRING}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div> */}
                 <ShiftInfoForm values={values} setValues={setValues} />
 
-                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+                {/* date n time section */}
+                <div className="h-2"></div>
+                <div className="py-4 px-3 rounded-lg bg-content1">
                   <div className="flex items-center gap-2">
                     <Calendar size={20} color={"red"} />
                     <span className="font-medium text-md">Time & Location</span>
@@ -695,118 +606,10 @@ const CreateShiftDrawer = ({
                     <></>
                   )}
                 </div>
-                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                  <div className="flex items-center gap-2">
-                    <UserIcon size={20} color={"blue"} />
-                    <span className="font-medium text-md">Carer</span>
-                  </div>
-                  <div className="h-2"></div>
-                  <Divider />
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Choose carer</span>
-                    {isEdit ? (
-                      <Autocomplete
-                        size="sm"
-                        className="max-w-xs"
-                        onSelectionChange={(value) => {
-                          setValues((prev) => {
-                            const updatedStaffSchedules = [
-                              ...prev.staffSchedules,
-                            ];
 
-                            if (updatedStaffSchedules.length > 0) {
-                              updatedStaffSchedules[0] = {
-                                ...updatedStaffSchedules[0],
-                                staff: value as string,
-                              };
-                            } else {
-                              updatedStaffSchedules.push({
-                                staff: value as string,
-                                timeFrom: null,
-                                timeTo: null,
-                                paymentMethod: PayMethodOptions[0].key,
-                              });
-                            }
+                <div className="h-2"></div>
+                <CarerForm values={values} setValues={setValues} />
 
-                            return {
-                              ...prev,
-                              staffSchedules: updatedStaffSchedules,
-                            };
-                          });
-                        }}
-                        placeholder="Type to search carer by name"
-                      >
-                        {carers.map((client: User) => {
-                          const _name = getDisplayName({
-                            firstName: client.firstName,
-                            lastName: client.lastName,
-                            preferredName: client.preferredName,
-                            salutation: client.salutation,
-                            middleName: client.middleName,
-                          });
-                          return (
-                            <AutocompleteItem key={client.id}>
-                              {_name}
-                            </AutocompleteItem>
-                          );
-                        })}
-                      </Autocomplete>
-                    ) : (
-                      <span className="font-medium text-md">
-                        {"Staff Here"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Choose pay group</span>
-                    {isEdit ? (
-                      <Autocomplete
-                        size="sm"
-                        className="max-w-xs"
-                        placeholder="Select"
-                        defaultSelectedKey={`${PayMethodOptions[0].key}`}
-                        onValueChange={(value) => {
-                          setValues((prev) => {
-                            const updatedStaffSchedules = [
-                              ...prev.staffSchedules,
-                            ];
-
-                            if (updatedStaffSchedules.length > 0) {
-                              updatedStaffSchedules[0] = {
-                                ...updatedStaffSchedules[0],
-                                paymentMethod: value as string,
-                              };
-                            } else {
-                              updatedStaffSchedules.push({
-                                staff: null,
-                                timeFrom: null,
-                                timeTo: null,
-                                paymentMethod: PayMethodOptions[0].key,
-                              });
-                            }
-
-                            return {
-                              ...prev,
-                              staffSchedules: updatedStaffSchedules,
-                            };
-                          });
-                        }}
-                      >
-                        {PayMethodOptions.map((payGroupItem) => (
-                          <AutocompleteItem key={payGroupItem.key}>
-                            {payGroupItem.label}
-                          </AutocompleteItem>
-                        ))}
-                      </Autocomplete>
-                    ) : (
-                      <span className="font-medium text-md">
-                        {"Payment method here"}
-                      </span>
-                    )}
-                  </div>
-                </div>
                 <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
                   <div className="flex items-center gap-2">
                     <ClipboardList size={20} color={"pink"} />

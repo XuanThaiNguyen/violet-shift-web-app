@@ -8,7 +8,7 @@ import { useGetPrices} from "@/states/apis/prices";
 import { useGetFundingsByUser, type IFunding } from "@/states/apis/funding";
 
 // constants
-import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
+import { EMPTY_ARRAY, EMPTY_OBJECT, EMPTY_STRING } from "@/constants/empty";
 
 // utils
 import { getDisplayName } from "@/utils/strings";
@@ -29,19 +29,12 @@ const ClientForm: FC<ClientFormProps> = ({ values }) => {
     page: 1,
     limit: 100,
   });
-  const allClients = allClientsData?.data || EMPTY_ARRAY;
 
   const { data: dataPriceBooks = EMPTY_ARRAY } = useGetPrices();
   const { data: dataFunds = EMPTY_ARRAY } = useGetFundingsByUser({
     userId: values?.clientSchedules[0]?.client || "",
   });
-  const allClientsMap = useMemo(() => {
-    const map: Record<string, IClient> = {};
-    allClients?.forEach((client) => {
-      map[client.id!] = client;
-    });
-    return map;
-  }, [allClients]);
+  const allClientsMap: Record<string, IClient> = allClientsData?.map || EMPTY_OBJECT;
   const allPriceBooksMap = useMemo(() => {
     const map: Record<string, IPrices> = {};
     dataPriceBooks.forEach((priceBook) => {
