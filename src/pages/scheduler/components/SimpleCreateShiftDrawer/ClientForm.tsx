@@ -71,7 +71,7 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
   }, [dataFunds]);
 
   return (
-    <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+    <div className="py-4 px-3 rounded-lg bg-content1">
       <div className="flex items-center gap-2">
         <Users size={20} color={"green"} />
         <span className="font-medium text-md">Client</span>

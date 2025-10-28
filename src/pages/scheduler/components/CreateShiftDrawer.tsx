@@ -60,6 +60,7 @@ import { getAllowanceTypeLabel, getShiftTypeLabel } from "../util";
 import MultiSelectAutocomplete from "./MultiSelectAutocomplete";
 import DeleteConfirm from "./DeleteConfirm";
 import ClientForm from "./SimpleCreateShiftDrawer/ClientForm";
+import ShiftInfoForm from "./SimpleCreateShiftDrawer/ShiftInfoForm";
 
 const initialValues = {
   clientSchedules: [],
@@ -435,9 +436,12 @@ const CreateShiftDrawer = ({
                   </div>
                 )}
               </DrawerHeader>
-              <DrawerBody className="bg-background px-3">
+              <DrawerBody className="bg-background px-3 py-2">
                 <ClientForm values={values} setValues={setValues} />
-                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
+
+                <div className="h-2"></div>
+
+                {/* <div className="py-4 px-3 rounded-lg bg-content1">
                   <div className="flex items-center gap-2">
                     <UserCheck size={20} color={"black"} />
                     <span className="font-medium text-md">Shift</span>
@@ -528,7 +532,9 @@ const CreateShiftDrawer = ({
                       </div>
                     )}
                   </div>
-                </div>
+                </div> */}
+                <ShiftInfoForm values={values} setValues={setValues} />
+
                 <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
                   <div className="flex items-center gap-2">
                     <Calendar size={20} color={"red"} />
