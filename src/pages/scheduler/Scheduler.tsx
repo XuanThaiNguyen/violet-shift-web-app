@@ -1,18 +1,17 @@
 import { useRoleCheck } from "@/hooks/useRoleCheck";
-import { Button, useDisclosure } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { Plus } from "lucide-react";
 import { useState, type FC } from "react";
-import CreateShiftDrawer from "./components/CreateShiftDrawer";
+import ShiftDrawer from "./components/ShiftDrawer";
 import SchedularPersonal from "./components/SchedularPersonal";
 import SchedulerManagement from "./components/SchedulerManagement";
 import SchedulerMode from "./components/SchedulerMode";
 import type { DayDateInfo, ViewMode } from "./type";
 
 const Scheduler: FC = () => {
-  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
-
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [weekOffset, setWeekOffset] = useState<number>(0);
+  const [openShiftDrawer, setOpenShiftDrawer] = useState<boolean>(false);
   const [dates, setDates] = useState<DayDateInfo[]>([]);
 
   const { isAdmin } = useRoleCheck();
@@ -32,7 +31,7 @@ const Scheduler: FC = () => {
           />
           <div>
             <Button
-              onPress={onOpen}
+              onPress={() => setOpenShiftDrawer(true)}
               color={"primary"}
               size="md"
               startContent={<Plus size={16} />}
@@ -50,13 +49,13 @@ const Scheduler: FC = () => {
         )}
       </div>
 
-      <CreateShiftDrawer
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
+      {openShiftDrawer && <ShiftDrawer
+        isOpen={openShiftDrawer}
+        onOpenChange={setOpenShiftDrawer}
         mode="add"
-        onClose={onClose}
+        onClose={() => setOpenShiftDrawer(false)}
         isFromCreate
-      />
+      />}
     </>
   );
 };

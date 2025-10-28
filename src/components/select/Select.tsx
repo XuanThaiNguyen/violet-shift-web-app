@@ -229,6 +229,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                       }}
                       className={cn(
                         "cursor-pointer py-2 flex items-center justify-between gap-2 text-sm",
+                        'hover:bg-default-100',
                         isDisabled && "opacity-50 cursor-not-allowed", // Disable styling
                         classNames?.item
                       )}

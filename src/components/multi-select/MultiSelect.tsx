@@ -276,7 +276,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
                 <CommandItem
                   key="all"
                   onSelect={toggleAll}
-                  className="cursor-pointer py-2"
+                  className="cursor-pointer py-2 hover:bg-default-100"
                 >
                   <Checkbox
                     isIndeterminate={

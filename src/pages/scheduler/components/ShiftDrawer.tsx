@@ -1,24 +1,14 @@
-import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
-import { useGetClients, type ClientFilter } from "@/states/apis/client";
-import { useGetFundingsByUser } from "@/states/apis/funding";
-import { useGetPrices } from "@/states/apis/prices";
 import {
   createNewShift,
   deleteShift,
   useGetShiftDetail,
   useGetStaffSchedulesByShift,
 } from "@/states/apis/shift";
-import { useStaffs } from "@/states/apis/staff";
 import type { DateValue, IShiftValues, TimeValue } from "@/types/shift";
-import type { User } from "@/types/user";
 import { formatTimeRange } from "@/utils/datetime";
-import { getDisplayName } from "@/utils/strings";
 import {
   addToast,
-  Autocomplete,
-  AutocompleteItem,
   Button,
-  Checkbox,
   DatePicker,
   Divider,
   Drawer,
@@ -35,19 +25,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { format, fromUnixTime, set } from "date-fns";
 import { useFormik } from "formik";
-import {
-  ArrowLeft,
-  Calendar,
-  ClipboardList,
-  Edit,
-  Milestone,
-  Save,
-  UserCheck,
-  User as UserIcon,
-  Users,
-  X,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Calendar, Edit, Save, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import * as Yup from "yup";
 import {
   AllowanceOptions,
@@ -56,12 +35,13 @@ import {
   ShiftTypeKeys,
   ShiftTypeOptions,
 } from "../constant";
-import { getAllowanceTypeLabel, getShiftTypeLabel } from "../util";
-import MultiSelectAutocomplete from "./MultiSelectAutocomplete";
 import DeleteConfirm from "./DeleteConfirm";
 import ClientForm from "./SimpleCreateShiftDrawer/ClientForm";
 import ShiftInfoForm from "./SimpleCreateShiftDrawer/ShiftInfoForm";
 import CarerForm from "./SimpleCreateShiftDrawer/CarerForm";
+import TaskForm from "./SimpleCreateShiftDrawer/TaskForm";
+import MilleageSection from "./ShiftDetail/MilleageSection";
+import MilleageForm from "./SimpleCreateShiftDrawer/MilleageForm";
 
 const initialValues = {
   clientSchedules: [],
@@ -69,8 +49,8 @@ const initialValues = {
   shiftType: ShiftTypeOptions[0].key,
   additionalShiftTypes: [],
   allowances: [AllowanceOptions[0].key],
-  timeFrom: null,
-  timeTo: null,
+  timeFrom: 0,
+  timeTo: 0,
   paymentMethod: PayMethodOptions[0].key,
   isCompanyVehicle: false,
   tasks: [],
@@ -102,7 +82,7 @@ const shiftSchema = Yup.object().shape({
   mileageCap: Yup.string().optional(),
 });
 
-interface CreateShiftDrawerProps {
+interface ShiftDrawerProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   selectedShiftId?: string;
@@ -111,16 +91,16 @@ interface CreateShiftDrawerProps {
   isFromCreate?: boolean;
 }
 
-const CreateShiftDrawer = ({
+const ShiftDrawer = ({
   isOpen,
-  onOpenChange,
   selectedShiftId,
   mode,
   onClose,
   isFromCreate,
-}: CreateShiftDrawerProps) => {
+}: ShiftDrawerProps) => {
   const [isEdit, setIsEdit] = useState(mode === "add");
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(isOpen);
 
   const queryClient = useQueryClient();
 
@@ -181,6 +161,17 @@ const CreateShiftDrawer = ({
     // isLoading: staffScheduleLoading,
   } = useGetStaffSchedulesByShift(selectedShiftId || "");
 
+  useMemo(() => {
+    const nineAm = new Date();
+    nineAm.setHours(9, 0, 0, 0);
+    const nineAmUnix = nineAm.getTime();
+    const defaultFrom =
+      Date.now() > nineAmUnix ? nineAmUnix + 1000 * 60 * 60 * 24 : nineAmUnix;
+    const defaultTo = defaultFrom + 1000 * 60 * 60 * 1;
+    initialValues.timeFrom = defaultFrom;
+    initialValues.timeTo = defaultTo;
+  }, [])
+  
   const { mutate: mutateDeleteShift } = useMutation({
     mutationFn: deleteShift,
     onSuccess: () => {
@@ -225,17 +216,6 @@ const CreateShiftDrawer = ({
     },
   });
 
-  const [filter] = useState<ClientFilter>({
-    query: "",
-    page: 1,
-    limit: 10,
-    sort: "createdAt",
-    order: "asc",
-  });
-  const { data: dataCarers } = useStaffs(filter);
-
-  const carers = dataCarers?.data || EMPTY_ARRAY;
-
   const { values, setValues, handleSubmit } = useFormik<IShiftValues>({
     initialValues: initialValues,
     validationSchema: shiftSchema,
@@ -243,6 +223,16 @@ const CreateShiftDrawer = ({
       mutateAddShift(values);
     },
   });
+
+  const closeDrawer = () => {
+    setIsDeleteConfirmOpen(false);
+    setInternalOpen(false);
+    setTimeout(onClose, 200);
+  };
+
+  useEffect(() => {
+    setInternalOpen(isOpen);
+  }, [isOpen]);
 
   useEffect(() => {
     if (dataShiftDetail && !isLoading && isSuccess) {
@@ -255,21 +245,6 @@ const CreateShiftDrawer = ({
   const [endTime, setEndTime] = useState<TimeValue | null>(null);
   const [date, setDate] = useState<DateValue | null>(null);
   const [isBonus, setIsBonus] = useState<boolean>(false);
-  const [task, setTask] = useState<{
-    name: string;
-    isMandatory: boolean;
-  }>({
-    name: "",
-    isMandatory: false,
-  });
-
-  const { data: dataPriceBooks } = useGetPrices();
-  const _dataPriceBooks = dataPriceBooks || EMPTY_ARRAY;
-
-  const { data: dataFunds } = useGetFundingsByUser({
-    userId: values?.clientSchedules[0]?.client || "",
-  });
-  const _dataFunds = dataFunds || [];
 
   useEffect(() => {
     if (!date) return;
@@ -365,15 +340,10 @@ const CreateShiftDrawer = ({
   return (
     <>
       <Drawer
-        isOpen={isOpen}
+        isOpen={internalOpen}
         closeButton={<div></div>}
         size="5xl"
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsEdit(false);
-          }
-          onOpenChange?.(open);
-        }}
+        onClose={closeDrawer}
       >
         <DrawerContent>
           {(onClose) => (
@@ -610,154 +580,11 @@ const CreateShiftDrawer = ({
                 <div className="h-2"></div>
                 <CarerForm values={values} setValues={setValues} />
 
-                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                  <div className="flex items-center gap-2">
-                    <ClipboardList size={20} color={"pink"} />
-                    <span className="font-medium text-md">Tasks</span>
-                  </div>
-                  <div className="h-2"></div>
-                  <Divider />
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Input
-                        label=""
-                        type="text"
-                        className="w-80"
-                        value={task.name}
-                        onValueChange={(value) => {
-                          setTask((prev) => ({ ...prev, name: value }));
-                        }}
-                      />
-                      <Checkbox
-                        isSelected={task.isMandatory}
-                        onValueChange={(value) =>
-                          setTask((prev) => ({ ...prev, isMandatory: value }))
-                        }
-                      >
-                        Mandatory
-                      </Checkbox>
-                    </div>
-                    <Button
-                      color="primary"
-                      isDisabled={!task.name}
-                      size="sm"
-                      onPress={() => {
-                        setValues((prev) => ({
-                          ...prev,
-                          tasks: [...prev.tasks, task],
-                        }));
-                        setTask({
-                          name: "",
-                          isMandatory: false,
-                        });
-                      }}
-                    >
-                      <p className={`text-bold text-md capitalize`}>Add</p>
-                    </Button>
-                  </div>
-                  <div className="h-2"></div>
-                  {values.tasks.length === 0 ? (
-                    <></>
-                  ) : (
-                    values.tasks.map((_task, index) => (
-                      <div
-                        key={`${_task.name}-${index}`}
-                        className="flex items-center justify-between py-2"
-                      >
-                        <span className="flex-1">{_task.name}</span>
-                        <div className="flex items-center gap-8">
-                          <span className="justify-start">
-                            <span className="font-semibold">Mandatory: </span>
-                            {_task.isMandatory ? "Yes" : "No"}
-                          </span>
-                          <Button
-                            color="danger"
-                            size="sm"
-                            onPress={() => {
-                              setValues((prev) => ({
-                                ...prev,
-                                tasks: prev.tasks.filter((_, i) => i !== index),
-                              }));
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
-                  <div className="flex items-center gap-2">
-                    <Milestone size={20} color={"green"} />
-                    <span className="font-medium text-md">Mileage</span>
-                  </div>
-                  <div className="h-2"></div>
-                  <Divider />
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Mileage cap</span>
-                    {isEdit ? (
-                      <Input
-                        label=""
-                        type="number"
-                        name="mileageCap"
-                        className="w-80"
-                        defaultValue="0"
-                        value={values.mileageCap}
-                        onValueChange={(value) => {
-                          setValues((prev) => ({ ...prev, mileageCap: value }));
-                        }}
-                      />
-                    ) : (
-                      <span className="font-medium text-md">
-                        {values.mileageCap}Km
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Mileage</span>
-                    {isEdit ? (
-                      <Input
-                        label=""
-                        type="number"
-                        name="mileage"
-                        className="w-80"
-                        defaultValue="0"
-                        value={values.mileage}
-                        onValueChange={(value) => {
-                          setValues((prev) => ({ ...prev, mileage: value }));
-                        }}
-                      />
-                    ) : (
-                      <span className="font-medium text-md">
-                        {values.mileage}Km
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Company Vehicle</span>
-                    {isEdit ? (
-                      <Switch
-                        isSelected={values.isCompanyVehicle}
-                        onValueChange={(value) =>
-                          setValues((prev) => ({
-                            ...prev,
-                            isCompanyVehicle: value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      <span className="font-medium text-md">
-                        {values.isCompanyVehicle ? "Yes" : "No"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-2"></div>
-                </div>
+                <div className="h-2"></div>
+                <TaskForm values={values} setValues={setValues} />
+
+                <div className="h-2"></div>
+                <MilleageForm values={values} setValues={setValues} />
               </DrawerBody>
               <DrawerFooter className="bg-background">
                 <div className="h-2"></div>
@@ -777,4 +604,4 @@ const CreateShiftDrawer = ({
   );
 };
 
-export default CreateShiftDrawer;
+export default ShiftDrawer;

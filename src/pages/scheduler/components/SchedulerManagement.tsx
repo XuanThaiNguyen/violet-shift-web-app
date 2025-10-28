@@ -94,8 +94,8 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
   return (
     <div className="px-4">
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
-        <div className={`grid ${gridCols} border-b`}>
-          <div className="p-4 bg-gray-50 border-r sticky left-0 z-20">
+        <div className={`grid ${gridCols}`}>
+          <div className="p-4 bg-gray-50 border-r border-b sticky left-0 z-20">
             <input
               type="text"
               placeholder="Search by team, staff..."
@@ -106,14 +106,14 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
 
           {viewMode === "day"
             ? hours.map((hour) => (
-                <div key={hour} className="p-2 text-center border-r bg-gray-50">
+                <div key={hour} className="p-2 text-center border-r border-b bg-gray-50">
                   <div className="text-xs font-semibold text-gray-600">
                     {formatHour(hour)}
                   </div>
                 </div>
               ))
             : dates.map((d, i) => (
-                <div key={i} className="p-4 text-center border-r bg-gray-50">
+                <div key={i} className="p-4 text-center border-r border-b bg-gray-50">
                   <div className="text-sm font-semibold text-gray-600">
                     {d.day}
                   </div>

@@ -1,6 +1,11 @@
 import { useMemo } from "react";
 import { UserIcon } from "lucide-react";
-import { Divider, Select as HerouiSelect, SelectItem } from "@heroui/react";
+import {
+  Divider,
+  Select as HerouiSelect,
+  SelectItem,
+  User,
+} from "@heroui/react";
 import { Select } from "@/components/select/Select";
 
 // apis
@@ -16,7 +21,7 @@ import { getDisplayName } from "@/utils/strings";
 import type { FC, SetStateAction } from "react";
 import type { IShiftValues } from "@/types/shift";
 import type { FormikErrors } from "formik";
-import type { User } from "@/types/user";
+import type { User as IUser } from "@/types/user";
 import { PayMethodOptions } from "../../constant";
 
 type CarerFormProps = {
@@ -36,10 +41,22 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
   const allStaffs = allStaffsData?.data || EMPTY_ARRAY;
 
   const allStaffsOptions = useMemo(() => {
-    return allStaffs.map((staff: User) => ({
-      label: getDisplayName(staff),
-      value: staff.id!,
-    }));
+    return allStaffs.map((staff: IUser) => {
+      const name = getDisplayName(staff);
+      const actualName = `${staff.firstName}+${staff.lastName}`;
+      const avatar =
+        staff.avatar || `https://ui-avatars.com/api/?name=${actualName}`;
+      return {
+        label: (
+          <User
+            avatarProps={{ src: avatar, size: "sm" }}
+            name={name}
+            description={staff.email}
+          />
+        ),
+        value: staff.id!,
+      };
+    });
   }, [allStaffs]);
 
   return (
