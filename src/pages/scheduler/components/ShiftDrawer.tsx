@@ -174,6 +174,7 @@ const ShiftDrawer = ({
     isLoading || staffScheduleLoading || clientScheduleLoading || tasksLoading;
 
   useMemo(() => {
+    if (selectedShiftId) return;
     const nineAm = new Date();
     nineAm.setHours(9, 0, 0, 0);
     const nineAmUnix = nineAm.getTime();
@@ -182,7 +183,7 @@ const ShiftDrawer = ({
     const defaultTo = defaultFrom + 1000 * 60 * 60 * 1;
     initialValues.timeFrom = defaultFrom;
     initialValues.timeTo = defaultTo;
-  }, []);
+  }, [selectedShiftId]);
 
   const { mutate: mutateDeleteShift } = useMutation({
     mutationFn: deleteShift,
@@ -257,7 +258,7 @@ const ShiftDrawer = ({
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataShiftDetail, isLoading, isSuccess]);
+  }, [dataShiftDetail, isSuccess, fullShiftLoading]);
 
   return (
     <>
