@@ -17,7 +17,7 @@ import type { FormikErrors } from "formik";
 import type { User as IUser } from "@/types/user";
 import { PayMethodMap } from "../../constant";
 
-type CarerFormProps = {
+type CarerSectionProps = {
   values: IShiftValues;
   setValues: (
     values: SetStateAction<IShiftValues>,
@@ -25,7 +25,7 @@ type CarerFormProps = {
   ) => Promise<FormikErrors<IShiftValues>> | Promise<void>;
 };
 
-const CarerForm: FC<CarerFormProps> = ({ values }) => {
+const CarerSection: FC<CarerSectionProps> = ({ values }) => {
   const { data: allStaffsData } = useStaffs({
     query: "",
     page: 1,
@@ -69,4 +69,4 @@ const CarerForm: FC<CarerFormProps> = ({ values }) => {
   );
 };
 
-export default CarerForm;
+export default CarerSection;

@@ -19,7 +19,7 @@ export interface IShiftValues {
   timeTo: number | null;
   address?: string;
   unitNumber?: string;
-  bonus?: string;
+  bonus?: number;
   mileage?: string;
   mileageCap?: string;
   isCompanyVehicle?: boolean;
