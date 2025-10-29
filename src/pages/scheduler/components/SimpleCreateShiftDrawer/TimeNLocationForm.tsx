@@ -1,31 +1,15 @@
-import { useMemo, useState } from "react";
-import { Users } from "lucide-react";
-import {
-  DatePicker,
-  Divider,
-  Input,
-  Switch,
-  type DateValue,
-} from "@heroui/react";
-import { Select } from "@/components/select/Select";
-
-// apis
-import { useGetClients } from "@/states/apis/client";
-import { useGetPrices } from "@/states/apis/prices";
-import { useGetFundingsByUser } from "@/states/apis/funding";
-
-// constants
-import { EMPTY_ARRAY } from "@/constants/empty";
+import { useState } from "react";
+import { CalendarIcon } from "lucide-react";
+import { Chip, DatePicker, Divider, Input, Switch, TimeInput } from "@heroui/react";
 
 // utils
-import { getDisplayName } from "@/utils/strings";
+import { parseAbsoluteToLocal, ZonedDateTime } from "@internationalized/date";
+import { getFormattedTz } from "@/utils/datetime";
 
 // types
 import type { FC, SetStateAction } from "react";
-import type { IClient } from "@/types/client";
 import type { IShiftValues } from "@/types/shift";
 import type { FormikErrors } from "formik";
-import type { SelectOption } from "@/components/select/Select";
 
 type TimeNLocationFormProps = {
   values: IShiftValues;
@@ -35,17 +19,30 @@ type TimeNLocationFormProps = {
   ) => Promise<FormikErrors<IShiftValues>> | Promise<void>;
 };
 
+const parseTimeInput = (time: number): ZonedDateTime => {
+  return parseAbsoluteToLocal(new Date(time).toISOString());
+};
+
+const formattedTz = getFormattedTz();
+
 const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
   values,
   setValues,
 }) => {
   const [isBonus, setIsBonus] = useState(false);
+  const timefromInput = values.timeFrom ? parseTimeInput(values.timeFrom) : null;
+  const timeToInput = values.timeTo ? parseTimeInput(values.timeTo) : null;
 
   return (
     <div className="py-4 px-3 rounded-lg bg-content1">
-      <div className="flex items-center gap-2">
-        <Calendar size={20} color={"red"} />
-        <span className="font-medium text-md">Time & Location</span>
+      <div className="flex items-center gap-2 justify-between">
+        <div className="flex items-center gap-2">
+          <CalendarIcon size={20} color={"red"} />
+          <span className="font-medium text-md">Time & Location</span>
+        </div>
+        <Chip className="rounded-sm" color="default" variant="flat">
+          {formattedTz}
+        </Chip>
       </div>
       <div className="h-2"></div>
       <Divider />
@@ -55,37 +52,85 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
         <DatePicker
           className="w-80"
           showMonthAndYearPickers
+          granularity="day"
           label=""
           name="birthdate"
-          value={values.timeFrom ? dateValue : null}
-          onChange={(date: DateValue | null) => {
-            if (date && date.year && date.month && date.day) {
-              setDate(date);
-            }
+          hideTimeZone
+          value={timefromInput}
+          onChange={(date: ZonedDateTime | null) => {
+            if (!date) return;
+            const hour = date.hour;
+            const minute = date.minute;
+            const second = date.second;
+            const day = date.day;
+            const month = date.month;
+            const year = date.year;
+            const newTimeFrom = new Date(year, month - 1, day, hour, minute, second).getTime();
+            setValues((prev) => {
+              const hourTo = timeToInput ? timeToInput.hour : (hour + 1) % 24;
+              const minuteTo = timeToInput ? timeToInput.minute : 0;
+              const secondTo = timeToInput ? timeToInput.second : 0;
+              const newTimeTo = new Date(year, month - 1, day, hourTo, minuteTo, secondTo).getTime();
+              return {
+                ...prev,
+                timeFrom: newTimeFrom,
+                timeTo: newTimeTo,
+              };
+            });
           }}
         />
       </div>
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Time</span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-80">
           <TimeInput
-            className="w-40"
+            className="w-full"
             label=""
             name="birthdate"
-            value={values.timeFrom ? timeFrom : null}
+            hideTimeZone
+            value={timefromInput}
+            granularity="minute"
+            hourCycle={24}
             onChange={(time) => {
-              setStartTime(time);
+              if (!time) return;
+              const hour = time.hour;
+              const minute = time.minute;
+              const day = time.day;
+              const month = time.month;
+              const year = time.year;
+              const newTimeFrom = new Date(year, month - 1, day, hour, minute, 0).getTime();
+              setValues((prev) => {
+                return {
+                  ...prev,
+                  timeFrom: newTimeFrom,
+                };
+              });
             }}
           />
           -
           <TimeInput
-            className="w-40"
+            className="w-full"
             label=""
             name="birthdate"
-            value={values.timeTo ? timeTo : null}
+            hideTimeZone
+            value={timeToInput}
+            granularity="minute"
+            hourCycle={24}
             onChange={(time) => {
-              setEndTime(time);
+              if (!time) return;
+              const hour = time.hour;
+              const minute = time.minute;
+              const day = time.day;
+              const month = time.month;
+              const year = time.year;
+              const newTimeTo = new Date(year, month - 1, day, hour, minute, 0).getTime();
+              setValues((prev) => {
+                return {
+                  ...prev,
+                  timeTo: newTimeTo,
+                };
+              });
             }}
           />
         </div>
@@ -123,10 +168,13 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Shift Bonus</span>
-        <Switch isSelected={isBonus} onChange={() => {
-          setIsBonus(!isBonus);
-          setValues((prev) => ({ ...prev, bonus: 0 }));
-        }} />
+        <Switch
+          isSelected={isBonus}
+          onChange={() => {
+            setIsBonus(!isBonus);
+            setValues((prev) => ({ ...prev, bonus: 0 }));
+          }}
+        />
       </div>
       {isBonus && (
         <>

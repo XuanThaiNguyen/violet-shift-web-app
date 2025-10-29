@@ -1,7 +1,10 @@
 import api from "@/services/api/http";
 import type {
   IShiftValues as IAddShift,
+  IClientSchedule,
   IGetStaffSchedule,
+  IShiftDetail,
+  ITask,
 } from "@/types/shift";
 import { useQuery } from "@tanstack/react-query";
 
@@ -53,8 +56,42 @@ export const useGetStaffSchedulesByShift = (
   return schedulesByStaffId;
 };
 
+export const  useGetClientSchedulesByShift = (
+  shiftId: string
+) => {
+  const clientSchedulesByShift = useQuery<IClientSchedule[]>({
+    queryKey: ["clientSchedulesByShift", shiftId],
+    queryFn: () =>
+      api.get(`/api/v1/shifts/${shiftId}/client-schedules`),
+    enabled: !!localStorage.getItem("auth_token") && !!shiftId,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  });
+
+  return clientSchedulesByShift;
+};
+
+
+export const useGetTasksByShift = (
+  shiftId: string
+) => {
+  const tasksByShift = useQuery<ITask[]>({
+    queryKey: ["tasksByShiftId", shiftId],
+    queryFn: () => api.get(`/api/v1/shifts/${shiftId}/tasks`),
+    enabled: !!localStorage.getItem("auth_token") && !!shiftId,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+  });
+
+  return tasksByShift;
+};
+
 export const useGetShiftDetail = (shiftId?: string) => {
-  const shiftDetail = useQuery<IGetStaffSchedule[]>({
+  const shiftDetail = useQuery<IShiftDetail>({
     queryKey: ["shiftDetail", shiftId],
     queryFn: () => api.get(`/api/v1/shifts/${shiftId}`),
     enabled: !!shiftId && !!localStorage.getItem("auth_token"),

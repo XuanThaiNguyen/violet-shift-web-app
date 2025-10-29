@@ -1,20 +1,16 @@
 import { ClipboardList } from "lucide-react";
-import { Button, Divider } from "@heroui/react";
+import { Divider } from "@heroui/react";
 
 // types
-import type { FC, SetStateAction } from "react";
+import type { FC } from "react";
 import type { IShiftValues } from "@/types/shift";
-import type { FormikErrors } from "formik";
 
 type TaskSectionProps = {
   values: IShiftValues;
-  setValues: (
-    values: SetStateAction<IShiftValues>,
-    shouldValidate?: boolean
-  ) => Promise<FormikErrors<IShiftValues>> | Promise<void>;
+
 };
 
-const TaskSection: FC<TaskSectionProps> = ({ values, setValues }) => {
+const TaskSection: FC<TaskSectionProps> = ({ values }) => {
   return (
     <div className="py-4 px-3 rounded-lg bg-content1">
       <div className="flex items-center gap-2">
@@ -35,18 +31,6 @@ const TaskSection: FC<TaskSectionProps> = ({ values, setValues }) => {
               <span className="font-semibold">Mandatory: </span>
               {task.isMandatory ? "Yes" : "No"}
             </span>
-            <Button
-              color="danger"
-              size="sm"
-              onPress={() => {
-                setValues((prev) => ({
-                  ...prev,
-                  tasks: prev.tasks.filter((_, i) => i !== index),
-                }));
-              }}
-            >
-              Remove
-            </Button>
           </div>
         </div>
       ))}

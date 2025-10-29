@@ -1,31 +1,25 @@
 import {
   createNewShift,
   deleteShift,
+  useGetClientSchedulesByShift,
   useGetShiftDetail,
   useGetStaffSchedulesByShift,
+  useGetTasksByShift,
 } from "@/states/apis/shift";
-import type { DateValue, IShiftValues, TimeValue } from "@/types/shift";
-import { formatTimeRange } from "@/utils/datetime";
+import type { IShiftValues, IStaffSchedule } from "@/types/shift";
 import {
   addToast,
   Button,
-  DatePicker,
-  Divider,
   Drawer,
   DrawerBody,
   DrawerContent,
   DrawerFooter,
   DrawerHeader,
-  Input,
-  Switch,
-  TimeInput,
 } from "@heroui/react";
-import { parseDate, parseTime } from "@internationalized/date";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { format, fromUnixTime, set } from "date-fns";
 import { useFormik } from "formik";
-import { ArrowLeft, Calendar, Edit, Save, X } from "lucide-react";
+import { ArrowLeft, Edit, Save, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import * as Yup from "yup";
 import {
@@ -40,8 +34,15 @@ import ClientForm from "./SimpleCreateShiftDrawer/ClientForm";
 import ShiftInfoForm from "./SimpleCreateShiftDrawer/ShiftInfoForm";
 import CarerForm from "./SimpleCreateShiftDrawer/CarerForm";
 import TaskForm from "./SimpleCreateShiftDrawer/TaskForm";
-import MilleageSection from "./ShiftDetail/MilleageSection";
 import MilleageForm from "./SimpleCreateShiftDrawer/MilleageForm";
+import MilleageSection from "./ShiftDetail/MilleageSection";
+import TimeNLocationForm from "./SimpleCreateShiftDrawer/TimeNLocationForm";
+import TimeNLocationSection from "./ShiftDetail/TimeNLocationSection";
+import ClientSection from "./ShiftDetail/ClientSection";
+import ShiftInfoSection from "./ShiftDetail/ShiftInfoSection";
+import CarerSection from "./ShiftDetail/CarerSection";
+import TaskSection from "./ShiftDetail/TaskSection";
+import { EMPTY_ARRAY } from "@/constants/empty";
 
 const initialValues = {
   clientSchedules: [],
@@ -157,9 +158,20 @@ const ShiftDrawer = ({
   } = useGetShiftDetail(selectedShiftId);
 
   const {
-    data: staffSchedules,
-    // isLoading: staffScheduleLoading,
+    data: staffSchedules = EMPTY_ARRAY,
+    isLoading: staffScheduleLoading,
   } = useGetStaffSchedulesByShift(selectedShiftId || "");
+
+  const {
+    data: clientSchedules = EMPTY_ARRAY,
+    isLoading: clientScheduleLoading,
+  } = useGetClientSchedulesByShift(selectedShiftId || "");
+
+  const { data: tasks = EMPTY_ARRAY, isLoading: tasksLoading } =
+    useGetTasksByShift(selectedShiftId || "");
+
+  const fullShiftLoading =
+    isLoading || staffScheduleLoading || clientScheduleLoading || tasksLoading;
 
   useMemo(() => {
     const nineAm = new Date();
@@ -170,8 +182,8 @@ const ShiftDrawer = ({
     const defaultTo = defaultFrom + 1000 * 60 * 60 * 1;
     initialValues.timeFrom = defaultFrom;
     initialValues.timeTo = defaultTo;
-  }, [])
-  
+  }, []);
+
   const { mutate: mutateDeleteShift } = useMutation({
     mutationFn: deleteShift,
     onSuccess: () => {
@@ -235,107 +247,17 @@ const ShiftDrawer = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (dataShiftDetail && !isLoading && isSuccess) {
-      setValues((prev) => ({ ...prev, ...dataShiftDetail }));
+    if (dataShiftDetail && !fullShiftLoading && isSuccess) {
+      setValues((prev) => ({
+        ...prev,
+        ...dataShiftDetail as unknown as IShiftValues,
+        clientSchedules: clientSchedules,
+        tasks: tasks,
+        staffSchedules: staffSchedules as IStaffSchedule[],
+      }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataShiftDetail, isLoading, isSuccess]);
-
-  const [startTime, setStartTime] = useState<TimeValue | null>(null);
-  const [endTime, setEndTime] = useState<TimeValue | null>(null);
-  const [date, setDate] = useState<DateValue | null>(null);
-  const [isBonus, setIsBonus] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!date) return;
-
-    setValues((prev) => {
-      let newTimeFrom = prev.timeFrom;
-      let newTimeTo = prev.timeTo;
-
-      if (startTime) {
-        newTimeFrom = combineDateTime(date, startTime);
-      }
-      if (endTime) {
-        newTimeTo = combineDateTime(date, endTime);
-      }
-
-      const updatedClientSchedules = [...prev.clientSchedules];
-      if (updatedClientSchedules.length > 0) {
-        updatedClientSchedules[0] = {
-          ...updatedClientSchedules[0],
-          timeFrom: newTimeFrom,
-          timeTo: newTimeTo,
-        };
-      } else {
-        updatedClientSchedules.push({
-          client: null,
-          timeFrom: newTimeFrom,
-          timeTo: newTimeTo,
-          priceBook: "",
-          fund: "",
-        });
-      }
-
-      const updatedStaffSchedules = [...prev.staffSchedules];
-      if (updatedStaffSchedules.length > 0) {
-        updatedStaffSchedules[0] = {
-          ...updatedStaffSchedules[0],
-          timeFrom: newTimeFrom,
-          timeTo: newTimeTo,
-        };
-      } else {
-        updatedStaffSchedules.push({
-          staff: null,
-          timeFrom: newTimeFrom,
-          timeTo: newTimeTo,
-          paymentMethod: PayMethodOptions[0].key,
-        });
-      }
-
-      return {
-        ...prev,
-        timeFrom: newTimeFrom,
-        timeTo: newTimeTo,
-        clientSchedules: updatedClientSchedules,
-        staffSchedules: updatedStaffSchedules,
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, startTime, endTime]);
-
-  const combineDateTime = (d: DateValue, t: TimeValue) => {
-    const combined = set(new Date(d.year, d.month - 1, d.day), {
-      hours: t.hour,
-      minutes: t.minute,
-      seconds: 0,
-      milliseconds: 0,
-    });
-    return combined.getTime();
-  };
-
-  const unixTimestamp = values.timeFrom!; // e.g., 1739385600000 (ms)
-  const jsDate = fromUnixTime(unixTimestamp / 1000);
-  const isoDate = jsDate.toISOString().split("T")[0]; // "2025-07-21"
-  const dateValue = parseDate(isoDate); // DateValue
-
-  const timeFrom = values.timeFrom
-    ? parseTime(
-        fromUnixTime(values.timeFrom / 1000)
-          .toISOString()
-          .split("T")[1]
-          .slice(0, 5)
-      )
-    : null;
-
-  const timeTo = values.timeTo
-    ? parseTime(
-        fromUnixTime(values.timeTo / 1000)
-          .toISOString()
-          .split("T")[1]
-          .slice(0, 5)
-      )
-    : null;
 
   return (
     <>
@@ -408,183 +330,48 @@ const ShiftDrawer = ({
                 )}
               </DrawerHeader>
               <DrawerBody className="bg-background px-3 py-2">
-                <ClientForm values={values} setValues={setValues} />
+                {isEdit ? (
+                  <ClientForm values={values} setValues={setValues} />
+                ) : (
+                  <ClientSection values={values} />
+                )}
 
                 <div className="h-2"></div>
 
-                <ShiftInfoForm values={values} setValues={setValues} />
+                {isEdit ? (
+                  <ShiftInfoForm values={values} setValues={setValues} />
+                ) : (
+                  <ShiftInfoSection values={values} />
+                )}
 
                 {/* date n time section */}
                 <div className="h-2"></div>
-                <div className="py-4 px-3 rounded-lg bg-content1">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={20} color={"red"} />
-                    <span className="font-medium text-md">Time & Location</span>
-                  </div>
-                  <div className="h-2"></div>
-                  <Divider />
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Date</span>
-                    {isEdit ? (
-                      <DatePicker
-                        className="w-80"
-                        showMonthAndYearPickers
-                        label=""
-                        name="birthdate"
-                        value={values.timeFrom ? dateValue : null}
-                        onChange={(date: DateValue | null) => {
-                          if (date && date.year && date.month && date.day) {
-                            setDate(date);
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span className="font-medium text-md">
-                        {format(
-                          fromUnixTime(values.timeFrom! / 1000),
-                          "EEE, dd MMMM yyyy"
-                        )}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Time</span>
-                    {isEdit ? (
-                      <div className="flex items-center gap-2">
-                        <TimeInput
-                          className="w-40"
-                          label=""
-                          name="birthdate"
-                          value={values.timeFrom ? timeFrom : null}
-                          onChange={(time) => {
-                            setStartTime(time);
-                          }}
-                        />
-                        -
-                        <TimeInput
-                          className="w-40"
-                          label=""
-                          name="birthdate"
-                          value={values.timeTo ? timeTo : null}
-                          onChange={(time) => {
-                            setEndTime(time);
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <span className="font-medium text-md">
-                        {formatTimeRange(
-                          values.timeFrom! / 1000,
-                          values.timeTo! / 1000
-                        )}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Address</span>
-                    {isEdit ? (
-                      <Input
-                        label=""
-                        type="text"
-                        placeholder="Enter Address"
-                        name="address"
-                        className="w-80"
-                        value={values.address}
-                        onValueChange={(value) => {
-                          setValues((prev) => ({ ...prev, address: value }));
-                        }}
-                      />
-                    ) : (
-                      <div className="max-w-md">
-                        <span className="font-medium text-md text-right">
-                          {values.address}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="h-4"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Unit/Apartment Number</span>
-                    {isEdit ? (
-                      <Input
-                        label=""
-                        type="text"
-                        placeholder="Enter Unit/Apartment Number"
-                        name="unitNumber"
-                        className="w-80"
-                        value={values.unitNumber}
-                        onValueChange={(value) => {
-                          setValues((prev) => ({ ...prev, unitNumber: value }));
-                        }}
-                      />
-                    ) : (
-                      <span className="font-medium text-md">
-                        {values.unitNumber}
-                      </span>
-                    )}
-                  </div>
-                  {isEdit && (
-                    <>
-                      <div className="h-4"></div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Shift Bonus</span>
-                        <Switch
-                          isSelected={isBonus}
-                          onChange={() => setIsBonus(!isBonus)}
-                        />
-                      </div>
-                    </>
-                  )}
-                  {isEdit && isBonus && (
-                    <>
-                      <div className="h-4"></div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Bonus Amount</span>
-                        <Input
-                          label=""
-                          type="number"
-                          placeholder="Enter Bonus Amount"
-                          startContent={
-                            <span className="text-default-400 text-small">
-                              $
-                            </span>
-                          }
-                          name="bonus"
-                          className="w-80"
-                          value={values.bonus}
-                          onValueChange={(value) => {
-                            setValues((prev) => ({ ...prev, bonus: value }));
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
-                  {!isEdit ? (
-                    <>
-                      <div className="h-4"></div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Bonus Amount</span>
-                        <span className="font-medium text-md">
-                          ${values.bonus || 0}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <></>
-                  )}
-                </div>
+                {isEdit ? (
+                  <TimeNLocationForm values={values} setValues={setValues} />
+                ) : (
+                  <TimeNLocationSection values={values} />
+                )}
 
                 <div className="h-2"></div>
-                <CarerForm values={values} setValues={setValues} />
+                {isEdit ? (
+                  <CarerForm values={values} setValues={setValues} />
+                ) : (
+                  <CarerSection values={values} />
+                )}
 
                 <div className="h-2"></div>
-                <TaskForm values={values} setValues={setValues} />
+                {isEdit ? (
+                  <TaskForm values={values} setValues={setValues} />
+                ) : (
+                  <TaskSection values={values} />
+                )}
 
                 <div className="h-2"></div>
-                <MilleageForm values={values} setValues={setValues} />
+                {isEdit ? (
+                  <MilleageForm values={values} setValues={setValues} />
+                ) : (
+                  <MilleageSection values={values} />
+                )}
               </DrawerBody>
               <DrawerFooter className="bg-background">
                 <div className="h-2"></div>

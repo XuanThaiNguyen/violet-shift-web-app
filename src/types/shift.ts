@@ -82,6 +82,7 @@ export interface IShiftRepeat {
 }
 
 export interface IShiftDetail {
+  _id?: string;
   // shift information
   shiftType: ShiftTypeEnum;
   additionalShiftTypes: ShiftTypeEnum[];

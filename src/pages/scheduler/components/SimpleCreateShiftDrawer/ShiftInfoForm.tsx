@@ -53,8 +53,8 @@ const ShiftInfoForm: FC<ShiftInfoFormProps> = ({ values, setValues }) => {
         <HerouiSelect
           placeholder="Select additional shift types"
           className="max-w-xs"
-          selectedKeys={values.additionalShiftTypes}
           selectionMode="multiple"
+          selectedKeys={new Set(values.additionalShiftTypes)}
           onSelectionChange={(value) => {
             const selected = Array.from(value);
             setValues((prev) => ({
@@ -74,7 +74,8 @@ const ShiftInfoForm: FC<ShiftInfoFormProps> = ({ values, setValues }) => {
         <HerouiSelect
           placeholder="Select allowance"
           className="max-w-xs"
-          selectedKeys={values.allowances}
+          selectionMode="multiple"
+          selectedKeys={new Set(values.allowances)}
           onSelectionChange={(value) => {
             const selected = Array.from(value);
             setValues((prev) => ({
