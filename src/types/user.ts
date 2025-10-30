@@ -21,3 +21,4 @@ export type User = {
 };
 
 export type CreateUser = Omit<User, "id" | "createdAt" | "updatedAt">;
+export type UpdateUser = Omit<User, "id" | "createdAt" | "updatedAt">;

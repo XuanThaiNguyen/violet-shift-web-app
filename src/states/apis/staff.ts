@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import api from "@/services/api/http";
-import type { CreateUser, User } from "@/types/user";
+import type { CreateUser, UpdateUser, User } from "@/types/user";
 import type { PaginationResponse } from "@/types/common";
 
 export type StaffFilter = {
@@ -84,5 +84,16 @@ export const usePostArchiveStaff = async ({
   isArchived: boolean;
 }) => {
   const res = await api.post(`/api/v1/staffs/archive`, { id, isArchived });
+  return res;
+};
+
+export const useUpdateStaff = async ({
+  id,
+  values,
+}: {
+  id: string;
+  values: UpdateUser;
+}) => {
+  const res = await api.patch(`/api/v1/staffs/${id}`, values);
   return res;
 };

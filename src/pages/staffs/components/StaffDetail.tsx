@@ -65,7 +65,17 @@ const StaffDetail = ({
   return (
     <div>
       <div className="p-4 w-full mx-auto shadow-lg rounded-lg bg-content1">
-        <span className="text-2xl font-medium">Demographic Detail</span>
+        <div className="flex items-center justify-between">
+          <span className="text-2xl font-medium">Demographic Detail</span>
+          <div
+            className="cursor-pointer"
+            onClick={() => {
+              navigate(`/staffs/${staffId}/update`);
+            }}
+          >
+            <span className="text-blue-400 text-md font-medium">EDIT</span>
+          </div>
+        </div>
         <div className="h-4"></div>
         <Divider />
         <div className="h-4"></div>

@@ -1,3 +1,5 @@
+import { ROLE_IDS } from "./roles";
+
 export const employmentTypeOptions = [
   { label: "Full Time", value: "full_time" },
   { label: "Part Time", value: "part_time" },
@@ -13,6 +15,16 @@ export const genderOptions = [
   { label: "Unspecified", value: "unspecified" },
   { label: "Prefer not to say", value: "other" },
 ];
+
+export const roleOptions = {
+  carer: [{ name: "Carer", value: ROLE_IDS.CARER }],
+  officer: [
+    { name: "HR", value: ROLE_IDS.HR },
+    { name: "Admin", value: ROLE_IDS.ADMIN },
+    { name: "Coordinator", value: ROLE_IDS.COORDINATOR },
+    { name: "Office Support", value: ROLE_IDS.OFFICE_SUPPORT },
+  ],
+};
 
 export const statusTypeOptions = [
   { label: "Prospect", value: "prospect" },
