@@ -13,12 +13,12 @@ import clsx from "clsx";
 
 // types
 import type { FC } from "react";
-import type { IShiftValues } from "@/types/shift";
+import type { IFullShiftDetail } from "@/types/shift";
 import type { User as IUser } from "@/types/user";
 import { PayMethodMap } from "../../constant";
 
 type CarerSectionProps = {
-  values: IShiftValues;
+  values: IFullShiftDetail;
 };
 
 const CarerSection: FC<CarerSectionProps> = ({ values }) => {

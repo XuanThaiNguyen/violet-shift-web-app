@@ -8,14 +8,11 @@ import clsx from "clsx";
 
 // types
 import type { FC } from "react";
-import type { IClient } from "@/types/client";
-import type { IShiftValues } from "@/types/shift";
-import type { IPrices } from "@/states/apis/prices";
-import type { IFunding } from "@/states/apis/funding";
+import type { IFullShiftDetail } from "@/types/shift";
 
 
 type ClientSectionProps = {
-  values: IShiftValues;
+  values: IFullShiftDetail;
 };
 
 const ClientSection: FC<ClientSectionProps> = ({ values }) => {
@@ -31,9 +28,9 @@ const ClientSection: FC<ClientSectionProps> = ({ values }) => {
       <div className="flex flex-col">
         {values.clientSchedules.map((clientSchedule, index) => {
           const isLast = index === values.clientSchedules.length - 1;
-          const client = clientSchedule.client as unknown as IClient;
-          const priceBook = clientSchedule.priceBook as unknown as IPrices;
-          const fund = clientSchedule.fund as unknown as IFunding;
+          const client = clientSchedule.client;
+          const priceBook = clientSchedule.priceBook;
+          const fund = clientSchedule.fund;
 
           return (
             <div

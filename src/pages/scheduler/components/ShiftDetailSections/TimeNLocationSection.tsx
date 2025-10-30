@@ -10,10 +10,10 @@ import { getFormattedTz } from "@/utils/datetime";
 
 // types
 import type { FC } from "react";
-import type { IShiftValues } from "@/types/shift";
+import type { IFullShiftDetail } from "@/types/shift";
 
 type TimeNLocationFormProps = {
-  values: IShiftValues;
+  values: IFullShiftDetail;
 };
 
 const formattedTz = getFormattedTz();

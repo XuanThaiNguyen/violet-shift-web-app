@@ -1,12 +1,22 @@
 import {
-  createNewShift,
   deleteShift,
+  updateShift,
   useGetClientSchedulesByShift,
   useGetShiftDetail,
   useGetStaffSchedulesByShift,
   useGetTasksByShift,
 } from "@/states/apis/shift";
-import type { IShiftValues, IStaffSchedule } from "@/types/shift";
+import type {
+  IArrayUpdate,
+  IClientSchedule,
+  IFullShiftDetail,
+  IShiftDetail,
+  IShiftTask,
+  IShiftValues,
+  IStaffSchedule,
+  ITask,
+  IUpdateShift,
+} from "@/types/shift";
 import {
   addToast,
   Button,
@@ -68,7 +78,7 @@ const shiftSchema = Yup.object().shape({
 
 interface ShiftDrawerProps {
   isOpen: boolean;
-  selectedShiftId?: string;
+  selectedShiftId: string;
   onClose: () => void;
 }
 
@@ -83,11 +93,43 @@ const ShiftDrawer = ({
 
   const queryClient = useQueryClient();
 
-  const { mutate: mutateAddShift } = useMutation({
-    mutationFn: createNewShift,
-    onSuccess: () => {
+  const {
+    data: dataShiftDetail,
+    isLoading,
+    isSuccess,
+  } = useGetShiftDetail(selectedShiftId);
+
+  const {
+    data: staffSchedules = EMPTY_ARRAY,
+    isLoading: staffScheduleLoading,
+  } = useGetStaffSchedulesByShift(selectedShiftId || "");
+
+  const {
+    data: clientSchedules = EMPTY_ARRAY,
+    isLoading: clientScheduleLoading,
+  } = useGetClientSchedulesByShift(selectedShiftId || "");
+
+  const { data: tasks = EMPTY_ARRAY, isLoading: tasksLoading } =
+    useGetTasksByShift(selectedShiftId || "");
+
+  const fullShiftLoading =
+    isLoading || staffScheduleLoading || clientScheduleLoading || tasksLoading;
+
+  const fullShiftDetails: IFullShiftDetail = useMemo(() => {
+    return {
+      ...(initialValues as unknown as IShiftDetail),
+      ...dataShiftDetail,
+      clientSchedules: clientSchedules,
+      tasks: tasks,
+      staffSchedules: staffSchedules,
+    };
+  }, [dataShiftDetail, clientSchedules, tasks, staffSchedules]);
+
+  const { mutate: mutateUpdateShift } = useMutation({
+    mutationFn: updateShift,
+    onSuccess: (_, payload) => {
       addToast({
-        title: "Add shift successfully",
+        title: "Update shift successfully",
         color: "success",
         timeout: 2000,
         isClosing: true,
@@ -96,7 +138,29 @@ const ShiftDrawer = ({
         predicate: (query) => {
           const firstKey = query.queryKey[0];
           const secondKey = query.queryKey[1];
+          if (firstKey === "shiftDetail") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "staffSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "clientSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "tasksByShift") {
+            return secondKey === selectedShiftId;
+          }
           if (firstKey === "staffSchedules") {
+            const staffNeedsUpdate: string[] = [];
+            payload.staffSchedules.update.forEach((schedule) => {
+              staffNeedsUpdate.push(schedule.staff!);
+            });
+            payload.staffSchedules.delete.forEach((staff) => {
+              staffNeedsUpdate.push(staff);
+            });
+            payload.staffSchedules.add.forEach((schedule) => {
+              staffNeedsUpdate.push(schedule.staff!);
+            });
             return (
               staffSchedules?.some(
                 (schedule) => schedule.staff === secondKey
@@ -129,40 +193,6 @@ const ShiftDrawer = ({
     },
   });
 
-  const {
-    data: dataShiftDetail,
-    isLoading,
-    isSuccess,
-  } = useGetShiftDetail(selectedShiftId);
-
-  const {
-    data: staffSchedules = EMPTY_ARRAY,
-    isLoading: staffScheduleLoading,
-  } = useGetStaffSchedulesByShift(selectedShiftId || "");
-
-  const {
-    data: clientSchedules = EMPTY_ARRAY,
-    isLoading: clientScheduleLoading,
-  } = useGetClientSchedulesByShift(selectedShiftId || "");
-
-  const { data: tasks = EMPTY_ARRAY, isLoading: tasksLoading } =
-    useGetTasksByShift(selectedShiftId || "");
-
-  const fullShiftLoading =
-    isLoading || staffScheduleLoading || clientScheduleLoading || tasksLoading;
-
-  useMemo(() => {
-    if (selectedShiftId) return;
-    const nineAm = new Date();
-    nineAm.setHours(9, 0, 0, 0);
-    const nineAmUnix = nineAm.getTime();
-    const defaultFrom =
-      Date.now() > nineAmUnix ? nineAmUnix + 1000 * 60 * 60 * 24 : nineAmUnix;
-    const defaultTo = defaultFrom + 1000 * 60 * 60 * 1;
-    initialValues.timeFrom = defaultFrom;
-    initialValues.timeTo = defaultTo;
-  }, [selectedShiftId]);
-
   const { mutate: mutateDeleteShift } = useMutation({
     mutationFn: deleteShift,
     onSuccess: () => {
@@ -178,6 +208,12 @@ const ShiftDrawer = ({
             return secondKey === selectedShiftId;
           }
           if (firstKey === "staffSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "clientSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "tasksByShift") {
             return secondKey === selectedShiftId;
           }
           if (firstKey === "staffSchedules") {
@@ -211,7 +247,84 @@ const ShiftDrawer = ({
     initialValues: initialValues,
     validationSchema: shiftSchema,
     onSubmit: (values) => {
-      mutateAddShift(values);
+      const clientSchedule = values.clientSchedules?.[0];
+      const oldClientSchedule = clientSchedules?.[0];
+      const clientScheduleUpdate: IArrayUpdate<IClientSchedule> = {
+        add: [],
+        update: [],
+        delete: [],
+      };
+      if (clientSchedule.client !== oldClientSchedule?.client._id) {
+        clientScheduleUpdate.add.push({
+          client: clientSchedule.client,
+          timeFrom: clientSchedule.timeFrom,
+          timeTo: clientSchedule.timeTo,
+          priceBook: clientSchedule.priceBook,
+          fund: clientSchedule.fund,
+        });
+        clientScheduleUpdate.delete.push(oldClientSchedule?.repetitiveId);
+      } else {
+        clientScheduleUpdate.update.push(clientSchedule);
+      }
+
+      const staffSchedule = values.staffSchedules?.[0];
+      const oldStaffSchedule = staffSchedules?.[0];
+      const staffScheduleUpdate: IArrayUpdate<IStaffSchedule> = {
+        add: [],
+        update: [],
+        delete: [],
+      };
+      if (staffSchedule.staff !== oldStaffSchedule?.staff) {
+        staffScheduleUpdate.add.push({
+          staff: staffSchedule.staff,
+          timeFrom: staffSchedule.timeFrom,
+          timeTo: staffSchedule.timeTo,
+          paymentMethod: staffSchedule.paymentMethod,
+        });
+        staffScheduleUpdate.delete.push(oldStaffSchedule.staff!);
+      } else {
+        staffScheduleUpdate.update.push(staffSchedule);
+      }
+
+      const oldTaskMap = tasks?.reduce((acc, task) => {
+        acc[task.repetitiveId!] = task;
+        return acc;
+      }, {} as Record<string, IShiftTask>);
+      const newTaskMap: Record<string, true> = {};
+      const taskUpdate: IArrayUpdate<ITask> = {
+        add: [],
+        update: [],
+        delete: [],
+      };
+
+      for (const task of values.tasks) {
+        const repetitiveId = task.repetitiveId;
+        if (!repetitiveId || !oldTaskMap[repetitiveId]) {
+          taskUpdate.add.push({
+            id: task.id,
+            name: task.name,
+            isMandatory: task.isMandatory,
+          });
+        } else {
+          newTaskMap[repetitiveId] = true;
+          taskUpdate.update.push(task);
+        }
+      }
+      for (const oldTask of tasks) {
+        if (!newTaskMap[oldTask.repetitiveId!]) {
+          taskUpdate.delete.push(oldTask.repetitiveId!);
+        }
+      }
+
+      const updateShift: IUpdateShift = {
+        ...values,
+        _id: selectedShiftId,
+        clientSchedules: clientScheduleUpdate,
+        staffSchedules: staffScheduleUpdate,
+        tasks: taskUpdate,
+      };
+
+      mutateUpdateShift(updateShift);
     },
   });
 
@@ -230,7 +343,16 @@ const ShiftDrawer = ({
       setValues((prev) => ({
         ...prev,
         ...(dataShiftDetail as unknown as IShiftValues),
-        clientSchedules: clientSchedules,
+        clientSchedules: clientSchedules?.map((schedule) => {
+          return {
+            repetitiveId: schedule.repetitiveId!,
+            client: schedule.client._id!,
+            timeFrom: schedule.timeFrom,
+            timeTo: schedule.timeTo,
+            priceBook: schedule.priceBook.id,
+            fund: schedule.fund.id,
+          };
+        }),
         tasks: tasks,
         staffSchedules: staffSchedules as IStaffSchedule[],
       }));
@@ -312,7 +434,7 @@ const ShiftDrawer = ({
                     setValues={setValues}
                   />
                 ) : (
-                  <ViewShiftLayout values={values} />
+                  <ViewShiftLayout values={fullShiftDetails} />
                 )}
               </DrawerBody>
               <DrawerFooter className="bg-background">

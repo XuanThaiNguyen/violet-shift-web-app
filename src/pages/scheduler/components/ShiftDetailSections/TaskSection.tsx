@@ -3,10 +3,10 @@ import { Divider } from "@heroui/react";
 
 // types
 import type { FC } from "react";
-import type { IShiftValues } from "@/types/shift";
+import type { IFullShiftDetail } from "@/types/shift";
 
 type TaskSectionProps = {
-  values: IShiftValues;
+  values: IFullShiftDetail;
 
 };
 
