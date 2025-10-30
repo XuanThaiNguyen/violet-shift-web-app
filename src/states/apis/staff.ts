@@ -16,7 +16,21 @@ export type StaffFilter = {
 export const useStaffs = (filter: StaffFilter) => {
   const staffsQueryResult = useQuery<PaginationResponse<User>>({
     queryKey: ["staffs", filter],
-    queryFn: () => api.get("/api/v1/staffs", { params: filter }),
+    queryFn: async () => {
+      const response: PaginationResponse<User> = await api.get(
+        "/api/v1/staffs",
+        { params: filter }
+      );
+      const list = response.data;
+      const map = list.reduce((acc, item) => {
+        acc[item.id!] = item;
+        return acc;
+      }, {} as Record<string, User>);
+      return {
+        ...response,
+        map: map,
+      };
+    },
     enabled: !!localStorage.getItem("auth_token"),
     refetchOnMount: false,
     refetchOnWindowFocus: false,

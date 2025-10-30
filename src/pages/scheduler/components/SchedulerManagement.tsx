@@ -8,6 +8,7 @@ import SchedulerManagementItem from "./SchedulerManagementItem";
 import type { User } from "@/types/user";
 import { getDisplayName } from "@/utils/strings";
 import { convertDateToMs } from "@/utils/datetime";
+import { useDebounceValue } from "usehooks-ts";
 
 interface SchedulerManagementProps {
   viewMode: ViewMode;
@@ -15,12 +16,20 @@ interface SchedulerManagementProps {
 }
 
 const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
-  const { data: dataStaffs } = useStaffs({ limit: 50 });
-
-  const _dataStaffs = dataStaffs?.data || EMPTY_ARRAY;
-
+  const [query, setQuery] = useDebounceValue<string>("", 300);
   const [from, setFrom] = useState<number | null>(null);
   const [to, setTo] = useState<number | null>(null);
+
+  const queryParams = useMemo(() => {
+    return {
+      limit: 50,
+      // roles: [ROLE_IDS.CARER],
+      query: query,
+    };
+  }, [query]);
+
+  const { data: dataStaffs } = useStaffs(queryParams);
+  const _dataStaffs = dataStaffs?.data || EMPTY_ARRAY;
 
   useEffect(() => {
     if (dates && dates.length === 0) return;
@@ -85,25 +94,26 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
   return (
     <div className="px-4">
       <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
-        <div className={`grid ${gridCols} border-b`}>
-          <div className="p-4 bg-gray-50 border-r sticky left-0 z-20">
+        <div className={`grid ${gridCols}`}>
+          <div className="p-4 bg-gray-50 border-r border-b sticky left-0 z-20">
             <input
               type="text"
               placeholder="Search by team, staff..."
               className="w-full px-3 py-2 border rounded-lg text-sm"
+              onChange={(e) => setQuery(e.target.value)}
             />
           </div>
 
           {viewMode === "day"
             ? hours.map((hour) => (
-                <div key={hour} className="p-2 text-center border-r bg-gray-50">
+                <div key={hour} className="p-2 text-center border-r border-b bg-gray-50">
                   <div className="text-xs font-semibold text-gray-600">
                     {formatHour(hour)}
                   </div>
                 </div>
               ))
             : dates.map((d, i) => (
-                <div key={i} className="p-4 text-center border-r bg-gray-50">
+                <div key={i} className="p-4 text-center border-r border-b bg-gray-50">
                   <div className="text-sm font-semibold text-gray-600">
                     {d.day}
                   </div>

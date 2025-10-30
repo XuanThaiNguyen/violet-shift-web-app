@@ -19,7 +19,7 @@ export interface IShiftValues {
   timeTo: number | null;
   address?: string;
   unitNumber?: string;
-  bonus?: string;
+  bonus?: number;
   mileage?: string;
   mileageCap?: string;
   isCompanyVehicle?: boolean;
@@ -27,12 +27,14 @@ export interface IShiftValues {
 }
 
 export interface ITask {
+  id?: string;
   name: string;
   isMandatory: boolean;
   isCompleted?: boolean;
 }
 
 export interface IClientSchedule {
+  id?: string;
   client: string | null;
   timeFrom: number | null;
   timeTo: number | null;
@@ -80,6 +82,7 @@ export interface IShiftRepeat {
 }
 
 export interface IShiftDetail {
+  _id?: string;
   // shift information
   shiftType: ShiftTypeEnum;
   additionalShiftTypes: ShiftTypeEnum[];

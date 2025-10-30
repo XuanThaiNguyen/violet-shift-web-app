@@ -20,3 +20,10 @@ export const formatTimeRange = (startTs: number, endTs: number) => {
 export const wait = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
+
+export const getFormattedTz = () => {
+  const tz = new Date().toString().match(/\b(GMT|UTC)([+-]\d{2})(\d{2})\b/);
+  if (!tz) return "UTC+00:00";
+  const formatted = `${tz[1]}${tz[2]}:${tz[3]}`;
+  return formatted;
+};

@@ -10,6 +10,10 @@ export const PayMethodOptions = [
     key: "cash",
   },
 ];
+export const PayMethodMap = PayMethodOptions.reduce((acc, item) => {
+  acc[item.key] = item.label;
+  return acc;
+}, {} as Record<string, string>);
 
 export const AllowanceOptions = [
   {
@@ -25,6 +29,10 @@ export const AllowanceOptions = [
     key: "sleepover",
   },
 ];
+export const AllowanceTypeMap = AllowanceOptions.reduce((acc, item) => {
+  acc[item.key] = item.label;
+  return acc;
+}, {} as Record<string, string>);
 
 export const ShiftTypeOptions = [
   {
@@ -76,6 +84,10 @@ export const ShiftTypeOptions = [
     key: "24_hour_care",
   },
 ];
+export const ShiftTypeMap = ShiftTypeOptions.reduce((acc, item) => {
+  acc[item.key] = item.label;
+  return acc;
+}, {} as Record<string, string>);
 
 export const ShiftTypeKeys = ShiftTypeOptions.map((item) => item.key);
 export const AllowanceTypeKeys = ShiftTypeOptions.map((item) => item.key);
