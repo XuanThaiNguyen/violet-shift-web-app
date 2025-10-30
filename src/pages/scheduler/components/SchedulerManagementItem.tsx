@@ -16,6 +16,7 @@ import { useDisclosure, User } from "@heroui/react";
 import { getDisplayName } from "@/utils/strings";
 
 import type { User as IUser } from "@/types/user";
+import { format, isValid } from "date-fns";
 interface SchedulerManagementItemProps {
   viewMode: ViewMode;
   dates: DayDateInfo[];
@@ -34,7 +35,7 @@ const SchedulerManagementItem = ({
   from,
   to,
 }: SchedulerManagementItemProps) => {
-  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
     undefined
@@ -165,17 +166,20 @@ const SchedulerManagementItem = ({
     setNewEventData({ title: "", client: "", hour: hour || 9, duration: 1 });
   };
 
-  const getEventsForCell = (day: number, hour: number | null = null) => {
+  const getEventsForCell = (date: number, hour: number | null = null) => {
     if (viewMode === "day" && hour !== null) {
       return events.filter((e) => {
+        if (!isValid(e.timeFrom)) return false;
         const _date = new Date(e.timeFrom!);
         return _date.getHours() === hour;
       });
     }
 
     return events.filter((e) => {
-      const _date = new Date(e.timeFrom! * 1000);
-      return _date.getDay() === day;
+      if (!isValid(e.timeFrom)) return false;
+      const fromDate = format(e.timeFrom!, 'yyyy-MM-dd');
+      const _date = format(date, 'yyyy-MM-dd');
+      return _date === fromDate;
     });
   };
 
@@ -260,13 +264,14 @@ const SchedulerManagementItem = ({
               </div>
             );
           })
-        : dates.map((_, day) => {
-            const cellEvents = getEventsForCell(day);
+        : dates.map((d, day) => {
+            const date = new Date(d.year, d.month - 1, d.date);
+            const cellEvents = getEventsForCell(date.getTime());
             const isOver = isDragOver(+staff.id, day);
 
             return (
               <div
-                key={day}
+                key={d.date}
                 onClick={() => handleCellClick(+staff.id, day)}
                 onDragOver={(e) => handleDragOver(e, +staff.id, day)}
                 onDragLeave={handleDragLeave}
@@ -341,9 +346,7 @@ const SchedulerManagementItem = ({
       {selectedShiftId && (
         <ShiftDrawer
           onClose={onClose}
-          mode="view"
           isOpen={isOpen}
-          onOpenChange={onOpenChange}
           selectedShiftId={selectedShiftId}
         />
       )}

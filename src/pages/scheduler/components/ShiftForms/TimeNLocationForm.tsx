@@ -30,6 +30,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
   setValues,
 }) => {
   const [isBonus, setIsBonus] = useState(false);
+  // const [isNightShift, setIsNightShift] = useState(false);
   const timefromInput = values.timeFrom ? parseTimeInput(values.timeFrom) : null;
   const timeToInput = values.timeTo ? parseTimeInput(values.timeTo) : null;
 
@@ -101,9 +102,27 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
               const year = time.year;
               const newTimeFrom = new Date(year, month - 1, day, hour, minute, 0).getTime();
               setValues((prev) => {
+                const oldClientSchedules = prev.clientSchedules;
+                const newClientSchedules = oldClientSchedules.map((clientSchedule) => {
+                  return {
+                    ...clientSchedule,
+                    timeFrom: newTimeFrom,
+                  };
+                });
+
+                const oldStaffSchedules = prev.staffSchedules;
+                const newStaffSchedules = oldStaffSchedules.map((staffSchedule) => {
+                  return {
+                    ...staffSchedule,
+                    timeFrom: newTimeFrom,
+                  };
+                });
+
                 return {
                   ...prev,
                   timeFrom: newTimeFrom,
+                  clientSchedules: newClientSchedules,
+                  staffSchedules: newStaffSchedules,
                 };
               });
             }}
@@ -126,9 +145,27 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
               const year = time.year;
               const newTimeTo = new Date(year, month - 1, day, hour, minute, 0).getTime();
               setValues((prev) => {
+                const oldClientSchedules = prev.clientSchedules;
+                const newClientSchedules = oldClientSchedules.map((clientSchedule) => {
+                  return {
+                    ...clientSchedule,
+                    timeTo: newTimeTo,
+                  };
+                });
+
+                const oldStaffSchedules = prev.staffSchedules;
+                const newStaffSchedules = oldStaffSchedules.map((staffSchedule) => {
+                  return {
+                    ...staffSchedule,
+                    timeTo: newTimeTo,
+                  };
+                });
+
                 return {
                   ...prev,
                   timeTo: newTimeTo,
+                  clientSchedules: newClientSchedules,
+                  staffSchedules: newStaffSchedules,
                 };
               });
             }}

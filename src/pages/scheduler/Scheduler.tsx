@@ -2,11 +2,11 @@ import { useRoleCheck } from "@/hooks/useRoleCheck";
 import { Button } from "@heroui/react";
 import { Plus } from "lucide-react";
 import { useState, type FC } from "react";
-import ShiftDrawer from "./components/ShiftDrawer";
 import SchedularPersonal from "./components/SchedularPersonal";
 import SchedulerManagement from "./components/SchedulerManagement";
 import SchedulerMode from "./components/SchedulerMode";
 import type { DayDateInfo, ViewMode } from "./type";
+import CreateShiftDrawer from "./components/CreateShiftDrawer";
 
 const Scheduler: FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("day");
@@ -49,12 +49,9 @@ const Scheduler: FC = () => {
         )}
       </div>
 
-      {openShiftDrawer && <ShiftDrawer
+      {openShiftDrawer && <CreateShiftDrawer
         isOpen={openShiftDrawer}
-        onOpenChange={setOpenShiftDrawer}
-        mode="add"
         onClose={() => setOpenShiftDrawer(false)}
-        isFromCreate
       />}
     </>
   );

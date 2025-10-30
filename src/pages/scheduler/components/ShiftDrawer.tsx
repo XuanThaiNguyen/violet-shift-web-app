@@ -22,37 +22,20 @@ import { useFormik } from "formik";
 import { ArrowLeft, Edit, Save, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import * as Yup from "yup";
-import {
-  AllowanceOptions,
-  ErrorMessages,
-  PayMethodOptions,
-  ShiftTypeKeys,
-  ShiftTypeOptions,
-} from "../constant";
+import { ErrorMessages, ShiftTypeKeys, ShiftTypeOptions } from "../constant";
 import DeleteConfirm from "./DeleteConfirm";
-import ClientForm from "./SimpleCreateShiftDrawer/ClientForm";
-import ShiftInfoForm from "./SimpleCreateShiftDrawer/ShiftInfoForm";
-import CarerForm from "./SimpleCreateShiftDrawer/CarerForm";
-import TaskForm from "./SimpleCreateShiftDrawer/TaskForm";
-import MilleageForm from "./SimpleCreateShiftDrawer/MilleageForm";
-import MilleageSection from "./ShiftDetail/MilleageSection";
-import TimeNLocationForm from "./SimpleCreateShiftDrawer/TimeNLocationForm";
-import TimeNLocationSection from "./ShiftDetail/TimeNLocationSection";
-import ClientSection from "./ShiftDetail/ClientSection";
-import ShiftInfoSection from "./ShiftDetail/ShiftInfoSection";
-import CarerSection from "./ShiftDetail/CarerSection";
-import TaskSection from "./ShiftDetail/TaskSection";
 import { EMPTY_ARRAY } from "@/constants/empty";
+import SimpleUpdateShiftLayout from "./ShiftLayouts/SimpleUpdateShiftLayout";
+import ViewShiftLayout from "./ShiftLayouts/ViewShiftLayout";
 
-const initialValues = {
+const initialValues: IShiftValues = {
   clientSchedules: [],
   staffSchedules: [],
   shiftType: ShiftTypeOptions[0].key,
   additionalShiftTypes: [],
-  allowances: [AllowanceOptions[0].key],
+  allowances: [],
   timeFrom: 0,
   timeTo: 0,
-  paymentMethod: PayMethodOptions[0].key,
   isCompanyVehicle: false,
   tasks: [],
 };
@@ -85,21 +68,16 @@ const shiftSchema = Yup.object().shape({
 
 interface ShiftDrawerProps {
   isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
   selectedShiftId?: string;
-  mode: "add" | "view";
   onClose: () => void;
-  isFromCreate?: boolean;
 }
 
 const ShiftDrawer = ({
   isOpen,
   selectedShiftId,
-  mode,
   onClose,
-  isFromCreate,
 }: ShiftDrawerProps) => {
-  const [isEdit, setIsEdit] = useState(mode === "add");
+  const [isEdit, setIsEdit] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [internalOpen, setInternalOpen] = useState(isOpen);
 
@@ -251,7 +229,7 @@ const ShiftDrawer = ({
     if (dataShiftDetail && !fullShiftLoading && isSuccess) {
       setValues((prev) => ({
         ...prev,
-        ...dataShiftDetail as unknown as IShiftValues,
+        ...(dataShiftDetail as unknown as IShiftValues),
         clientSchedules: clientSchedules,
         tasks: tasks,
         staffSchedules: staffSchedules as IStaffSchedule[],
@@ -273,7 +251,7 @@ const ShiftDrawer = ({
             <>
               <DrawerHeader className="flex items-center justify-between bg-conten1">
                 <div className="flex items-center gap-2">
-                  {isEdit && !isFromCreate ? (
+                  {isEdit ? (
                     <Button
                       size="md"
                       className="bg-content1 border-1 border-divider"
@@ -291,9 +269,6 @@ const ShiftDrawer = ({
                     startContent={<X size={16} />}
                     onPress={() => {
                       onClose();
-                      if (!isFromCreate) {
-                        setIsEdit(false);
-                      }
                     }}
                   >
                     Close
@@ -307,7 +282,7 @@ const ShiftDrawer = ({
                       onPress={() => handleSubmit()}
                       startContent={<Save size={16} />}
                     >
-                      {isFromCreate ? "Save" : "Update"}
+                      Update
                     </Button>
                   </div>
                 ) : (
@@ -332,46 +307,12 @@ const ShiftDrawer = ({
               </DrawerHeader>
               <DrawerBody className="bg-background px-3 py-2">
                 {isEdit ? (
-                  <ClientForm values={values} setValues={setValues} />
+                  <SimpleUpdateShiftLayout
+                    values={values}
+                    setValues={setValues}
+                  />
                 ) : (
-                  <ClientSection values={values} />
-                )}
-
-                <div className="h-2"></div>
-
-                {isEdit ? (
-                  <ShiftInfoForm values={values} setValues={setValues} />
-                ) : (
-                  <ShiftInfoSection values={values} />
-                )}
-
-                {/* date n time section */}
-                <div className="h-2"></div>
-                {isEdit ? (
-                  <TimeNLocationForm values={values} setValues={setValues} />
-                ) : (
-                  <TimeNLocationSection values={values} />
-                )}
-
-                <div className="h-2"></div>
-                {isEdit ? (
-                  <CarerForm values={values} setValues={setValues} />
-                ) : (
-                  <CarerSection values={values} />
-                )}
-
-                <div className="h-2"></div>
-                {isEdit ? (
-                  <TaskForm values={values} setValues={setValues} />
-                ) : (
-                  <TaskSection values={values} />
-                )}
-
-                <div className="h-2"></div>
-                {isEdit ? (
-                  <MilleageForm values={values} setValues={setValues} />
-                ) : (
-                  <MilleageSection values={values} />
+                  <ViewShiftLayout values={values} />
                 )}
               </DrawerBody>
               <DrawerFooter className="bg-background">
