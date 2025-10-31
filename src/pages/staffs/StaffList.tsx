@@ -1,31 +1,31 @@
-import { useState, useMemo, useCallback } from "react";
+import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
+import { ROLE_IDS, ROLE_NAMES, ROLES } from "@/constants/roles";
+import { employmentTypeOptions, genderOptions } from "@/constants/userOptions";
+import { useStaffs, type StaffFilter } from "@/states/apis/staff";
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Input,
   Button,
-  User,
+  Input,
   Pagination,
-  type SharedSelection,
   Select,
   SelectItem,
   Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+  User,
+  type SharedSelection,
 } from "@heroui/react";
-import { PlusIcon, Search } from "lucide-react";
-import { Link, useNavigate } from "react-router";
-import { ROLE_IDS, ROLES } from "@/constants/roles";
-import { useStaffs, type StaffFilter } from "@/states/apis/staff";
-import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
-import { employmentTypeOptions, genderOptions } from "@/constants/userOptions";
 import { format, isValid } from "date-fns";
+import { PlusIcon, Search } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router";
 
-import type { FC } from "react";
 import type { User as UserType } from "@/types/user";
-import { getFullName } from "@/utils/strings";
+import { getDisplayName, getFullName } from "@/utils/strings";
+import type { FC } from "react";
 
 const columns = [
   { name: "Name", uid: "name", width: 240, className: "min-w-[160px]" },
@@ -57,11 +57,11 @@ const columns = [
 ];
 
 const roleOptions = [
-  { name: "Carrier", value: ROLE_IDS.CARER },
-  { name: "HR", value: ROLE_IDS.HR },
-  { name: "Admin", value: ROLE_IDS.ADMIN },
-  { name: "Coordinator", value: ROLE_IDS.COORDINATOR },
-  { name: "Office Support", value: ROLE_IDS.OFFICE_SUPPORT },
+  { name: ROLE_NAMES.CARER, value: ROLE_IDS.CARER },
+  { name: ROLE_NAMES.HR, value: ROLE_IDS.HR },
+  { name: ROLE_NAMES.ADMIN, value: ROLE_IDS.ADMIN },
+  { name: ROLE_NAMES.COORDINATOR, value: ROLE_IDS.COORDINATOR },
+  { name: ROLE_NAMES.OFFICE_SUPPORT, value: ROLE_IDS.OFFICE_SUPPORT },
 ];
 
 const genderMap = genderOptions.reduce((acc, option) => {
@@ -107,10 +107,18 @@ const StaffList: FC = () => {
 
   const renderCell = useCallback((user: UserType, columnKey: string) => {
     const cellValue = user[columnKey as keyof UserType];
-    const fullName = getFullName({
-      firstName: user.firstName,
+    const displayName = getDisplayName({
+      firstName: user?.firstName,
       middleName: user?.middleName,
-      lastName: user.lastName,
+      lastName: user?.lastName,
+      salutation: user?.salutation,
+      preferredName: user?.preferredName,
+    });
+
+    const fullName = getFullName({
+      firstName: user?.firstName,
+      middleName: user?.middleName,
+      lastName: user?.lastName,
     });
 
     switch (columnKey) {
@@ -133,7 +141,7 @@ const StaffList: FC = () => {
                 description: "text-default-500",
               }}
               description={fullName || ""}
-              name={user.preferredName || fullName || ""}
+              name={displayName || ""}
             />
           </div>
         );

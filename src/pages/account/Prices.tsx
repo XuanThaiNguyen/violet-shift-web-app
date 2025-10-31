@@ -37,8 +37,7 @@ const Prices = () => {
       const priceBookToDuplicate = priceBooks[priceBookIndex];
       const duplicatedPriceBook = {
         ...priceBookToDuplicate,
-        priceBookTitle: `${priceBookToDuplicate.priceBookTitle} (Copy)`,
-        priceBookId: `${priceBookToDuplicate.priceBookId} (Copy)`,
+        name: `${priceBookToDuplicate.name} (Copy)`,
         rules: priceBookToDuplicate.rules.map((rule) => ({
           ...rule,
           _id: generateId(),
@@ -86,17 +85,14 @@ const Prices = () => {
   });
 
   const handleAddNewPriceBook = ({
-    title,
-    externalId,
+    name,
     rules,
   }: {
-    title: string;
-    externalId: string;
+    name: string;
     rules?: IAddPriceBookRule[];
   }) => {
     const newPriceBook: IAddPriceBook = {
-      priceBookId: externalId,
-      priceBookTitle: title,
+      name,
       rules: rules
         ? rules
         : [
@@ -142,22 +138,18 @@ const Prices = () => {
       <PriceHeaderInfoModal
         isOpen={isOpen}
         onClose={onClose}
-        onConfirm={({ title, externalId }) => {
+        onConfirm={({ name }) => {
           if (newPriceBook) {
             handleAddNewPriceBook({
               ...newPriceBook,
-              title,
-              externalId,
+              name,
             });
           } else {
-            handleAddNewPriceBook({ title, externalId });
+            handleAddNewPriceBook({ name });
           }
         }}
         mode={newPriceBook ? "duplicate" : "add"}
-        priceBookTitle={
-          newPriceBook?.priceBookTitle ? newPriceBook.priceBookTitle : ""
-        }
-        priceBookId={newPriceBook?.priceBookId ? newPriceBook.priceBookId : ""}
+        name={newPriceBook ? newPriceBook.name : ""}
       />
     </div>
   );

@@ -33,9 +33,9 @@ const MilleageForm: FC<MilleageFormProps> = ({ values, setValues }) => {
           name="mileageCap"
           className="w-80"
           defaultValue="0"
-          value={values.mileageCap}
+          value={values.mileageCap?.toString() ?? ""}
           onValueChange={(value) => {
-            setValues((prev) => ({ ...prev, mileageCap: value }));
+            setValues((prev) => ({ ...prev, mileageCap: Number(value) }));
           }}
         />
       </div>
@@ -48,9 +48,9 @@ const MilleageForm: FC<MilleageFormProps> = ({ values, setValues }) => {
           name="mileage"
           className="w-80"
           defaultValue="0"
-          value={values.mileage}
+          value={values.mileage?.toString() ?? ""}
           onValueChange={(value) => {
-            setValues((prev) => ({ ...prev, mileage: value }));
+            setValues((prev) => ({ ...prev, mileage: Number(value) }));
           }}
         />
       </div>

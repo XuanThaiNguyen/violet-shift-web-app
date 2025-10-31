@@ -71,10 +71,11 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
 
   const _renderScheduleByStaff = (staff: User) => {
     const _displayName = getDisplayName({
-      firstName: staff.firstName,
-      lastName: staff.lastName,
-      middleName: staff.middleName,
-      salutation: staff.salutation,
+      firstName: staff?.firstName,
+      lastName: staff?.lastName,
+      middleName: staff?.middleName,
+      salutation: staff?.salutation,
+      preferredName: staff?.preferredName,
     });
 
     return (
@@ -106,14 +107,20 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
 
           {viewMode === "day"
             ? hours.map((hour) => (
-                <div key={hour} className="p-2 text-center border-r border-b bg-gray-50">
+                <div
+                  key={hour}
+                  className="p-2 text-center border-r border-b bg-gray-50"
+                >
                   <div className="text-xs font-semibold text-gray-600">
                     {formatHour(hour)}
                   </div>
                 </div>
               ))
             : dates.map((d, i) => (
-                <div key={i} className="p-4 text-center border-r border-b bg-gray-50">
+                <div
+                  key={i}
+                  className="p-4 text-center border-r border-b bg-gray-50"
+                >
                   <div className="text-sm font-semibold text-gray-600">
                     {d.day}
                   </div>

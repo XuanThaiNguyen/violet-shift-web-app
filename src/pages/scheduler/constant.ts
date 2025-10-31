@@ -96,6 +96,17 @@ export const PaymentMethodKeys = PayMethodOptions.map((item) => item.key);
 export const ErrorMessages = {
   [SHIFT_ERROR_CODE.INVALID_REQUEST]: "Invalid request",
   [SHIFT_ERROR_CODE.SHIFT_NOT_FOUND]: "Shift is not found",
+  [SHIFT_ERROR_CODE.SHIFT_HAPPENED]: "Shift has happened",
+  [SHIFT_ERROR_CODE.STAFF_SCHEDULE_NOT_FOUND]:
+    "Staff schedule not found or happened in some other time or already clocked in",
+  [SHIFT_ERROR_CODE.TASK_NOT_FOUND]: "Task is not found",
+  [SHIFT_ERROR_CODE.SHIFT_NOT_STARTED]: "Shift has not happened",
+  [SHIFT_ERROR_CODE.SHIFT_ENDED]: "Shift has ended",
+  [SHIFT_ERROR_CODE.STAFF_SIGNATURE_REQUIRED]: "Staff Signature is required",
+  [SHIFT_ERROR_CODE.CLIENT_SIGNATURE_REQUIRED]: "Client Signature is required",
+  [SHIFT_ERROR_CODE.STAFF_ALREADY_CLOCKED_IN]: "Staff is already clocked in",
+  [SHIFT_ERROR_CODE.STAFF_ALREADY_CLOCKED_OUT]: "Staff is already clocked out",
+  [SHIFT_ERROR_CODE.STAFF_NOT_CLOCKED_IN]: "Staff is not clocked in",
   [SHIFT_ERROR_CODE.INTERNAL_SERVER_ERROR]: "Internal server error",
 };
 

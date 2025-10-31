@@ -7,9 +7,17 @@ export const ROLE_IDS = {
 } as const;
 
 export const ROLES = {
-  [ROLE_IDS.CARER]: "Carrier",
+  [ROLE_IDS.CARER]: "Carer",
   [ROLE_IDS.HR]: "HR",
   [ROLE_IDS.ADMIN]: "Admin",
   [ROLE_IDS.COORDINATOR]: "Coordinator",
   [ROLE_IDS.OFFICE_SUPPORT]: "Office Support",
+} as const;
+
+export const ROLE_NAMES = {
+  CARER: "Carer",
+  HR: "HR",
+  ADMIN: "Admin",
+  COORDINATOR: "Coordinator",
+  OFFICE_SUPPORT: "Office Support",
 } as const;

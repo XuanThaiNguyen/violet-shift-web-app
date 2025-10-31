@@ -61,7 +61,7 @@ const ClientInfo = ({
         <div className="flex-5">
           <Checkbox
             size="sm"
-            isSelected={!!values.salutation}
+            isSelected={!!values?.salutation}
             onValueChange={(value) => {
               if (value) {
                 setFieldValue("salutation", "Mr");
@@ -74,7 +74,7 @@ const ClientInfo = ({
           </Checkbox>
           <div className="h-8"></div>
           <Select
-            isDisabled={values.salutation === undefined}
+            isDisabled={values?.salutation === undefined}
             label=""
             name="salutation"
             placeholder="Select salutation"
@@ -83,7 +83,7 @@ const ClientInfo = ({
             errorMessage={
               errors.salutation && touched.salutation ? errors.salutation : ""
             }
-            selectedKeys={[values.salutation || ""]}
+            selectedKeys={[values?.salutation || ""]}
             onSelectionChange={([value]) => {
               setFieldValue("salutation", value as string);
             }}

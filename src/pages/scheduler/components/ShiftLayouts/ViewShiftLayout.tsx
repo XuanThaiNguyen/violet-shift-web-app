@@ -5,11 +5,11 @@ import CarerSection from "../ShiftDetailSections/CarerSection";
 import TaskSection from "../ShiftDetailSections/TaskSection";
 import MilleageSection from "../ShiftDetailSections/MilleageSection";
 
-import type { IShiftValues } from "@/types/shift";
+import type { IFullShiftDetail } from "@/types/shift";
 
 
 interface ViewShiftLayoutProps {
-  values: IShiftValues;
+  values: IFullShiftDetail;
 }
 
 const ViewShiftLayout = ({ values }: ViewShiftLayoutProps) => {

@@ -1,10 +1,11 @@
 import api from "@/services/api/http";
 import type {
   IShiftValues as IAddShift,
-  IClientSchedule,
+  IClientScheduleDetail,
   IGetStaffSchedule,
   IShiftDetail,
-  ITask,
+  IShiftTask,
+  IUpdateShift,
 } from "@/types/shift";
 import { useQuery } from "@tanstack/react-query";
 
@@ -13,6 +14,10 @@ export const createNewShift = async (values: IAddShift) => {
   return res.data;
 };
 
+export const updateShift = async (values: IUpdateShift) => {
+  const res = await api.put(`/api/v1/shifts/${values._id}`, values);
+  return res.data;
+};
 export const deleteShift = async (shiftId: string) => {
   const res = await api.delete(`/api/v1/shifts/${shiftId}`);
   return res.data;
@@ -59,7 +64,7 @@ export const useGetStaffSchedulesByShift = (
 export const  useGetClientSchedulesByShift = (
   shiftId: string
 ) => {
-  const clientSchedulesByShift = useQuery<IClientSchedule[]>({
+  const clientSchedulesByShift = useQuery<IClientScheduleDetail[]>({
     queryKey: ["clientSchedulesByShift", shiftId],
     queryFn: () =>
       api.get(`/api/v1/shifts/${shiftId}/client-schedules`),
@@ -77,7 +82,7 @@ export const  useGetClientSchedulesByShift = (
 export const useGetTasksByShift = (
   shiftId: string
 ) => {
-  const tasksByShift = useQuery<ITask[]>({
+  const tasksByShift = useQuery<IShiftTask[]>({
     queryKey: ["tasksByShiftId", shiftId],
     queryFn: () => api.get(`/api/v1/shifts/${shiftId}/tasks`),
     enabled: !!localStorage.getItem("auth_token") && !!shiftId,

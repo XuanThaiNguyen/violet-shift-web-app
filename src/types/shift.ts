@@ -4,6 +4,8 @@ import type {
   ShiftTypeKeys,
 } from "@/pages/scheduler/constant";
 import type { IClient } from "./client";
+import type { IPrices } from "@/states/apis/prices";
+import type { IFunding } from "@/states/apis/funding";
 
 export type ShiftTypeEnum = (typeof ShiftTypeKeys)[number];
 export type AllowanceTypeEnum = (typeof AllowanceTypeKeys)[number];
@@ -20,13 +22,37 @@ export interface IShiftValues {
   address?: string;
   unitNumber?: string;
   bonus?: number;
-  mileage?: string;
-  mileageCap?: string;
+  mileage?: number;
+  mileageCap?: number;
   isCompanyVehicle?: boolean;
   tasks: ITask[];
 }
 
+export type IArrayUpdate<T> = {
+  add: T[];
+  update: T[];
+  delete: string[];
+};
+export interface IUpdateShift {
+  _id: string;
+  shiftType: ShiftTypeEnum;
+  additionalShiftTypes: ShiftTypeEnum[];
+  allowances: AllowanceTypeEnum[];
+  timeFrom: number | null;
+  timeTo: number | null;
+  address?: string;
+  unitNumber?: string;
+  bonus?: number;
+  mileage?: number;
+  mileageCap?: number;
+  isCompanyVehicle?: boolean;
+  clientSchedules: IArrayUpdate<IClientSchedule>;
+  staffSchedules: IArrayUpdate<IStaffSchedule>;
+  tasks: IArrayUpdate<ITask>;
+}
+
 export interface ITask {
+  repetitiveId?: string;
   id?: string;
   name: string;
   isMandatory: boolean;
@@ -34,12 +60,23 @@ export interface ITask {
 }
 
 export interface IClientSchedule {
+  repetitiveId?: string;
   id?: string;
   client: string | null;
   timeFrom: number | null;
   timeTo: number | null;
   priceBook: string;
   fund: string;
+}
+
+export interface IClientScheduleDetail {
+  repetitiveId: string;
+  id: string;
+  client: IClient;
+  priceBook: IPrices;
+  fund: IFunding;
+  timeFrom: number;
+  timeTo: number;
 }
 
 export interface IStaffSchedule {
@@ -122,11 +159,19 @@ export interface IShiftDetail {
   staffClockOutTime: number;
 }
 
+export interface IFullShiftDetail extends IShiftDetail {
+  clientSchedules: IClientScheduleDetail[];
+  staffSchedules: IStaffSchedule[];
+  tasks: IShiftTask[];
+}
+
 export interface IShiftTask {
+  repetitiveId?: string;
+  id?: string;
   shift: IShiftDetail | string;
   name: string;
   description: string;
   isMandatory: boolean;
   isCompleted: boolean;
-  completedAt: Date;
+  completedAt?: Date;
 }

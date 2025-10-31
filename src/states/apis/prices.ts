@@ -2,8 +2,7 @@ import api from "@/services/api/http";
 import { useQuery } from "@tanstack/react-query";
 
 export interface IUpdatePriceBook {
-  priceBookTitle?: string;
-  priceBookId?: string;
+  name?: string;
   rules?: IPriceBookRule[];
   id?: string;
 }
@@ -21,8 +20,7 @@ export interface IPriceBookRule {
 }
 
 export interface IPrices {
-  priceBookTitle: string;
-  priceBookId: string;
+  name: string;
   isArchived?: boolean;
   rules: IPriceBookRule[];
   id: string;
@@ -40,8 +38,7 @@ export interface IAddPriceBookRule {
 }
 
 export interface IAddPriceBook {
-  priceBookTitle: string;
-  priceBookId: string;
+  name: string;
   rules: IAddPriceBookRule[];
 }
 

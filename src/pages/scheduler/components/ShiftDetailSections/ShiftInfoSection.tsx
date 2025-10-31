@@ -6,10 +6,10 @@ import { AllowanceTypeMap, ShiftTypeMap } from "../../constant";
 
 // types
 import type { FC } from "react";
-import type { IShiftValues } from "@/types/shift";
+import type { IFullShiftDetail } from "@/types/shift";
 
 type ShiftInfoSectionProps = {
-  values: IShiftValues;
+  values: IFullShiftDetail;
 };
 
 const ShiftInfoSection: FC<ShiftInfoSectionProps> = ({ values }) => {

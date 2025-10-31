@@ -26,6 +26,7 @@ import {
   statusTypeOptions,
 } from "@/constants/userOptions";
 import { differenceInYears, isValid } from "date-fns";
+import { getDisplayName, getFullName } from "@/utils/strings";
 
 const columns = [
   { name: "Name", uid: "name", width: 160, className: "min-w-[160px]" },
@@ -82,11 +83,19 @@ const ClientList = () => {
   const renderCell = useCallback(
     (client: ClientType, columnKey: string) => {
       const cellValue = client[columnKey as keyof ClientType];
-      const fullName = client.firstName
-        ? `${client.firstName} ${
-            client.middleName ? `${client.middleName} ` : ""
-          }${client.lastName}`
-        : "";
+      const displayName = getDisplayName({
+        firstName: client?.firstName,
+        middleName: client?.middleName,
+        lastName: client?.lastName,
+        salutation: client?.salutation,
+        preferredName: client?.preferredName,
+      });
+
+      const fullName = getFullName({
+        firstName: client?.firstName,
+        middleName: client?.middleName,
+        lastName: client?.lastName,
+      });
 
       let _age = EMPTY_STRING;
       if (client.birthdate && isValid(new Date(client.birthdate))) {
@@ -115,11 +124,9 @@ const ClientList = () => {
                 classNames={{
                   description: "text-default-500",
                 }}
-                description={client.preferredName ? fullName : ""}
-                name={client.preferredName || fullName || ""}
-              >
-                {client.preferredName || fullName || ""}
-              </User>
+                description={fullName || ""}
+                name={displayName || ""}
+              />
             </div>
           );
         case "status":

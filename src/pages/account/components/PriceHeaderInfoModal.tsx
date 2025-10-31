@@ -13,15 +13,8 @@ import * as Yup from "yup";
 interface PriceHeaderInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: ({
-    title,
-    externalId,
-  }: {
-    title: string;
-    externalId: string;
-  }) => void;
-  priceBookTitle?: string;
-  priceBookId?: string;
+  onConfirm: ({ name }: { name: string }) => void;
+  name?: string;
   mode: "add" | "edit" | "duplicate";
 }
 
@@ -29,10 +22,11 @@ const PriceHeaderInfoModal = ({
   isOpen,
   onClose,
   onConfirm,
-  priceBookTitle = "",
-  priceBookId = "",
+  name = "",
   mode = "add",
 }: PriceHeaderInfoModalProps) => {
+  console.log("namename", name);
+
   const {
     values,
     handleSubmit,
@@ -41,21 +35,16 @@ const PriceHeaderInfoModal = ({
     setFieldValue,
     setFieldTouched,
   } = useFormik<{
-    title: string;
-    externalId: string;
+    name: string;
   }>({
     initialValues: {
-      title: priceBookTitle,
-      externalId: priceBookId,
+      name,
     },
     validationSchema: Yup.object({
-      title: Yup.string().required("Title is required"),
-      externalId: Yup.string().required("External ID is required"),
+      name: Yup.string().required("Name is required"),
     }),
-    onSubmit: ({ title, externalId }) => {
-      console.log("123123123");
-
-      onConfirm({ title, externalId });
+    onSubmit: ({ name }) => {
+      onConfirm({ name });
     },
   });
 
@@ -80,41 +69,17 @@ const PriceHeaderInfoModal = ({
                 <div className="h-2"></div>
                 <Input
                   type="text"
-                  name="title"
+                  name="name"
                   isRequired
-                  placeholder="Enter title"
-                  isInvalid={!!errors.title && touched.title}
-                  errorMessage={
-                    errors.title && touched.title ? errors.title : ""
-                  }
-                  value={values.title}
+                  placeholder="Enter name"
+                  isInvalid={!!errors.name && touched.name}
+                  errorMessage={errors.name && touched.name ? errors.name : ""}
+                  value={values.name}
                   onValueChange={(value) => {
-                    setFieldValue("title", value);
+                    setFieldValue("name", value);
                   }}
                   onBlur={() => {
-                    setFieldTouched("title", true);
-                  }}
-                />
-                <div className="h-4"></div>
-                <span>External ID</span>
-                <div className="h-2"></div>
-                <Input
-                  type="text"
-                  name="externalId"
-                  isRequired
-                  placeholder="Enter external ID"
-                  isInvalid={!!errors.externalId && touched.externalId}
-                  errorMessage={
-                    errors.externalId && touched.externalId
-                      ? errors.externalId
-                      : ""
-                  }
-                  value={values.externalId}
-                  onValueChange={(value) => {
-                    setFieldValue("externalId", value);
-                  }}
-                  onBlur={() => {
-                    setFieldTouched("externalId", true);
+                    setFieldTouched("name", true);
                   }}
                 />
                 <div className="h-6"></div>
