@@ -398,17 +398,18 @@ const ShiftDrawer = ({
                   </Button>
                 </div>
                 {isEdit ? (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="md"
-                      color={"primary"}
-                      onPress={() => handleSubmit()}
-                      startContent={<Save size={16} />}
-                    >
-                      Update
-                    </Button>
-                  </div>
+                  <></>
                 ) : (
+                  // <div className="flex items-center gap-2">
+                  //   <Button
+                  //     size="md"
+                  //     color={"primary"}
+                  //     onPress={() => handleSubmit()}
+                  //     startContent={<Save size={16} />}
+                  //   >
+                  //     Update
+                  //   </Button>
+                  // </div>
                   <div className="flex items-center gap-2">
                     <Button
                       size="md"
@@ -417,14 +418,14 @@ const ShiftDrawer = ({
                     >
                       Delete
                     </Button>
-                    <Button
+                    {/* <Button
                       size="md"
                       color={"default"}
                       onPress={() => setIsEdit(true)}
                       startContent={<Edit size={16} />}
                     >
                       Edit
-                    </Button>
+                    </Button> */}
                   </div>
                 )}
               </DrawerHeader>
