@@ -11,6 +11,8 @@ export type StaffFilter = {
   limit?: number;
   sort?: string;
   order?: string;
+  joined?: boolean;
+  archived?: boolean;
 };
 
 export const useStaffs = (filter: StaffFilter) => {

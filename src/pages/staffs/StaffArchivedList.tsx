@@ -24,9 +24,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 
 const columns = [
-  { name: "Name", uid: "name", width: 160, className: "min-w-[160px]" },
-  { name: "Mobile", uid: "mobile", width: 120, className: "min-w-[120px]" },
-  { name: "Phone", uid: "phone", width: 120, className: "min-w-[120px]" },
+  { name: "Name", uid: "name", width: 200, className: "min-w-[160px]" },
+  { name: "Mobile", uid: "mobile", width: 160, className: "min-w-[120px]" },
+  { name: "Phone", uid: "phone", width: 160, className: "min-w-[120px]" },
   {
     name: "Email",
     uid: "email",
@@ -34,7 +34,7 @@ const columns = [
     width: 240,
     className: "min-w-[240px]",
   },
-  { name: "Address", uid: "address", width: 240, className: "min-w-[240]" },
+  { name: "Address", uid: "address", width: 300, className: "min-w-[300px]" },
   { name: "", uid: "unarchived", width: 120, className: "min-w-[120px]" },
 ];
 

@@ -348,7 +348,7 @@ const SchedulerManagementItem = ({
             );
           })}
 
-      {selectedShiftId && (
+      {(isOpen && selectedShiftId) && (
         <ShiftDrawer
           onClose={onClose}
           isOpen={isOpen}

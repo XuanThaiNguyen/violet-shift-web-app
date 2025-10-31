@@ -25,6 +25,8 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
       limit: 50,
       // roles: [ROLE_IDS.CARER],
       query: query,
+      joined: true,
+      archived: false,
     };
   }, [query]);
 

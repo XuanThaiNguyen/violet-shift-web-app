@@ -5,7 +5,7 @@ import { Divider, User } from "@heroui/react";
 import { useStaffs } from "@/states/apis/staff";
 
 // constants
-import { EMPTY_OBJECT } from "@/constants/empty";
+import { EMPTY_OBJECT, EMPTY_STRING } from "@/constants/empty";
 
 // utils
 import { getDisplayName } from "@/utils/strings";
@@ -42,10 +42,10 @@ const CarerSection: FC<CarerSectionProps> = ({ values }) => {
       <div className="flex flex-col">
         {values.staffSchedules.map((staffSchedule, index) => {
           const staff = allStaffsMap?.[staffSchedule.staff!];
-          const name = getDisplayName(staff);
-          const actualName = `${staff.firstName}+${staff.lastName}`;
+          const name = staff ? getDisplayName(staff) : EMPTY_STRING;
+          const actualName = staff ? `${staff.firstName}+${staff.lastName}` : EMPTY_STRING;
           const avatar =
-            staff.avatar || `https://ui-avatars.com/api/?name=${actualName}`;
+            staff?.avatar || `https://ui-avatars.com/api/?name=${actualName}`;
           const isLast = index === values.staffSchedules.length - 1;
           return (
             <div

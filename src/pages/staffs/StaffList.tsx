@@ -95,6 +95,7 @@ const StaffList: FC = () => {
     limit: 10,
     sort: "createdAt",
     order: "desc",
+    archived: false,
   });
 
   const { data: staffData, isLoading } = useStaffs(filter);
