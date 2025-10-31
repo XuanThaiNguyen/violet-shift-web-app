@@ -139,9 +139,9 @@ const SchedulerManagementItem = ({
     return dragOverCell.day === day;
   };
 
-  const handleDeleteEvent = (eventId: number) => {
-    setEvents(events.filter((e) => +e._id !== eventId));
-  };
+  // const handleDeleteEvent = (eventId: number) => {
+  //   setEvents(events.filter((e) => +e._id !== eventId));
+  // };
 
   // const handleAddEvent = () => {
   //   if (selectedCell && newEventData.title) {
@@ -177,8 +177,8 @@ const SchedulerManagementItem = ({
 
     return events.filter((e) => {
       if (!isValid(e.timeFrom)) return false;
-      const fromDate = format(e.timeFrom!, 'yyyy-MM-dd');
-      const _date = format(date, 'yyyy-MM-dd');
+      const fromDate = format(e.timeFrom!, "yyyy-MM-dd");
+      const _date = format(date, "yyyy-MM-dd");
       return _date === fromDate;
     });
   };
@@ -223,6 +223,10 @@ const SchedulerManagementItem = ({
                     <div
                       key={event._id}
                       draggable
+                      onClick={() => {
+                        setSelectedShiftId(event.shift._id);
+                        onOpen();
+                      }}
                       onDragStart={(e) => handleDragStart(e, event)}
                       onDragEnd={handleDragEnd}
                       className={`p-1 rounded text-xs text-white relative group cursor-move mb-1 ${
@@ -241,7 +245,7 @@ const SchedulerManagementItem = ({
                           {_timeShift}
                           <div className="h-1"></div>
                           <div className="font-medium text-gray-800 truncate">
-                            {event.shift.shiftType || "Personal Care"}
+                            {event?.shift?.shiftType || "Personal Care"}
                           </div>
                           <div className="h-2"></div>
                           <div className="text-xs text-gray-500 truncate">
@@ -249,7 +253,7 @@ const SchedulerManagementItem = ({
                           </div>
                         </div>
                       </div>
-                      <button
+                      {/* <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteEvent(+event._id);
@@ -257,7 +261,7 @@ const SchedulerManagementItem = ({
                         className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 flex items-center justify-center"
                       >
                         ×
-                      </button>
+                      </button> */}
                     </div>
                   );
                 })}
@@ -318,7 +322,7 @@ const SchedulerManagementItem = ({
                             </div>
                             <div className="h-1"></div>
                             <div className="font-medium text-gray-800 truncate">
-                              {shift.shift.shiftType || "Personal Care"}
+                              {shift?.shift?.shiftType || "Personal Care"}
                             </div>
                             <div className="h-2"></div>
                             <div className="text-xs text-gray-500 truncate">
@@ -326,7 +330,7 @@ const SchedulerManagementItem = ({
                             </div>
                           </div>
                         </div>
-                        <button
+                        {/* <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteEvent(+shift._id);
@@ -334,7 +338,7 @@ const SchedulerManagementItem = ({
                           className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                         >
                           ×
-                        </button>
+                        </button> */}
                       </div>
                     );
                   })}

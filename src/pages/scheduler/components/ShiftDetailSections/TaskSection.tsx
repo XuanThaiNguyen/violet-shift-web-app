@@ -7,7 +7,6 @@ import type { IFullShiftDetail } from "@/types/shift";
 
 type TaskSectionProps = {
   values: IFullShiftDetail;
-
 };
 
 const TaskSection: FC<TaskSectionProps> = ({ values }) => {
@@ -20,20 +19,24 @@ const TaskSection: FC<TaskSectionProps> = ({ values }) => {
       <div className="h-2"></div>
       <Divider />
       <div className="h-2"></div>
-      {values.tasks.map?.((task, index) => (
-        <div
-          key={`${task.name}-${index}`}
-          className="flex items-center justify-between py-2"
-        >
-          <span className="flex-1">{task.name}</span>
-          <div className="flex items-center gap-8">
-            <span className="justify-start">
-              <span className="font-semibold">Mandatory: </span>
-              {task.isMandatory ? "Yes" : "No"}
-            </span>
+      {values.tasks?.length > 0 ? (
+        values.tasks.map?.((task, index) => (
+          <div
+            key={`${task.name}-${index}`}
+            className="flex items-center justify-between py-2"
+          >
+            <span className="flex-1">{task.name}</span>
+            <div className="flex items-center gap-8">
+              <span className="justify-start">
+                <span className="font-semibold">Mandatory: </span>
+                {task.isMandatory ? "Yes" : "No"}
+              </span>
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      ) : (
+        <span className="text-sm font-normal">No tasks added!</span>
+      )}
     </div>
   );
 };

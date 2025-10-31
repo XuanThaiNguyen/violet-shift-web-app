@@ -8,11 +8,11 @@ export const capitalizeFirstLetter = (str: string): string => {
 };
 
 export const getDisplayName = ({
-  salutation,
-  firstName,
-  middleName,
-  lastName,
-  preferredName,
+  salutation = "",
+  firstName = "",
+  middleName = "",
+  lastName = "",
+  preferredName = "",
 }: {
   salutation?: string;
   firstName?: string;
@@ -27,18 +27,6 @@ export const getDisplayName = ({
   return salutation && salutation?.length > 0
     ? `${salutation}. ${baseName}`.trim()
     : baseName;
-};
-
-export const getFullName = ({
-  firstName = "",
-  middleName = "",
-  lastName = "",
-}: {
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-}) => {
-  return [firstName, middleName, lastName].filter(Boolean).join(" ");
 };
 
 export const generateId = () =>

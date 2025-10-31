@@ -1,31 +1,31 @@
-import { useState, useMemo, useCallback } from "react";
+import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
+import { ROLE_IDS, ROLES } from "@/constants/roles";
+import { employmentTypeOptions, genderOptions } from "@/constants/userOptions";
+import { useStaffs, type StaffFilter } from "@/states/apis/staff";
 import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Input,
   Button,
-  User,
+  Input,
   Pagination,
-  type SharedSelection,
   Select,
   SelectItem,
   Spinner,
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+  User,
+  type SharedSelection,
 } from "@heroui/react";
-import { PlusIcon, Search } from "lucide-react";
-import { Link, useNavigate } from "react-router";
-import { ROLE_IDS, ROLES } from "@/constants/roles";
-import { useStaffs, type StaffFilter } from "@/states/apis/staff";
-import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
-import { employmentTypeOptions, genderOptions } from "@/constants/userOptions";
 import { format, isValid } from "date-fns";
+import { PlusIcon, Search } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router";
 
-import type { FC } from "react";
 import type { User as UserType } from "@/types/user";
-import { getFullName } from "@/utils/strings";
+import { getDisplayName } from "@/utils/strings";
+import type { FC } from "react";
 
 const columns = [
   { name: "Name", uid: "name", width: 240, className: "min-w-[160px]" },
@@ -107,10 +107,12 @@ const StaffList: FC = () => {
 
   const renderCell = useCallback((user: UserType, columnKey: string) => {
     const cellValue = user[columnKey as keyof UserType];
-    const fullName = getFullName({
-      firstName: user.firstName,
+    const fullName = getDisplayName({
+      firstName: user?.firstName,
       middleName: user?.middleName,
-      lastName: user.lastName,
+      lastName: user?.lastName,
+      salutation: user?.salutation,
+      preferredName: user?.preferredName,
     });
 
     switch (columnKey) {

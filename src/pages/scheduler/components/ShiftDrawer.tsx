@@ -230,6 +230,7 @@ const ShiftDrawer = ({
       onClose();
     },
     onError: (error) => {
+      setIsDeleteConfirmOpen(false);
       if (error instanceof AxiosError) {
         const errorCode = error.response?.data?.code;
         const msg = ErrorMessages[errorCode] ?? "Something went wrong";

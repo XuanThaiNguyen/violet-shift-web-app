@@ -66,8 +66,6 @@ const PriceItem = ({ dataPrice, handleDuplicatePriceBook }: PriceItemProps) => {
   const { mutate } = useMutation({
     mutationFn: updatePriceBook,
     onSuccess: () => {
-      console.log("123123");
-
       addToast({
         title: "Update price book successfully",
         color: "success",
@@ -82,7 +80,6 @@ const PriceItem = ({ dataPrice, handleDuplicatePriceBook }: PriceItemProps) => {
       setErrors({});
     },
     onError: (error) => {
-      console.log("456456");
       if (error instanceof AxiosError) {
         const errorCode = error.response?.data?.code;
         const msg = PriceErrorMessages[errorCode] ?? "Something went wrong";
@@ -141,7 +138,7 @@ const PriceItem = ({ dataPrice, handleDuplicatePriceBook }: PriceItemProps) => {
   const handleFieldChange = (
     ruleId: string,
     field: keyof IPriceBookRule,
-    value: any
+    value: string | number | null
   ) => {
     setEditingRules((prev) =>
       prev.map((rule) =>
@@ -153,6 +150,7 @@ const PriceItem = ({ dataPrice, handleDuplicatePriceBook }: PriceItemProps) => {
   const handleDuplicateRule = (ruleId: string) => {
     const ruleIndex = editingRules.findIndex((rule) => rule._id === ruleId);
     if (ruleIndex !== -1) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, ...ruleToDuplicate } = editingRules[ruleIndex];
       setEditingRules((prev) => [
         ...prev,
@@ -532,6 +530,7 @@ const PriceItem = ({ dataPrice, handleDuplicatePriceBook }: PriceItemProps) => {
     ) : (
       <></>
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, editingRules]);
 
   const onChangeTitle = ({

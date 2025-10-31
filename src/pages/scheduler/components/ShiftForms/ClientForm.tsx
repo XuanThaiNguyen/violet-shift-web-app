@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Users } from "lucide-react";
-import { Divider } from "@heroui/react";
+import { Divider, User } from "@heroui/react";
 import { Select } from "@/components/select/Select";
 
 // apis
@@ -46,12 +46,18 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
     const options: SelectOption[] = [];
     allClients?.forEach((client) => {
       map[client.id!] = client;
+      const name = getDisplayName(client);
+      const actualName = `${client.firstName}+${client.lastName}`;
+      const avatar =
+        client.avatar || `https://ui-avatars.com/api/?name=${actualName}`;
       options.push({
-        label: getDisplayName({
-          firstName: client.firstName,
-          lastName: client.lastName,
-          preferredName: client.preferredName,
-        }),
+        label: (
+          <User
+            avatarProps={{ src: avatar, size: "sm" }}
+            name={name}
+            description={client.email}
+          />
+        ),
         value: client.id!,
       });
     });
@@ -100,7 +106,7 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
                     timeFrom: old.timeFrom,
                     timeTo: old.timeTo,
                     priceBook: oldClientSchedule?.priceBook || "",
-                    fund: "",
+                    fund: oldClientSchedule?.fund || "",
                   },
                 ],
               };
@@ -121,7 +127,7 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
           value={values.clientSchedules[0]?.priceBook || undefined}
           onValueChange={(value) => {
             setValues((old) => {
-                const oldClientSchedule = old.clientSchedules[0];
+              const oldClientSchedule = old.clientSchedules[0];
               return {
                 ...old,
                 clientSchedules: [
