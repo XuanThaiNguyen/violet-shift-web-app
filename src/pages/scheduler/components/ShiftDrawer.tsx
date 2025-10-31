@@ -29,7 +29,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useFormik } from "formik";
-import { ArrowLeft, Edit, Save, X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import * as Yup from "yup";
 import { ErrorMessages, ShiftTypeKeys, ShiftTypeOptions } from "../constant";
@@ -244,7 +244,7 @@ const ShiftDrawer = ({
     },
   });
 
-  const { values, setValues, handleSubmit } = useFormik<IShiftValues>({
+  const { values, setValues } = useFormik<IShiftValues>({
     initialValues: initialValues,
     validationSchema: shiftSchema,
     onSubmit: (values) => {
