@@ -293,17 +293,18 @@ const SchedulerManagementItem = ({
 
                     return (
                       <div
-                        key={shift._id}
+                        key={`${d.year}-${d.month}-${d.date}-${shift?.shift?._id}`}
                         draggable
                         onDragStart={(e) => handleDragStart(e, shift)}
                         onDragEnd={handleDragEnd}
                         className={`p-2 rounded text-xs relative group cursor-move border-l-4 ${
-                          draggedEvent && +draggedEvent?._id === +shift._id
+                          draggedEvent &&
+                          +draggedEvent?._id === +shift?.shift?._id
                             ? "opacity-50"
                             : ""
                         }`}
                         onClick={() => {
-                          setSelectedShiftId(shift.shift._id);
+                          setSelectedShiftId(shift?.shift?._id);
                           onOpen();
                         }}
                         style={{

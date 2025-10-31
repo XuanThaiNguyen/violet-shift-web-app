@@ -79,9 +79,11 @@ const ClientInfo = ({
             name="salutation"
             placeholder="Select salutation"
             className="w-72"
-            isInvalid={!!errors.salutation && touched.salutation}
+            isInvalid={!!errors?.salutation && touched?.salutation}
             errorMessage={
-              errors.salutation && touched.salutation ? errors.salutation : ""
+              errors?.salutation && touched?.salutation
+                ? errors?.salutation
+                : ""
             }
             selectedKeys={[values?.salutation || ""]}
             onSelectionChange={([value]) => {
