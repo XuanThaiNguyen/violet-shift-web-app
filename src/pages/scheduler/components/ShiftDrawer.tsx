@@ -184,7 +184,7 @@ const ShiftDrawer = ({
         });
       } else {
         addToast({
-          title: "Add shift failed",
+          title: "Update shift failed",
           color: "danger",
           timeout: 2000,
           isClosing: true,

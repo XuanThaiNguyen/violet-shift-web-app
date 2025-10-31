@@ -9,7 +9,7 @@ import type { DayDateInfo, ViewMode } from "./type";
 import CreateShiftDrawer from "./components/CreateShiftDrawer";
 
 const Scheduler: FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [openShiftDrawer, setOpenShiftDrawer] = useState<boolean>(false);
   const [dates, setDates] = useState<DayDateInfo[]>([]);
@@ -49,10 +49,12 @@ const Scheduler: FC = () => {
         )}
       </div>
 
-      {openShiftDrawer && <CreateShiftDrawer
-        isOpen={openShiftDrawer}
-        onClose={() => setOpenShiftDrawer(false)}
-      />}
+      {openShiftDrawer && (
+        <CreateShiftDrawer
+          isOpen={openShiftDrawer}
+          onClose={() => setOpenShiftDrawer(false)}
+        />
+      )}
     </>
   );
 };

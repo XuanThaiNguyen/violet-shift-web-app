@@ -59,8 +59,8 @@ const SchedulerMode = ({
       const _date = dates[0] || new Date();
 
       const _formatedDate = `${_date.day}, ${_date.date} ${
-        monthNames[_date.month - 1]
-      } ${_date.year}`;
+        monthNames[_date?.month - 1]
+      } ${_date?.year}`;
 
       return (
         <span className="font-medium">{`${_formatedDate} ${
@@ -74,28 +74,28 @@ const SchedulerMode = ({
     let _formatedDate = "";
 
     if (
-      firstItem.month - 1 !== lastItem.month - 1 &&
-      firstItem.year !== lastItem.year
+      firstItem?.month - 1 !== lastItem?.month - 1 &&
+      firstItem?.year !== lastItem?.year
     ) {
-      _formatedDate = `${monthNames[firstItem.month - 1]} ${lastItem.year} - ${
-        monthNames[lastItem.month - 1]
-      } ${lastItem.year}`;
+      _formatedDate = `${monthNames[firstItem?.month - 1]} ${
+        lastItem?.year
+      } - ${monthNames[lastItem?.month - 1]} ${lastItem?.year}`;
     }
 
     if (
-      firstItem.year === lastItem.year &&
-      firstItem.month - 1 !== lastItem.month - 1
+      firstItem?.year === lastItem?.year &&
+      firstItem?.month - 1 !== lastItem?.month - 1
     ) {
-      _formatedDate = `${monthNames[firstItem.month - 1]} - ${
-        monthNames[lastItem.month - 1]
-      } ${lastItem.year}`;
+      _formatedDate = `${monthNames[firstItem?.month - 1]} - ${
+        monthNames[lastItem?.month - 1]
+      } ${lastItem?.year}`;
     }
 
     if (
-      firstItem.year === lastItem.year &&
-      firstItem.month === lastItem.month
+      firstItem?.year === lastItem?.year &&
+      firstItem?.month === lastItem?.month
     ) {
-      _formatedDate = `${monthNames[firstItem.month - 1]} ${firstItem.year}`;
+      _formatedDate = `${monthNames[firstItem?.month - 1]} ${firstItem?.year}`;
     }
 
     return <span className="font-medium">{_formatedDate}</span>;
@@ -111,7 +111,7 @@ const SchedulerMode = ({
         className="w-32"
         value={viewMode}
         defaultSelectedKeys={[
-          (isAdmin ? ViewModeOptions : ViewCarerModeOptions)[0].label || "",
+          (isAdmin ? ViewModeOptions : ViewCarerModeOptions)[1].label || "",
         ]}
         onSelectionChange={([value]) => {
           const _viewMode = (
