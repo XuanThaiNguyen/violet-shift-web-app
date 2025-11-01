@@ -1,0 +1,13 @@
+dist
+node_modules
+
+.env
+.env.example
+.gitignore
+
+Dockerfile
+
+eslint.config.js
+
+netlify.toml
+vercel.json
