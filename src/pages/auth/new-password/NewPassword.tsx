@@ -5,10 +5,12 @@ import * as Yup from "yup";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { LOGIN_ERROR_CODE } from "@/constants/errorMsg";
+import api from "@/services/api/http";
+import { AxiosError } from "axios";
 
 import type { FC } from "react";
-import axios, { AxiosError } from "axios";
-import { LOGIN_ERROR_CODE } from "@/constants/errorMsg";
+
 
 const schema = Yup.object({
   password: Yup.string()
@@ -48,8 +50,8 @@ const NewPassword: FC = () => {
 
       try {
         // due to axios interceptor will replace headers, so we need to use axios directly
-        const response = await axios.post(
-          "/api/v1/auth/new-password",
+        const response = await api.post(
+          "/auth/new-password",
           {
             ...values,
           },
@@ -57,11 +59,10 @@ const NewPassword: FC = () => {
             headers: {
               Authorization: token ?? "",
             },
-            baseURL: import.meta.env.VITE_API_URL,
           }
         );
 
-        const auth_token = response.data?.data?.token;
+        const auth_token = response?.token;
         queryClient.invalidateQueries({ queryKey: ["me"] });
         if (token) {
           localStorage.setItem("auth_token", auth_token);

@@ -21,6 +21,8 @@ const initialLoginValues = {
 
 const ErrorMessages = {
   [LOGIN_ERROR_CODE.INVALID_REQUEST]: "Email or password is incorrect",
+  [LOGIN_ERROR_CODE.USER_IS_ARCHIVED]: "Your account has been archived",
+  [LOGIN_ERROR_CODE.USER_NOT_ACTIVE]: "Your account has not been activated",
   [LOGIN_ERROR_CODE.INTERNAL_SERVER_ERROR]: "Internal server error",
 };
 
