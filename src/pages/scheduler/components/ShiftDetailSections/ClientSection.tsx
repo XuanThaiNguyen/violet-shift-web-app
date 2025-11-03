@@ -1,13 +1,13 @@
+import { Divider, User } from "@heroui/react";
 import { Users } from "lucide-react";
-import { Divider } from "@heroui/react";
 
 // utils
 import { getDisplayName } from "@/utils/strings";
 import clsx from "clsx";
 
 // types
-import type { FC } from "react";
 import type { IFullShiftDetail } from "@/types/shift";
+import type { FC } from "react";
 
 type ClientSectionProps = {
   values: IFullShiftDetail;
@@ -30,6 +30,17 @@ const ClientSection: FC<ClientSectionProps> = ({ values }) => {
           const priceBook = clientSchedule.priceBook;
           const fund = clientSchedule.fund;
 
+          const name = getDisplayName({
+            firstName: client?.firstName,
+            lastName: client?.lastName,
+            middleName: client?.middleName,
+            preferredName: client?.preferredName,
+            salutation: client?.salutation,
+          });
+          const actualName = `${client?.firstName}+${client?.lastName}`;
+          const avatar =
+            client?.avatar || `https://ui-avatars.com/api/?name=${actualName}`;
+
           return (
             <div
               className={clsx(
@@ -40,7 +51,7 @@ const ClientSection: FC<ClientSectionProps> = ({ values }) => {
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-medium">Client:</span>
-                <span className="text-sm">{getDisplayName(client)}</span>
+                <User avatarProps={{ src: avatar, size: "sm" }} name={name} />
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-medium">Price Book:</span>

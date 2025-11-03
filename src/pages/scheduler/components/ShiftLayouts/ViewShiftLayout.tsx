@@ -1,9 +1,10 @@
-import ClientSection from "../ShiftDetailSections/ClientSection";
-import ShiftInfoSection from "../ShiftDetailSections/ShiftInfoSection";
-import TimeNLocationSection from "../ShiftDetailSections/TimeNLocationSection";
 import CarerSection from "../ShiftDetailSections/CarerSection";
-import TaskSection from "../ShiftDetailSections/TaskSection";
+import ClientSection from "../ShiftDetailSections/ClientSection";
 import MilleageSection from "../ShiftDetailSections/MilleageSection";
+import PersonalSection from "../ShiftDetailSections/PersonalSection";
+import ShiftInfoSection from "../ShiftDetailSections/ShiftInfoSection";
+import TaskSection from "../ShiftDetailSections/TaskSection";
+import TimeNLocationSection from "../ShiftDetailSections/TimeNLocationSection";
 
 import type { IFullShiftDetail } from "@/types/shift";
 
@@ -21,7 +22,7 @@ const ViewShiftLayout = ({ values, isAdmin }: ViewShiftLayoutProps) => {
 
       <TimeNLocationSection values={values} />
 
-      <CarerSection values={values} />
+      {isAdmin ? <CarerSection values={values} /> : <PersonalSection />}
 
       {isAdmin ? <TaskSection values={values} /> : <></>}
 
