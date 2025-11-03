@@ -69,7 +69,9 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
       <Divider />
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
-        <span className="text-sm">Choose carer</span>
+        <span className="text-sm">
+          Choose carer <span className="text-red-500">*</span>
+        </span>
         <Select
           className="max-w-xs"
           placeholder="Select carer"

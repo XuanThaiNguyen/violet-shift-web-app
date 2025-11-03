@@ -7,13 +7,12 @@ import MilleageSection from "../ShiftDetailSections/MilleageSection";
 
 import type { IFullShiftDetail } from "@/types/shift";
 
-
 interface ViewShiftLayoutProps {
   values: IFullShiftDetail;
+  isAdmin: boolean;
 }
 
-const ViewShiftLayout = ({ values }: ViewShiftLayoutProps) => {
-
+const ViewShiftLayout = ({ values, isAdmin }: ViewShiftLayoutProps) => {
   return (
     <div className="flex flex-col gap-4">
       <ClientSection values={values} />
@@ -24,7 +23,7 @@ const ViewShiftLayout = ({ values }: ViewShiftLayoutProps) => {
 
       <CarerSection values={values} />
 
-      <TaskSection values={values} />
+      {isAdmin ? <TaskSection values={values} /> : <></>}
 
       <MilleageSection values={values} />
     </div>
