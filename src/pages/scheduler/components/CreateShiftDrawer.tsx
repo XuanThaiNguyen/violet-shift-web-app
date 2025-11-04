@@ -49,8 +49,7 @@ const shiftSchema = Yup.object().shape({
     .oneOf(ShiftTypeKeys, "Invalid key")
     .required("Shift Type is required"),
   timeFrom: Yup.string().required("Time From is required"),
-  timeTo: Yup.string()
-    .required("Time To is required"),
+  timeTo: Yup.string().required("Time To is required"),
   address: Yup.string().optional(),
   isCompanyVehicle: Yup.boolean().optional(),
   mileage: Yup.string().optional(),
@@ -186,6 +185,12 @@ const CreateShiftDrawer = ({ isOpen, onClose }: CreateShiftDrawerProps) => {
                 <Button
                   size="md"
                   color={"primary"}
+                  isDisabled={
+                    !values.clientSchedules?.[0]?.client ||
+                    !values.staffSchedules?.[0]?.staff ||
+                    !values.clientSchedules[0]?.priceBook ||
+                    !values.clientSchedules[0]?.fund
+                  }
                   onPress={() => handleSubmit()}
                   startContent={<Save size={16} />}
                 >

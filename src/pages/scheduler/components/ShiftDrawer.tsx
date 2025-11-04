@@ -80,12 +80,14 @@ interface ShiftDrawerProps {
   isOpen: boolean;
   selectedShiftId: string;
   onClose: () => void;
+  isAdmin: boolean;
 }
 
 const ShiftDrawer = ({
   isOpen,
   selectedShiftId,
   onClose,
+  isAdmin,
 }: ShiftDrawerProps) => {
   const [isEdit, setIsEdit] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -411,13 +413,17 @@ const ShiftDrawer = ({
                   //   </Button>
                   // </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      size="md"
-                      color="danger"
-                      onPress={() => setIsDeleteConfirmOpen(true)}
-                    >
-                      Delete
-                    </Button>
+                    {isAdmin ? (
+                      <Button
+                        size="md"
+                        color="danger"
+                        onPress={() => setIsDeleteConfirmOpen(true)}
+                      >
+                        Delete
+                      </Button>
+                    ) : (
+                      <></>
+                    )}
                     {/* <Button
                       size="md"
                       color={"default"}
@@ -436,7 +442,10 @@ const ShiftDrawer = ({
                     setValues={setValues}
                   />
                 ) : (
-                  <ViewShiftLayout values={fullShiftDetails} />
+                  <ViewShiftLayout
+                    isAdmin={isAdmin}
+                    values={fullShiftDetails}
+                  />
                 )}
               </DrawerBody>
               <DrawerFooter className="bg-background">

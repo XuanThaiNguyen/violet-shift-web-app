@@ -1,19 +1,19 @@
-import ClientSection from "../ShiftDetailSections/ClientSection";
-import ShiftInfoSection from "../ShiftDetailSections/ShiftInfoSection";
-import TimeNLocationSection from "../ShiftDetailSections/TimeNLocationSection";
 import CarerSection from "../ShiftDetailSections/CarerSection";
-import TaskSection from "../ShiftDetailSections/TaskSection";
+import ClientSection from "../ShiftDetailSections/ClientSection";
 import MilleageSection from "../ShiftDetailSections/MilleageSection";
+import PersonalSection from "../ShiftDetailSections/PersonalSection";
+import ShiftInfoSection from "../ShiftDetailSections/ShiftInfoSection";
+import TaskSection from "../ShiftDetailSections/TaskSection";
+import TimeNLocationSection from "../ShiftDetailSections/TimeNLocationSection";
 
 import type { IFullShiftDetail } from "@/types/shift";
 
-
 interface ViewShiftLayoutProps {
   values: IFullShiftDetail;
+  isAdmin: boolean;
 }
 
-const ViewShiftLayout = ({ values }: ViewShiftLayoutProps) => {
-
+const ViewShiftLayout = ({ values, isAdmin }: ViewShiftLayoutProps) => {
   return (
     <div className="flex flex-col gap-4">
       <ClientSection values={values} />
@@ -22,9 +22,9 @@ const ViewShiftLayout = ({ values }: ViewShiftLayoutProps) => {
 
       <TimeNLocationSection values={values} />
 
-      <CarerSection values={values} />
+      {isAdmin ? <CarerSection values={values} /> : <PersonalSection />}
 
-      <TaskSection values={values} />
+      {isAdmin ? <TaskSection values={values} /> : <></>}
 
       <MilleageSection values={values} />
     </div>

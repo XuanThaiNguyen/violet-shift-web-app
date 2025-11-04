@@ -1,12 +1,13 @@
+import { useMe } from "@/states/apis/me";
+import { useGetSchedulesByStaffId } from "@/states/apis/shift";
+import type { IGetStaffSchedule } from "@/types/shift";
+import { convertDateToMs } from "@/utils/datetime";
+import { useDisclosure } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { hours, weekDays } from "../constant";
-import { X } from "lucide-react";
 import type { DayDateInfo, ViewMode } from "../type";
-import { convertDateToMs } from "@/utils/datetime";
-import { useGetSchedulesByStaffId } from "@/states/apis/shift";
-import { useMe } from "@/states/apis/me";
-import type { IGetStaffSchedule } from "@/types/shift";
 import { getShiftTypeLabel } from "../util";
+import ShiftDrawer from "./ShiftDrawer";
 
 interface SchedularPersonalProps {
   viewMode: ViewMode;
@@ -18,9 +19,13 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
 
   const [events, setEvents] = useState<IGetStaffSchedule[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [from, setFrom] = useState<number | null>(null);
   const [to, setTo] = useState<number | null>(null);
+  const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
+    undefined
+  );
 
   const {
     data: dataSchedules,
@@ -189,6 +194,10 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
               const leftPercent = index * 30;
               return (
                 <div
+                  onClick={() => {
+                    setSelectedShiftId(event.shift._id);
+                    onOpen();
+                  }}
                   key={event._id}
                   className={`absolute left-2 right-2 border-l-4 p-3 rounded group bg-background`}
                   style={{
@@ -201,26 +210,22 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className={`font-medium`}>
-                        {_start.getHours()}:
-                        {_start.getMinutes().toString().padStart(2, "0")} -{" "}
-                        {_end.getHours()}:
-                        {_end.getMinutes().toString().padStart(2, "0")}
-                      </div>
-                      <div className={`font-semibold text-lg`}>
-                        {getShiftTypeLabel(event.shift.shiftType)}
+                      <div className="flex gap-2">
+                        <div className={`font-medium`}>
+                          {_start.getHours()}:
+                          {_start.getMinutes().toString().padStart(2, "0")} -{" "}
+                          {_end.getHours()}:
+                          {_end.getMinutes().toString().padStart(2, "0")}
+                        </div>
+                        <div className={`font-semibold`}>
+                          {getShiftTypeLabel(event.shift.shiftType)}
+                        </div>
                       </div>
                       <div className="h-1"></div>
                       <div className="text-gray-500 text-sm mt-1">
-                        {event.clientNames[0]}
+                        Client: {event.clientNames[0]}
                       </div>
                     </div>
-                    <button
-                      // onClick={() => deleteEvent(event.id)}
-                      className="opacity-0 group-hover:opacity-100"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               );
@@ -286,6 +291,10 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
                   const pos = getEventPosition(event);
                   return (
                     <div
+                      onClick={() => {
+                        setSelectedShiftId(event.shift._id);
+                        onOpen();
+                      }}
                       key={event._id}
                       className={`absolute left-1 right-1 border-l-4 p-2 rounded text-xs group bg-background`}
                       style={{
@@ -295,25 +304,21 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
-                          <div className={`font-medium`}>
-                            {_start.getHours()}:
-                            {_start.getMinutes().toString().padStart(2, "0")} -{" "}
-                            {_end.getHours()}:
-                            {_end.getMinutes().toString().padStart(2, "0")}
-                          </div>
-                          <div className={`font-semibold text-lg truncate`}>
-                            {event.shift.shiftType}
+                          <div className="flex gap-2">
+                            <div className={`font-medium`}>
+                              {_start.getHours()}:
+                              {_start.getMinutes().toString().padStart(2, "0")}{" "}
+                              - {_end.getHours()}:
+                              {_end.getMinutes().toString().padStart(2, "0")}
+                            </div>
+                            <div className={`font-semibold truncate`}>
+                              {event.shift.shiftType}
+                            </div>
                           </div>
                           <div className="text-gray-500 text-xs">
-                            {event.clientNames[0]}
+                            Client: {event.clientNames[0]}
                           </div>
                         </div>
-                        <button
-                          // onClick={() => deleteEvent(event.id)}
-                          className="opacity-0 group-hover:opacity-100"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   );
@@ -383,29 +388,32 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
                       <div
                         key={event._id}
                         className={`border-l-4 p-1 text-xs rounded group relative bg-background`}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedShiftId(event.shift._id);
+                          onOpen();
+                        }}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <div className={`font-medium truncate`}>
-                              {_start.getHours()}:
-                              {_start.getMinutes().toString().padStart(2, "0")}{" "}
-                              - {_end.getHours()}:
-                              {_end.getMinutes().toString().padStart(2, "0")}
-                            </div>
-                            <div className={`font-semibold text-lg truncate`}>
-                              {getShiftTypeLabel(event.shift.shiftType)}
+                            <div className="flex gap-2">
+                              <div className={`font-medium truncate`}>
+                                {_start.getHours()}:
+                                {_start
+                                  .getMinutes()
+                                  .toString()
+                                  .padStart(2, "0")}{" "}
+                                - {_end.getHours()}:
+                                {_end.getMinutes().toString().padStart(2, "0")}
+                              </div>
+                              <div className={`font-semibold truncate`}>
+                                {getShiftTypeLabel(event.shift.shiftType)}
+                              </div>
                             </div>
                           </div>
-                          <button
-                            // onClick={() => deleteEvent(event.id)}
-                            className="opacity-0 group-hover:opacity-100 ml-1"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
                         </div>
                         <div className="text-xs text-gray-500">
-                          {event.clientNames[0]}
+                          Client: {event.clientNames[0]}
                         </div>
                       </div>
                     );
@@ -424,6 +432,15 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
       {viewMode === "day" && renderDayView()}
       {viewMode === "week" && renderWeekView()}
       {viewMode === "month" && renderMonthView()}
+
+      {isOpen && selectedShiftId && (
+        <ShiftDrawer
+          onClose={onClose}
+          isOpen={isOpen}
+          selectedShiftId={selectedShiftId}
+          isAdmin={false}
+        />
+      )}
     </div>
   );
 };

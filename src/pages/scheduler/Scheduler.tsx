@@ -29,7 +29,7 @@ const Scheduler: FC = () => {
             setViewMode={setViewMode}
             setWeekOffset={setWeekOffset}
           />
-          <div>
+          {isAdmin ? (
             <Button
               onPress={() => setOpenShiftDrawer(true)}
               color={"primary"}
@@ -38,7 +38,9 @@ const Scheduler: FC = () => {
             >
               Shift
             </Button>
-          </div>
+          ) : (
+            <></>
+          )}
         </div>
 
         <div className="h-4"></div>

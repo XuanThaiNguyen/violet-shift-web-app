@@ -86,7 +86,9 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
       <Divider />
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
-        <span className="text-sm">Choose client</span>
+        <span className="text-sm">
+          Choose client <span className="text-red-500">*</span>
+        </span>
         <Select
           className="max-w-xs"
           placeholder="Select client"
@@ -116,7 +118,9 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
       </div>
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
-        <span className="text-sm">Price book</span>
+        <span className="text-sm">
+          Price book <span className="text-red-500">*</span>
+        </span>
         <Select
           className="max-w-xs"
           classNames={{
@@ -146,7 +150,9 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
       </div>
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
-        <span className="text-sm">Funds</span>
+        <span className="text-sm">
+          Funds <span className="text-red-500">*</span>
+        </span>
         <Select
           className="max-w-xs"
           classNames={{
