@@ -42,7 +42,7 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
 
   const { data: dataPriceBooks = EMPTY_ARRAY } = useGetPrices();
   const { data: dataFunds = EMPTY_ARRAY } = useGetFundingsByUser({
-    userId: values?.clientSchedules[0]?.client || "",
+    client: values?.clientSchedules[0]?.client || "",
   });
   const allClientsTransform = useMemo(() => {
     const map: Record<string, IClient> = {};
