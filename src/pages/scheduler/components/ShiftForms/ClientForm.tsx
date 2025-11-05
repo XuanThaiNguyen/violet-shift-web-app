@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Users } from "lucide-react";
-import { Divider, User } from "@heroui/react";
+import { Button, Divider, User } from "@heroui/react";
 import { Select } from "@/components/select/Select";
 
 // apis
@@ -20,6 +20,7 @@ import type { IClient } from "@/types/client";
 import type { IShiftValues } from "@/types/shift";
 import type { FormikErrors } from "formik";
 import type { SelectOption } from "@/components/select/Select";
+import { useNavigate } from "react-router";
 
 type ClientFormProps = {
   values: IShiftValues;
@@ -30,6 +31,8 @@ type ClientFormProps = {
 };
 
 const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
+  const navigate = useNavigate();
+
   const { data: allClientsData } = useGetClients({
     query: "",
     page: 1,
@@ -73,8 +76,26 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
     return dataFunds.map((fund) => ({
       label: fund.name,
       value: fund.id!,
+      isDefault: fund.isDefault,
     }));
   }, [dataFunds]);
+
+  useEffect(() => {
+    if (values.clientSchedules[0]?.client && fundOptions?.length > 0) {
+      const fund =
+        fundOptions.find((option) => option.isDefault) || fundOptions[0];
+
+      setValues((prev) => ({
+        ...prev,
+        clientSchedules: [{ ...prev.clientSchedules[0], fund: fund.value }],
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.clientSchedules[0]?.client, fundOptions]);
+
+  const onAddFund = () => {
+    navigate(`/clients/${values.clientSchedules[0]?.client}`);
+  };
 
   return (
     <div className="py-4 px-3 rounded-lg bg-content1">
@@ -106,7 +127,7 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
                     timeFrom: old.timeFrom,
                     timeTo: old.timeTo,
                     priceBook: oldClientSchedule?.priceBook || "",
-                    fund: oldClientSchedule?.fund || "",
+                    fund: "",
                   },
                 ],
               };
@@ -148,11 +169,25 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
       <div className="flex items-center justify-between">
         <span className="text-sm">Funds</span>
         <Select
+          emptyComponent={
+            <div>
+              <div className="text-center cursor-pointer">No fund!</div>
+              <div className="h-2"></div>
+              <Button onPress={onAddFund} size="sm" color={"primary"}>
+                Add now
+              </Button>
+            </div>
+          }
+          isTriggerDisabled={!values.clientSchedules[0]?.client}
           className="max-w-xs"
           classNames={{
             content: "w-screen max-w-xs",
           }}
-          placeholder="Select fund"
+          placeholder={
+            !values.clientSchedules[0]?.client
+              ? "Select client first"
+              : "Select fund"
+          }
           options={fundOptions}
           value={values.clientSchedules[0]?.fund || undefined}
           onValueChange={(value) => {

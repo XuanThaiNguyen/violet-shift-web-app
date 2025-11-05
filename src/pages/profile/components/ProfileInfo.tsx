@@ -1,7 +1,8 @@
 import { EMPTY_STRING } from "@/constants/empty";
+import UserAvatar from "@/layouts/components/Avatar";
 import { useMe } from "@/states/apis/me";
 import { capitalizeFirstLetter, getDisplayName } from "@/utils/strings";
-import { Avatar, Divider } from "@heroui/react";
+import { Divider } from "@heroui/react";
 import { format, isValid } from "date-fns";
 import { Camera, Mail, Phone, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -76,10 +77,7 @@ const ProfileInfo = () => {
           </div>
           <div className="flex md:justify-end cursor-pointer">
             <div className="relative w-72 h-72 p-2 rounded-lg border border-gray-200 flex items-center justify-center">
-              <Avatar
-                className="w-full h-full rounded-full object-cover"
-                color={"primary"}
-              />
+              <UserAvatar user={detailUser} size={240} />
               <button className="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 p-2 rounded-full cursor-pointer">
                 <Camera size={18} className="text-gray-600" />
               </button>

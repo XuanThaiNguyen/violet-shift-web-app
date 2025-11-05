@@ -1,9 +1,12 @@
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
+import queryClient from "@/constants/queryClient";
 import {
   useGetArchivedClients,
   usePostArchiveClient,
   type ClientFilter,
 } from "@/states/apis/client";
+import type { IClient as ClientType, IClient } from "@/types/client";
+import { getUserAvatar } from "@/utils/strings";
 import {
   addToast,
   Button,
@@ -19,12 +22,10 @@ import {
   User,
   type SharedSelection,
 } from "@heroui/react";
+import { useMutation } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import type { IClient as ClientType, IClient } from "@/types/client";
 import { useNavigate } from "react-router";
-import { useMutation } from "@tanstack/react-query";
-import queryClient from "@/constants/queryClient";
 
 const columns = [
   { name: "Name", uid: "name", width: 240, className: "min-w-[160px]" },
@@ -189,7 +190,7 @@ const ClientArchivedList = () => {
               avatarProps={{
                 radius: "full",
                 size: "sm",
-                src: client.avatar,
+                src: getUserAvatar(client),
                 classNames: {
                   base: "flex-shrink-0",
                 },

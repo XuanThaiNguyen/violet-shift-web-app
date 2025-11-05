@@ -3,6 +3,7 @@ import queryClient from "@/constants/queryClient";
 import { type ClientFilter } from "@/states/apis/client";
 import { useGetArchivedStaffs, usePostArchiveStaff } from "@/states/apis/staff";
 import type { User as IUser } from "@/types/user";
+import { getUserAvatar } from "@/utils/strings";
 import {
   addToast,
   Button,
@@ -186,7 +187,7 @@ const StaffArchivedList = () => {
               avatarProps={{
                 radius: "full",
                 size: "sm",
-                src: staff.avatar,
+                src: getUserAvatar(staff),
                 classNames: {
                   base: "flex-shrink-0",
                 },
