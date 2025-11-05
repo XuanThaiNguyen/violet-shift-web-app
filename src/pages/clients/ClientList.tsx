@@ -1,5 +1,12 @@
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
+import {
+  ageTypeOptions,
+  genderOptions,
+  statusTypeOptions,
+} from "@/constants/userOptions";
 import { useGetClients, type ClientFilter } from "@/states/apis/client";
+import type { IClient as ClientType } from "@/types/client";
+import { getDisplayName, getFullName, getUserAvatar } from "@/utils/strings";
 import {
   Button,
   Input,
@@ -16,17 +23,10 @@ import {
   User,
   type SharedSelection,
 } from "@heroui/react";
+import { differenceInYears, isValid } from "date-fns";
 import { PlusIcon, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import type { IClient as ClientType } from "@/types/client";
-import {
-  ageTypeOptions,
-  genderOptions,
-  statusTypeOptions,
-} from "@/constants/userOptions";
-import { differenceInYears, isValid } from "date-fns";
-import { getDisplayName, getFullName } from "@/utils/strings";
 
 const columns = [
   { name: "Name", uid: "name", width: 160, className: "min-w-[160px]" },
@@ -116,7 +116,7 @@ const ClientList = () => {
                 avatarProps={{
                   radius: "full",
                   size: "sm",
-                  src: client.avatar,
+                  src: getUserAvatar(client),
                   classNames: {
                     base: "flex-shrink-0",
                   },

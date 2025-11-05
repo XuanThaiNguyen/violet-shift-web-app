@@ -86,10 +86,12 @@ const ProfileSetup: FC = () => {
   });
 
   const languageOptions = useMemo(() => {
-    return languages?.map((language) => ({
-      label: language.name,
-      value: language.key,
-    })) || EMPTY_ARRAY;
+    return (
+      languages?.map((language) => ({
+        label: language.name,
+        value: language.key,
+      })) || EMPTY_ARRAY
+    );
   }, [languages]);
 
   useEffect(() => {
@@ -114,8 +116,8 @@ const ProfileSetup: FC = () => {
           <div className="h-8"></div>
 
           {/* avatar */}
-          <div className="w-16 h-16 bg-gray-300 rounded-md"></div>
-          <div className="h-4"></div>
+          {/* <div className="w-16 h-16 bg-gray-300 rounded-md"></div>
+          <div className="h-4"></div> */}
 
           <form className="" onSubmit={formik.handleSubmit}>
             <div className="grid md:grid-cols-2 grid-cols-1 gap-y-4 gap-x-2">
@@ -295,7 +297,6 @@ const ProfileSetup: FC = () => {
                 onValueChange={(value) => {
                   formik.setFieldValue("languages", value);
                 }}
-
               />
               <Input
                 className="col-span-2"
