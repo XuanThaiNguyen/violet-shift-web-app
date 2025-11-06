@@ -28,6 +28,8 @@ const initialValues: IShiftValues = {
   timeTo: 0,
   isCompanyVehicle: false,
   tasks: [],
+  clientClockOutRequired: false,
+  staffClockOutRequired: false,
 };
 
 const clientScheduleSchema = Yup.object().shape({
