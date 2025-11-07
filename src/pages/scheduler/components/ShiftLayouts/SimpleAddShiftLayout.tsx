@@ -1,5 +1,6 @@
 import CarerForm from "../ShiftForms/CarerForm";
 import ClientForm from "../ShiftForms/ClientForm";
+import InstructionForm from "../ShiftForms/InstructionForm";
 import MilleageForm from "../ShiftForms/MilleageForm";
 import ShiftInfoForm from "../ShiftForms/ShiftInfoForm";
 import SignatureForm from "../ShiftForms/SignatureForm";
@@ -33,6 +34,8 @@ const SimpleAddShiftLayout = ({
       <CarerForm values={values} setValues={setValues} />
 
       <TaskForm values={values} setValues={setValues} />
+
+      <InstructionForm values={values} setValues={setValues} />
 
       <MilleageForm values={values} setValues={setValues} />
 

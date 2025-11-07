@@ -1,5 +1,6 @@
 import CarerSection from "../ShiftDetailSections/CarerSection";
 import ClientSection from "../ShiftDetailSections/ClientSection";
+import InstructionSection from "../ShiftDetailSections/InstructionSection";
 import MilleageSection from "../ShiftDetailSections/MilleageSection";
 import ShiftInfoSection from "../ShiftDetailSections/ShiftInfoSection";
 import SignatureSection from "../ShiftDetailSections/SignatureSection";
@@ -24,6 +25,8 @@ const ViewShiftLayout = ({ values }: ViewShiftLayoutProps) => {
       <CarerSection values={values} />
 
       <TaskSection values={values} />
+
+      <InstructionSection values={values} />
 
       <MilleageSection values={values} />
 
