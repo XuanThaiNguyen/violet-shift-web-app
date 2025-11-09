@@ -26,6 +26,9 @@ export interface IShiftValues {
   mileageCap?: number;
   isCompanyVehicle?: boolean;
   tasks: ITask[];
+  clientClockOutRequired?: boolean;
+  staffClockOutRequired?: boolean;
+  instruction?: string;
 }
 
 export type IArrayUpdate<T> = {

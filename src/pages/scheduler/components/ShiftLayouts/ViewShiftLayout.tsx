@@ -1,19 +1,19 @@
-import ClientSection from "../ShiftDetailSections/ClientSection";
-import ShiftInfoSection from "../ShiftDetailSections/ShiftInfoSection";
-import TimeNLocationSection from "../ShiftDetailSections/TimeNLocationSection";
 import CarerSection from "../ShiftDetailSections/CarerSection";
-import TaskSection from "../ShiftDetailSections/TaskSection";
+import ClientSection from "../ShiftDetailSections/ClientSection";
+import InstructionSection from "../ShiftDetailSections/InstructionSection";
 import MilleageSection from "../ShiftDetailSections/MilleageSection";
+import ShiftInfoSection from "../ShiftDetailSections/ShiftInfoSection";
+import SignatureSection from "../ShiftDetailSections/SignatureSection";
+import TaskSection from "../ShiftDetailSections/TaskSection";
+import TimeNLocationSection from "../ShiftDetailSections/TimeNLocationSection";
 
 import type { IFullShiftDetail } from "@/types/shift";
-
 
 interface ViewShiftLayoutProps {
   values: IFullShiftDetail;
 }
 
 const ViewShiftLayout = ({ values }: ViewShiftLayoutProps) => {
-
   return (
     <div className="flex flex-col gap-4">
       <ClientSection values={values} />
@@ -26,7 +26,11 @@ const ViewShiftLayout = ({ values }: ViewShiftLayoutProps) => {
 
       <TaskSection values={values} />
 
+      <InstructionSection values={values} />
+
       <MilleageSection values={values} />
+
+      <SignatureSection values={values} />
     </div>
   );
 };
