@@ -5,6 +5,7 @@ import {
   Calendar,
   ChevronRight,
   ChevronsRight,
+  // Clock,
   PersonStanding,
   Settings,
   UsersRound,
@@ -39,6 +40,13 @@ const sidebarItems: SidebarItem[] = [
       ROLE_IDS.OFFICE_SUPPORT,
     ],
   },
+  // {
+  //   icon: Clock,
+  //   key: "worklogs",
+  //   label: "Worklogs",
+  //   to: "/worklogs",
+  //   roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
+  // },
   {
     icon: PersonStanding,
     key: "staffs",

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import StaffDetail from "./components/StaffDetail";
 import { useStaffDetail } from "@/states/apis/staff";
+import Worklogs from "./components/Worklogs";
 
 const StaffProfile = () => {
   const navigate = useNavigate();
@@ -46,6 +47,9 @@ const StaffProfile = () => {
             detailStaff={detailStaff}
             staffName={_staffName}
           />
+        </Tab>
+        <Tab key="worklogs" title="Worklogs">
+          <Worklogs />
         </Tab>
       </Tabs>
     </div>
