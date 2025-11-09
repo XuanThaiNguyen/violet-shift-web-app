@@ -37,6 +37,8 @@ const ClientArchivedList = lazy(
   () => import("@/pages/clients/ClientArchivedList")
 );
 const AccountPrices = lazy(() => import("@/pages/account/Prices"));
+const StaffWorklogs = lazy(() => import("@/pages/worklogs/StaffWorklogs"));
+const Worklogs = lazy(() => import("@/pages/worklogs/Worklogs"));
 
 export const router = createBrowserRouter([
   {
@@ -92,6 +94,8 @@ export const router = createBrowserRouter([
       { path: "staffs/:id/update", Component: UpdateStaff },
       { path: "clients/:id", Component: ClientProfile },
       { path: "clients/:id/update", Component: UpdateClient },
+      { path: "worklogs", Component: Worklogs },
+      { path: "worklogs/:staffId", Component: StaffWorklogs },
       { path: "*", Component: NotFound },
     ],
   },
