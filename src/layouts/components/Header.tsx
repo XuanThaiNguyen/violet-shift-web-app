@@ -1,19 +1,20 @@
-import { useState } from "react";
-import { Cog, DoorOpen, Menu } from "lucide-react";
-import useSidebarStore from "../../states/app/sidebar";
+import { useMe } from "@/states/apis/me";
 import {
-  Avatar,
   Button,
   Popover,
   PopoverContent,
   PopoverTrigger,
   User,
 } from "@heroui/react";
-import { Link, useNavigate } from "react-router";
-import { useMe } from "@/states/apis/me";
 import { useQueryClient } from "@tanstack/react-query";
+import { Cog, DoorOpen, Menu } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import useSidebarStore from "../../states/app/sidebar";
 
+import { getUserAvatar } from "@/utils/strings";
 import type { FC } from "react";
+import UserAvatar from "./Avatar";
 
 const Header: FC = () => {
   const { toggleSidebar } = useSidebarStore();
@@ -23,9 +24,6 @@ const Header: FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: user } = useMe();
-  const avatar = user?.avatar
-    ? user.avatar
-    : "https://i.pravatar.cc/150?u=a042581f4e29026024d";
   const name = user?.preferredName
     ? user.preferredName
     : [user?.firstName, user?.middleName, user?.lastName].join(" ");
@@ -47,7 +45,7 @@ const Header: FC = () => {
             <User
               as="button"
               avatarProps={{
-                src: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
+                src: getUserAvatar(user),
               }}
               className="transition-transform [&>span]:w-8 [&>span]:h-8 cursor-pointer"
               name={name}
@@ -55,7 +53,7 @@ const Header: FC = () => {
           </PopoverTrigger>
           <PopoverContent className="w-56 flex flex-col gap-0 p-0 shadow-md">
             <div className="w-full flex flex-col justify-center items-center py-4 bg-primary text-primary-foreground gap-2">
-              <Avatar src={avatar} />
+              <UserAvatar user={user} />
               <p className="text-sm font-medium">{name}</p>
               <p className="text-xs text-primary-foreground/50">{user.email}</p>
             </div>

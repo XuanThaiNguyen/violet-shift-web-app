@@ -24,7 +24,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
 import type { User as UserType } from "@/types/user";
-import { getDisplayName, getFullName } from "@/utils/strings";
+import { getDisplayName, getFullName, getUserAvatar } from "@/utils/strings";
 import type { FC } from "react";
 
 const columns = [
@@ -133,7 +133,7 @@ const StaffList: FC = () => {
               avatarProps={{
                 radius: "full",
                 size: "sm",
-                src: user.avatar,
+                src: getUserAvatar(user),
                 classNames: {
                   base: "flex-shrink-0",
                 },

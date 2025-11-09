@@ -1,3 +1,10 @@
+import { useGetSchedulesByStaffId } from "@/states/apis/shift";
+import type { IGetStaffSchedule } from "@/types/shift";
+import type { User as IUser } from "@/types/user";
+import { formatTimeRange } from "@/utils/datetime";
+import { getDisplayName } from "@/utils/strings";
+import { useDisclosure, User } from "@heroui/react";
+import { format, isValid } from "date-fns";
 import { GripVertical } from "lucide-react";
 import { useEffect, useState } from "react";
 import { hours } from "../constant";
@@ -8,15 +15,9 @@ import type {
   SelectedCell,
   ViewMode,
 } from "../type";
-import { useGetSchedulesByStaffId } from "@/states/apis/shift";
-import type { IGetStaffSchedule } from "@/types/shift";
-import { formatTimeRange } from "@/utils/datetime";
+import { getShiftTypeLabel } from "../util";
 import ShiftDrawer from "./ShiftDrawer";
-import { useDisclosure, User } from "@heroui/react";
-import { getDisplayName } from "@/utils/strings";
 
-import type { User as IUser } from "@/types/user";
-import { format, isValid } from "date-fns";
 interface SchedulerManagementItemProps {
   viewMode: ViewMode;
   dates: DayDateInfo[];
@@ -245,7 +246,8 @@ const SchedulerManagementItem = ({
                           {_timeShift}
                           <div className="h-1"></div>
                           <div className="font-medium text-gray-800 truncate">
-                            {event?.shift?.shiftType || "Personal Care"}
+                            {getShiftTypeLabel(event?.shift?.shiftType) ||
+                              "Personal Care"}
                           </div>
                           <div className="h-2"></div>
                           <div className="text-xs text-gray-500 truncate">
@@ -253,15 +255,6 @@ const SchedulerManagementItem = ({
                           </div>
                         </div>
                       </div>
-                      {/* <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteEvent(+event._id);
-                        }}
-                        className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 flex items-center justify-center"
-                      >
-                        ×
-                      </button> */}
                     </div>
                   );
                 })}
@@ -323,7 +316,8 @@ const SchedulerManagementItem = ({
                             </div>
                             <div className="h-1"></div>
                             <div className="font-medium text-gray-800 truncate">
-                              {shift?.shift?.shiftType || "Personal Care"}
+                              {getShiftTypeLabel(shift?.shift?.shiftType) ||
+                                "Personal Care"}
                             </div>
                             <div className="h-2"></div>
                             <div className="text-xs text-gray-500 truncate">
@@ -331,15 +325,6 @@ const SchedulerManagementItem = ({
                             </div>
                           </div>
                         </div>
-                        {/* <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteEvent(+shift._id);
-                          }}
-                          className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                        >
-                          ×
-                        </button> */}
                       </div>
                     );
                   })}

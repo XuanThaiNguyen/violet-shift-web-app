@@ -32,7 +32,7 @@ export type SelectClasses = {
   group?: string;
   empty?: string;
   icon?: string;
-}
+};
 
 export type SelectOption = {
   label: React.ReactNode;
@@ -83,6 +83,8 @@ interface SelectProps extends Omit<PopoverProps, "children"> {
   classNames?: SelectClasses;
   label?: string;
   clearable?: boolean;
+
+  emptyComponent?: React.ReactNode;
 }
 
 export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
@@ -97,6 +99,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       className,
       classNames,
       label,
+      emptyComponent,
       clearable = false,
       ...props
     },
@@ -204,14 +207,18 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className={cn("w-auto p-0 min-w-full", classNames?.content)}>
+        <PopoverContent
+          className={cn("w-auto p-0 min-w-full", classNames?.content)}
+        >
           <Command>
             <CommandInput
               classNames={{ wrapper: "border-divider h-10" }}
               placeholder="Search..."
             />
             <CommandList className="hidden-scrollbar">
-              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandEmpty>
+                {emptyComponent ? emptyComponent : "No results found."}
+              </CommandEmpty>
               <CommandGroup>
                 {options.map((option) => {
                   const isSelected = selectedValue === option.value;
@@ -229,7 +236,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                       }}
                       className={cn(
                         "cursor-pointer py-2 flex items-center justify-between gap-2 text-sm",
-                        'hover:bg-default-100',
+                        "hover:bg-default-100",
                         isDisabled && "opacity-50 cursor-not-allowed", // Disable styling
                         classNames?.item
                       )}

@@ -15,7 +15,6 @@ type MilleageFormProps = {
 };
 
 const MilleageForm: FC<MilleageFormProps> = ({ values, setValues }) => {
-
   return (
     <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
       <div className="flex items-center gap-2">
@@ -29,6 +28,7 @@ const MilleageForm: FC<MilleageFormProps> = ({ values, setValues }) => {
         <span className="text-sm">Mileage cap</span>
         <Input
           label=""
+          placeholder="0"
           type="number"
           name="mileageCap"
           className="w-80"
@@ -44,6 +44,7 @@ const MilleageForm: FC<MilleageFormProps> = ({ values, setValues }) => {
         <span className="text-sm">Mileage</span>
         <Input
           label=""
+          placeholder="0"
           type="number"
           name="mileage"
           className="w-80"

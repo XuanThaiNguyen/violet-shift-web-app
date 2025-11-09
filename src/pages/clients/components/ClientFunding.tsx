@@ -34,7 +34,7 @@ const ClientFunding = ({ clientId }: ClientFundingProps) => {
 
   const queryClient = useQueryClient();
 
-  const { data: dataFundings } = useGetFundingsByUser({ userId: clientId });
+  const { data: dataFundings } = useGetFundingsByUser({ client: clientId });
 
   const { mutate: mutateRemove, isPending: isPendingRemove } = useMutation({
     mutationFn: useDeleteFunding,

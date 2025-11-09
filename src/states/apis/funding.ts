@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export interface IFunding {
   id: string;
-  userId: string;
+  client: string;
   name: string;
   startDate: string;
   expireDate: string;
@@ -13,7 +13,7 @@ export interface IFunding {
 }
 
 export interface IAddFunding {
-  userId: string;
+  client: string;
   name: string;
   startDate?: string;
   expireDate?: string;
@@ -21,11 +21,11 @@ export interface IAddFunding {
   isDefault?: boolean;
 }
 
-export const useGetFundingsByUser = ({ userId }: { userId: string }) => {
+export const useGetFundingsByUser = ({ client }: { client: string }) => {
   const reponse = useQuery<IFunding[]>({
-    queryKey: ["fundings", userId],
-    queryFn: () => api.get(`/api/v1/fundings/${userId}`),
-    enabled: !!localStorage.getItem("auth_token") && !!userId,
+    queryKey: ["fundings", client],
+    queryFn: () => api.get(`/api/v1/fundings/${client}`),
+    enabled: !!localStorage.getItem("auth_token") && !!client,
   });
 
   return reponse;

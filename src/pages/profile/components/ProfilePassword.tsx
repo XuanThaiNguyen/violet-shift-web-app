@@ -4,7 +4,6 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import api from "@/services/api/http";
 
-import type { FC } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { LOGIN_ERROR_CODE } from "@/constants/errorMsg";
 import { AxiosError } from "axios";
@@ -33,8 +32,7 @@ const ErrorMessages = {
   [LOGIN_ERROR_CODE.INTERNAL_SERVER_ERROR]: "Internal server error",
 };
 
-const PasswordUpdate: FC = () => {
-
+const PasswordUpdate = ({ changeToInfo }: { changeToInfo: () => void }) => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -51,6 +49,7 @@ const PasswordUpdate: FC = () => {
           timeout: 2000,
           isClosing: true,
         });
+        changeToInfo();
       } catch (error) {
         let msg = "Something went wrong";
         if (error instanceof AxiosError) {
@@ -76,7 +75,7 @@ const PasswordUpdate: FC = () => {
         </h1>
         <div className="h-8"></div>
 
-        <form className="" onSubmit={profileFormik.handleSubmit}>
+        <form className="flex flex-col" onSubmit={profileFormik.handleSubmit}>
           <div className="flex flex-col gap-y-4 gap-x-2">
             <Input
               isRequired
@@ -142,6 +141,7 @@ const PasswordUpdate: FC = () => {
               }
             />
             <Input
+              isRequired
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Confirm Password"
               name="confirmPassword"
@@ -174,12 +174,12 @@ const PasswordUpdate: FC = () => {
             />
           </div>
 
-          <div className="h-4"></div>
+          <div className="h-6"></div>
 
           <Button
             type="submit"
-            className="w-full"
             color="primary"
+            className="self-end"
             isDisabled={profileFormik.isSubmitting || !profileFormik.isValid}
             isLoading={profileFormik.isSubmitting}
           >
