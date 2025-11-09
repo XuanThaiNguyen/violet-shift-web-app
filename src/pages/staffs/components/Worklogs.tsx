@@ -65,7 +65,7 @@ const Worklogs: FC = () => {
   return (
     <section className="bg-content1 mx-auto p-4 rounded-lg shadow-md">
       <div className="flex items-center gap-2">
-        <h3 className="text-lg md:text-xl font-semibold">Worklogs in</h3>
+        <h3 className="text-lg md:text-xl font-semibold">Work Logs in</h3>
         <div className="flex items-center gap-2">
           <Button
             size="sm"
