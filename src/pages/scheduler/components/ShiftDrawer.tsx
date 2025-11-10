@@ -80,12 +80,14 @@ interface ShiftDrawerProps {
   isOpen: boolean;
   selectedShiftId: string;
   onClose: () => void;
+  readOnly?: boolean;
 }
 
 const ShiftDrawer = ({
   isOpen,
   selectedShiftId,
   onClose,
+  readOnly = false,
 }: ShiftDrawerProps) => {
   const [isEdit, setIsEdit] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -397,7 +399,9 @@ const ShiftDrawer = ({
                     Close
                   </Button>
                 </div>
-                {isEdit ? (
+                {readOnly ? (
+                  <></>
+                ) : isEdit ? (
                   <div className="flex items-center gap-2">
                     <Button
                       size="md"

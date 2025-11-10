@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
+  Button,
   Pagination,
   Select,
   SelectItem,
@@ -11,12 +12,15 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  useDisclosure,
 } from "@heroui/react";
 import { useGetWorklogs, type WorklogSegment } from "@/states/apis/worklogs";
 import { TIME_RULES_DATA, timeRules } from "@/constants/timeRules";
 
 import type { FC } from "react";
 import { EMPTY_ARRAY } from "@/constants/empty";
+import ShiftDrawer from "@/pages/scheduler/components/ShiftDrawer";
+import { Link } from "react-router";
 
 export type WorkLogTableProps = {
   staffId: string;
@@ -61,6 +65,12 @@ const columns = [
 ];
 
 const WorkLogTable: FC<WorkLogTableProps> = ({ staffId, from, to }) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
+    undefined
+  );
+
   const [filter, setFilter] = useState({
     rules: [] as string[],
     sort: "startedAt",
@@ -74,6 +84,11 @@ const WorkLogTable: FC<WorkLogTableProps> = ({ staffId, from, to }) => {
     from: from.getTime(),
     to: to.getTime(),
   });
+
+  const onDetailShift = (shiftId: string) => {
+    setSelectedShiftId(shiftId);
+    onOpen();
+  };
 
   const renderCell = useCallback(
     (worklog: WorklogSegment, columnKey: string) => {
@@ -89,11 +104,21 @@ const WorkLogTable: FC<WorkLogTableProps> = ({ staffId, from, to }) => {
         case "hours":
           return `${worklog.hours} hrs`;
         case "shift":
-          return worklog.shift;
+          return (
+            <Button
+              color="primary"
+              variant="light"
+              as={Link}
+              onPress={() => onDetailShift(worklog.shift)}
+            >
+              {worklog.shift}
+            </Button>
+          );
         default:
           return cellValue as React.ReactNode;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -136,10 +161,9 @@ const WorkLogTable: FC<WorkLogTableProps> = ({ staffId, from, to }) => {
   const topContent = useMemo(() => {
     return (
       <div className="">
-        
         {/* <div className="h-2"></div> */}
         <div className="flex justify-between gap-2 items-start">
-        <h3 className="text-lg font-bold">Work Logs</h3>
+          <h3 className="text-lg font-bold">Work Logs</h3>
           <div className="flex items-end gap-2">
             <Select
               label="Select Time Rules"
@@ -212,76 +236,88 @@ const WorkLogTable: FC<WorkLogTableProps> = ({ staffId, from, to }) => {
   }, [onRowsPerPageChange, filter.limit, filter.page, worklogs?.length]);
 
   return (
-    <Table
-      isCompact
-      removeWrapper
-      bottomContent={bottomContent}
-      bottomContentPlacement="outside"
-      checkboxesProps={{
-        classNames: {
-          wrapper: "after:bg-foreground after:text-background text-background p-0",
-        },
-      }}
-      classNames={{
-        wrapper: "max-h-[552px] overflow-x-auto shadow-none thin-scrollbar",
-        th: "bg-transparent text-default-500 border-b border-divider",
-        td: [
-          "py-2.5",
-          // changing the rows border radius
-          // first
-          "first:group-data-[first=true]/tr:before:rounded-none",
-          "last:group-data-[first=true]/tr:before:rounded-none",
-          // middle
-          "group-data-[middle=true]/tr:before:rounded-none",
-          // last
-          "first:group-data-[last=true]/tr:before:rounded-none",
-          "last:group-data-[last=true]/tr:before:rounded-none",
-        ],
-      }}
-      sortDescriptor={{
-        column: filter.sort ?? "startedAt",
-        direction: filter.order === "asc" ? "ascending" : "descending",
-      }}
-      topContent={topContent}
-      topContentPlacement="outside"
-      onSortChange={(sortDescriptor) => {
-        setFilter((oldFilter) => {
-          return {
-            ...oldFilter,
-            sort: sortDescriptor.column as string,
-            order: sortDescriptor.direction === "ascending" ? "asc" : "desc",
-          };
-        });
-      }}
-    >
-      <TableHeader columns={columns}>
-        {(column) => (
-          <TableColumn
-            key={column.uid}
-            align={column.uid === "actions" ? "center" : "start"}
-            allowsSorting={column.sortable}
-            width={column.width}
-            className={column.className}
-          >
-            {column.name}
-          </TableColumn>
-        )}
-      </TableHeader>
-      <TableBody
-        isLoading={isLoading}
-        loadingContent={<Spinner label="Loading..." />}
-        emptyContent={"No work logged yet"}
-        items={paginatedWorklogs}
+    <>
+      <Table
+        isCompact
+        removeWrapper
+        bottomContent={bottomContent}
+        bottomContentPlacement="outside"
+        checkboxesProps={{
+          classNames: {
+            wrapper:
+              "after:bg-foreground after:text-background text-background p-0",
+          },
+        }}
+        classNames={{
+          wrapper: "max-h-[552px] overflow-x-auto shadow-none thin-scrollbar",
+          th: "bg-transparent text-default-500 border-b border-divider",
+          td: [
+            "py-2.5",
+            // changing the rows border radius
+            // first
+            "first:group-data-[first=true]/tr:before:rounded-none",
+            "last:group-data-[first=true]/tr:before:rounded-none",
+            // middle
+            "group-data-[middle=true]/tr:before:rounded-none",
+            // last
+            "first:group-data-[last=true]/tr:before:rounded-none",
+            "last:group-data-[last=true]/tr:before:rounded-none",
+          ],
+        }}
+        sortDescriptor={{
+          column: filter.sort ?? "startedAt",
+          direction: filter.order === "asc" ? "ascending" : "descending",
+        }}
+        topContent={topContent}
+        topContentPlacement="outside"
+        onSortChange={(sortDescriptor) => {
+          setFilter((oldFilter) => {
+            return {
+              ...oldFilter,
+              sort: sortDescriptor.column as string,
+              order: sortDescriptor.direction === "ascending" ? "asc" : "desc",
+            };
+          });
+        }}
       >
-        {(item) => (
-          <TableRow key={item._id}>
-            {(columnKey) => (
-              <TableCell>{renderCell(item, columnKey as string)}</TableCell>
-            )}
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+        <TableHeader columns={columns}>
+          {(column) => (
+            <TableColumn
+              key={column.uid}
+              align={column.uid === "actions" ? "center" : "start"}
+              allowsSorting={column.sortable}
+              width={column.width}
+              className={column.className}
+            >
+              {column.name}
+            </TableColumn>
+          )}
+        </TableHeader>
+        <TableBody
+          isLoading={isLoading}
+          loadingContent={<Spinner label="Loading..." />}
+          emptyContent={"No work logged yet"}
+          items={paginatedWorklogs}
+        >
+          {(item) => (
+            <TableRow key={item._id}>
+              {(columnKey) => (
+                <TableCell>{renderCell(item, columnKey as string)}</TableCell>
+              )}
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+
+      {isOpen && selectedShiftId && (
+        <ShiftDrawer
+          readOnly
+          onClose={onClose}
+          isOpen={isOpen}
+          selectedShiftId={selectedShiftId}
+        />
+      )}
+    </>
   );
 };
 
