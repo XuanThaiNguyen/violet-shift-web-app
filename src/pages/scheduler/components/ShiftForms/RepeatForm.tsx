@@ -5,6 +5,8 @@ import {
   parseAbsoluteToLocal,
   type ZonedDateTime,
 } from "@internationalized/date";
+import { format, isValid } from "date-fns";
+import { EMPTY_STRING } from "@/constants/empty";
 
 type DayOfWeek = "Sun" | "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat";
 const days: DayOfWeek[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -13,8 +15,40 @@ const parseTimeInput = (time: number): ZonedDateTime => {
   return parseAbsoluteToLocal(new Date(time).toISOString());
 };
 
+const getUnit = (recurrence: string) => {
+  switch (recurrence) {
+    case "daily":
+      return "Day(s)";
+    case "weekly":
+      return "Week(s)";
+    case "monthly":
+      return "Month(s)";
+  }
+};
+
+const getMaxRepeat = (recurrence: string) => {
+  switch (recurrence) {
+    case "daily":
+      return 15;
+    case "weekly":
+      return 12;
+    case "monthly":
+      return 3;
+    default:
+      return 1;
+  }
+};
+
+const getRepeatGapOptions = (recurrence: string) => {
+  const unit = getUnit(recurrence);
+  return [...Array(getMaxRepeat(recurrence))].map((_, i) => ({
+    label: `${i + 1} ${unit}`,
+    key: i + 1,
+  }));
+};
+
 const RepeatForm = () => {
-  const [isRepeat, setIsRepeat] = useState(true);
+  const [isRepeat, setIsRepeat] = useState(false);
   const [recurrence, setRecurrence] = useState(RecurrenceOptions[1].key);
   const [repeatEvery, setRepeatEvery] = useState(1);
   const [selectedDays, setSelectedDays] = useState([days[1]]);
@@ -27,22 +61,9 @@ const RepeatForm = () => {
     );
   };
 
-  const getMaxRepeat = () => {
-    switch (recurrence) {
-      case "daily":
-        return 15;
-      case "weekly":
-        return 12;
-      case "monthly":
-        return 3;
-      default:
-        return 1;
-    }
-  };
-
   const calculateOccurrences = (): number => {
     const start = new Date();
-    const end = new Date(endDate);
+    const end = new Date(endDate!);
     const diffTime = end.getTime() - start.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -64,18 +85,16 @@ const RepeatForm = () => {
 
   const getSummaryText = () => {
     const occurrences = calculateOccurrences();
-    const unit =
-      recurrence === "daily"
-        ? "Day"
-        : recurrence === "weekly"
-        ? "Week"
-        : "Month";
-    return `Every ${repeatEvery} ${unit} until Nov 10, 2025, ${occurrences} occurrence${
+    return `Every ${repeatEvery} ${getUnit(
+      recurrence
+    )} until ${isValid(new Date(endDate!)) ? format(new Date(endDate!), "MMM d, yyyy") : EMPTY_STRING}, ${occurrences} occurrence${
       occurrences !== 1 ? "s" : ""
     }`;
   };
 
   const timeFromEndDate = endDate ? parseTimeInput(endDate) : null;
+
+  const repeatGapOptions = getRepeatGapOptions(recurrence);
 
   return (
     <div>
@@ -103,7 +122,7 @@ const RepeatForm = () => {
             </Select>
           </div>
           <div className="h-4"></div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between text-sm">
             <span className="text-sm">Repeat Every</span>
             <Select
               className="max-w-xs"
@@ -113,8 +132,8 @@ const RepeatForm = () => {
                 setRepeatEvery(+value);
               }}
             >
-              {[...Array(getMaxRepeat())].map((_, i) => (
-                <SelectItem key={i + 1}>{i + 1}</SelectItem>
+              {repeatGapOptions.map((option) => (
+                <SelectItem key={option.key}>{option.label}</SelectItem>
               ))}
             </Select>
           </div>
@@ -123,17 +142,15 @@ const RepeatForm = () => {
               <div className="h-4"></div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Occurs On</span>
-                <div>
-                  {days.map((day, index) => (
+                <div className="flex items-center justify-between max-w-xs w-full">
+                  {days.map((day) => (
                     <button
                       key={day}
                       onClick={() => toggleDay(day)}
-                      className={`relative ${
-                        index === days.length - 1 ? "mr-0" : "mr-3"
-                      }`}
+                      className="relative"
                     >
                       <div
-                        className={`w-8 h-8 rounded-lg px-4 border-1 flex items-center justify-center text-sm transition-colors ${
+                        className={`w-10 h-8 rounded-lg px-4 border-1 flex items-center justify-center text-sm transition-colors ${
                           selectedDays.includes(day)
                             ? "border-blue-500 bg-cyan-50"
                             : "border-gray-300 bg-white hover:border-gray-400"
