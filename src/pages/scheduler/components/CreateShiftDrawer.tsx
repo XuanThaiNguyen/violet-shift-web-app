@@ -30,6 +30,7 @@ const initialValues: IShiftValues = {
   tasks: [],
   clientClockOutRequired: false,
   staffClockOutRequired: false,
+  instruction: "",
 };
 
 const clientScheduleSchema = Yup.object().shape({

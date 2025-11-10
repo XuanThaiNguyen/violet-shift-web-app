@@ -28,6 +28,7 @@ export interface IShiftValues {
   tasks: ITask[];
   clientClockOutRequired?: boolean;
   staffClockOutRequired?: boolean;
+  instruction?: string;
 }
 
 export type IArrayUpdate<T> = {
