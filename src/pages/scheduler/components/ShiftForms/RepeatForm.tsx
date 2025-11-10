@@ -1,19 +1,15 @@
-import { DatePicker, Select, SelectItem, Switch } from "@heroui/react";
-import { useState } from "react";
-import { RecurrenceOptions } from "../../constant";
-import {
-  parseAbsoluteToLocal,
-  type ZonedDateTime,
-} from "@internationalized/date";
-import { format, isValid } from "date-fns";
 import { EMPTY_STRING } from "@/constants/empty";
+import type { IShiftValues } from "@/types/shift";
+import { parseTimeInput } from "@/utils/datetime";
+import { DatePicker, Select, SelectItem, Switch } from "@heroui/react";
+import { ZonedDateTime } from "@internationalized/date";
+import { format, isValid } from "date-fns";
+import type { FormikErrors } from "formik";
+import { useEffect, useMemo, useState, type SetStateAction } from "react";
+import { RecurrenceOptions } from "../../constant";
 
 type DayOfWeek = "Sun" | "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat";
 const days: DayOfWeek[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-const parseTimeInput = (time: number): ZonedDateTime => {
-  return parseAbsoluteToLocal(new Date(time).toISOString());
-};
 
 const getUnit = (recurrence: string) => {
   switch (recurrence) {
@@ -47,13 +43,60 @@ const getRepeatGapOptions = (recurrence: string) => {
   }));
 };
 
-const RepeatForm = () => {
+const getMaxDayInMonth = () => {
+  return [...Array(31)].map((_, i) => ({
+    label: `${i + 1}`,
+    key: i + 1,
+  }));
+};
+
+type RepeatFormProps = {
+  values: IShiftValues;
+  setValues: (
+    values: SetStateAction<IShiftValues>,
+    shouldValidate?: boolean
+  ) => Promise<FormikErrors<IShiftValues>> | Promise<void>;
+};
+
+const dayToCron: Record<DayOfWeek, string> = {
+  Sun: "0",
+  Mon: "1",
+  Tue: "2",
+  Wed: "3",
+  Thu: "4",
+  Fri: "5",
+  Sat: "6",
+};
+
+const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
   const [isRepeat, setIsRepeat] = useState(false);
   const [recurrence, setRecurrence] = useState(RecurrenceOptions[1].key);
   const [repeatEvery, setRepeatEvery] = useState(1);
   const [selectedDays, setSelectedDays] = useState([days[1]]);
   const [monthDay, setMonthDay] = useState(1);
-  const [endDate, setEndDate] = useState<number | null>(null);
+  const [endDate, setEndDate] = useState<number | null>(
+    Date.now() + 86400000 * 7
+  );
+
+  useEffect(() => {
+    if (isRepeat) {
+      const date = new Date(endDate!);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      setValues((prev) => ({
+        ...prev,
+        repeat: {
+          pattern: generateCronExpression(),
+          endDate: endOfDay.getTime(),
+          tz: "Australia/Sydney",
+        },
+      }));
+    } else {
+      setValues((prev) => ({ ...prev, repeat: "" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRepeat, endDate, selectedDays]);
 
   const toggleDay = (day: DayOfWeek) => {
     setSelectedDays((prev) =>
@@ -85,16 +128,61 @@ const RepeatForm = () => {
 
   const getSummaryText = () => {
     const occurrences = calculateOccurrences();
-    return `Every ${repeatEvery} ${getUnit(
-      recurrence
-    )} until ${isValid(new Date(endDate!)) ? format(new Date(endDate!), "MMM d, yyyy") : EMPTY_STRING}, ${occurrences} occurrence${
-      occurrences !== 1 ? "s" : ""
-    }`;
+    return `Every ${repeatEvery} ${getUnit(recurrence)} until ${
+      isValid(new Date(endDate!))
+        ? format(new Date(endDate!), "MMM d, yyyy")
+        : EMPTY_STRING
+    }, ${occurrences} occurrence${occurrences !== 1 ? "s" : ""}`;
   };
 
-  const timeFromEndDate = endDate ? parseTimeInput(endDate) : null;
+  const generateCronExpression = (): string => {
+    // Extract hour and minute from timeFrom
+    const date = new Date(values.timeFrom!);
+    const hour = date.getHours();
+    const minute = date.getMinutes();
+
+    // Specific days of week at specific time
+    const cronDays = selectedDays
+      .map((day) => dayToCron[day])
+      .sort()
+      .join(",");
+
+    switch (recurrence) {
+      case "daily":
+        // Every N days at specific time
+        if (repeatEvery === 1) {
+          return `${minute} ${hour} * * *`; // Every day at specified time
+        } else {
+          return `${minute} ${hour} */${repeatEvery} * *`; // Every N days at specified time
+        }
+
+      case "weekly":
+        if (repeatEvery === 1) {
+          return `${minute} ${hour} * * ${cronDays}`; // Every week on selected days at specified time
+        } else {
+          return `${minute} ${hour} * * ${cronDays}/${repeatEvery}`;
+        }
+
+      case "monthly":
+        // Specific day of month at specific time
+        if (repeatEvery === 1) {
+          return `${minute} ${hour} ${monthDay} * *`; // Every month on specific day at specified time
+        } else {
+          return `${minute} ${hour} ${monthDay} */${repeatEvery} *`; // Every N months on specific day at specified time
+        }
+
+      default:
+        return `${minute} ${hour} * * *`;
+    }
+  };
+
+  const timeFromEndDate = useMemo(
+    () => (endDate ? parseTimeInput(endDate) : null),
+    [endDate]
+  );
 
   const repeatGapOptions = getRepeatGapOptions(recurrence);
+  const maxDayInMonth = getMaxDayInMonth();
 
   return (
     <div>
@@ -175,21 +263,22 @@ const RepeatForm = () => {
             <></>
           )}
           {recurrence === "monthly" ? (
-            <div>
+            <>
               <div className="h-4"></div>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-1 items-center justify-between">
                 <span className="text-sm">Occurs On</span>
-                <div className="flex items-center max-w">
+                <div className="flex items-center gap-2 justify-between">
                   <span className="text-gray-700 mr-4 text-lg">Day</span>
                   <Select
-                    // className="w-2.5"
-                    selectedKeys={[monthDay]}
-                    onSelectionChange={([value]) => {
-                      setMonthDay(+value + 1);
+                    className="w-20"
+                    selectedKeys={new Set([monthDay.toString()])}
+                    onSelectionChange={(keys) => {
+                      const value = Array.from(keys)[0];
+                      setMonthDay(+value);
                     }}
                   >
-                    {[...Array(31)].map((_, i) => (
-                      <SelectItem key={i}>{i + 1}</SelectItem>
+                    {maxDayInMonth.map((day) => (
+                      <SelectItem key={day.key}>{day.label}</SelectItem>
                     ))}
                   </Select>
                   <span className="text-gray-700 mr-4 text-lg">
@@ -197,7 +286,7 @@ const RepeatForm = () => {
                   </span>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <></>
           )}
@@ -236,7 +325,7 @@ const RepeatForm = () => {
           <div className="h-4"></div>
           <div className="flex items-center justify-between">
             <div>{""}</div>
-            <span className="text-sm text-grey-100">{getSummaryText()}</span>
+            <span className="text-sm text-gray-400">{getSummaryText()}</span>
           </div>
         </div>
       ) : (

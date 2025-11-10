@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { CalendarIcon } from "lucide-react";
 import {
   Chip,
   DatePicker,
@@ -8,15 +6,17 @@ import {
   Switch,
   TimeInput,
 } from "@heroui/react";
+import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 
 // utils
-import { parseAbsoluteToLocal, ZonedDateTime } from "@internationalized/date";
-import { getFormattedTz } from "@/utils/datetime";
+import { getFormattedTz, parseTimeInput } from "@/utils/datetime";
+import { ZonedDateTime } from "@internationalized/date";
 
 // types
-import type { FC, SetStateAction } from "react";
 import type { IShiftValues } from "@/types/shift";
 import type { FormikErrors } from "formik";
+import type { FC, SetStateAction } from "react";
 import RepeatForm from "./RepeatForm";
 
 type TimeNLocationFormProps = {
@@ -25,10 +25,6 @@ type TimeNLocationFormProps = {
     values: SetStateAction<IShiftValues>,
     shouldValidate?: boolean
   ) => Promise<FormikErrors<IShiftValues>> | Promise<void>;
-};
-
-const parseTimeInput = (time: number): ZonedDateTime => {
-  return parseAbsoluteToLocal(new Date(time).toISOString());
 };
 
 const formattedTz = getFormattedTz();
@@ -220,7 +216,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
         </div>
       </div>
       <div className="h-4"></div>
-      <RepeatForm />
+      <RepeatForm values={values} setValues={setValues} />
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Address</span>
