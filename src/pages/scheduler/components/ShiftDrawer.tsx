@@ -257,7 +257,7 @@ const ShiftDrawer = ({
         update: [],
         delete: [],
       };
-      if (clientSchedule.client !== oldClientSchedule?.client._id) {
+      if (clientSchedule.repetitiveId !== oldClientSchedule?.repetitiveId) {
         clientScheduleUpdate.add.push({
           client: clientSchedule.client,
           timeFrom: clientSchedule.timeFrom,

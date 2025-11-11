@@ -153,6 +153,7 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
                 ...old,
                 clientSchedules: [
                   {
+                    ...oldClientSchedule,
                     client: oldClientSchedule?.client || "",
                     timeFrom: oldClientSchedule?.timeFrom || null,
                     timeTo: oldClientSchedule?.timeTo || null,
@@ -197,6 +198,7 @@ const ClientForm: FC<ClientFormProps> = ({ values, setValues }) => {
                 ...old,
                 clientSchedules: [
                   {
+                    ...oldClientSchedule,
                     client: oldClientSchedule?.client || "",
                     timeFrom: oldClientSchedule?.timeFrom || null,
                     timeTo: oldClientSchedule?.timeTo || null,
