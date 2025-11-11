@@ -36,13 +36,13 @@ const initialValues: IShiftValues = {
 const clientScheduleSchema = Yup.object().shape({
   client: Yup.string().required(),
   timeFrom: Yup.number().required(),
-  timeTo: Yup.number().required(),
+  timeTo: Yup.number().required().min(Yup.ref("timeFrom"), "Time To must be greater than Time From"),
 });
 
 const staffScheduleSchema = Yup.object().shape({
   staff: Yup.string().required("Staff is required"),
-  timeFrom: Yup.string().required("Staff Time From is required"),
-  timeTo: Yup.string().required("Staff Time To is required"),
+  timeFrom: Yup.number().required("Staff Time From is required"),
+  timeTo: Yup.number().required("Staff Time To is required").min(Yup.ref("timeFrom"), "Staff Time To must be greater than Staff Time From"),
 });
 
 const shiftSchema = Yup.object().shape({
@@ -51,8 +51,8 @@ const shiftSchema = Yup.object().shape({
   shiftType: Yup.string()
     .oneOf(ShiftTypeKeys, "Invalid key")
     .required("Shift Type is required"),
-  timeFrom: Yup.string().required("Time From is required"),
-  timeTo: Yup.string().required("Time To is required"),
+  timeFrom: Yup.number().required("Time From is required"),
+  timeTo: Yup.number().required("Time To is required").min(Yup.ref("timeFrom"), "Time To must be greater than Time From"),
   address: Yup.string().optional(),
   isCompanyVehicle: Yup.boolean().optional(),
   mileage: Yup.string().optional(),
@@ -151,8 +151,6 @@ const CreateShiftDrawer = ({ isOpen, onClose }: CreateShiftDrawerProps) => {
       mutateAddShift(values);
     },
   });
-  console.log("🚀 ~ values:", values);
-  console.log("🚀 ~ errors:", errors);
 
   const closeDrawer = () => {
     setInternalOpen(false);
@@ -203,7 +201,7 @@ const CreateShiftDrawer = ({ isOpen, onClose }: CreateShiftDrawerProps) => {
               </div>
             </DrawerHeader>
             <DrawerBody className="bg-background px-3 py-2">
-              <SimpleAddShiftLayout values={values} setValues={setValues} />
+              <SimpleAddShiftLayout values={values} errors={errors} setValues={setValues} />
             </DrawerBody>
             <DrawerFooter className="bg-background">
               <div className="h-2"></div>

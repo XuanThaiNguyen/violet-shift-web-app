@@ -37,6 +37,8 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
     query: "",
     page: 1,
     limit: 100,
+    archived: false,
+    joined: true,
   });
   const allStaffs = allStaffsData?.data || EMPTY_ARRAY;
 

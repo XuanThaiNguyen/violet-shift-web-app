@@ -37,6 +37,7 @@ import DeleteConfirm from "./DeleteConfirm";
 import { EMPTY_ARRAY } from "@/constants/empty";
 import SimpleUpdateShiftLayout from "./ShiftLayouts/SimpleUpdateShiftLayout";
 import ViewShiftLayout from "./ShiftLayouts/ViewShiftLayout";
+import { useRefresh } from "../store/refreshStore";
 
 const initialValues: IShiftValues = {
   clientSchedules: [],
@@ -83,6 +84,10 @@ interface ShiftDrawerProps {
   readOnly?: boolean;
 }
 
+const objectEqual = (obj1: object, obj2: object) => {
+  return JSON.stringify(obj1) === JSON.stringify(obj2);
+};
+
 const ShiftDrawer = ({
   isOpen,
   selectedShiftId,
@@ -92,6 +97,7 @@ const ShiftDrawer = ({
   const [isEdit, setIsEdit] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [internalOpen, setInternalOpen] = useState(isOpen);
+  const refresh = useRefresh();
 
   const queryClient = useQueryClient();
 
@@ -163,11 +169,14 @@ const ShiftDrawer = ({
             payload.staffSchedules.add.forEach((schedule) => {
               staffNeedsUpdate.push(schedule.staff!);
             });
-            return (
-              staffSchedules?.some(
-                (schedule) => schedule.staff === secondKey
-              ) || false
-            );
+            staffSchedules?.forEach((schedule) => {
+              staffNeedsUpdate.push(schedule.staff!);
+            });
+            if (staffNeedsUpdate?.includes(secondKey as string)) {
+              refresh(secondKey as string);
+              return true;
+            }
+            return false;
           }
           return false;
         },
@@ -286,7 +295,22 @@ const ShiftDrawer = ({
         });
         staffScheduleUpdate.delete.push(oldStaffSchedule.staff!);
       } else {
-        staffScheduleUpdate.update.push(staffSchedule);
+        if (
+          !objectEqual(
+            {
+              timeFrom: staffSchedule.timeFrom,
+              timeTo: staffSchedule.timeTo,
+              paymentMethod: staffSchedule.paymentMethod,
+            },
+            {
+              timeFrom: oldStaffSchedule.timeFrom,
+              timeTo: oldStaffSchedule.timeTo,
+              paymentMethod: oldStaffSchedule.paymentMethod,
+            }
+          )
+        ) {
+          staffScheduleUpdate.update.push(staffSchedule);
+        }
       }
 
       const oldTaskMap = tasks?.reduce((acc, task) => {
