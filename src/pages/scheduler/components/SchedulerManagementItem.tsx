@@ -17,6 +17,7 @@ import type {
 } from "../type";
 import { getShiftTypeLabel } from "../util";
 import ShiftDrawer from "./ShiftDrawer";
+import { useSubscribeRefresh } from "../store/refreshStore";
 
 interface SchedulerManagementItemProps {
   viewMode: ViewMode;
@@ -37,6 +38,7 @@ const SchedulerManagementItem = ({
   to,
 }: SchedulerManagementItemProps) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  useSubscribeRefresh(staff.id);
 
   const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
     undefined
