@@ -13,6 +13,7 @@ import type { SetStateAction } from "react";
 
 interface SimpleAddShiftLayoutProps {
   values: IShiftValues;
+  errors: FormikErrors<IShiftValues>;
   setValues: (
     values: SetStateAction<IShiftValues>,
     shouldValidate?: boolean
@@ -21,6 +22,7 @@ interface SimpleAddShiftLayoutProps {
 
 const SimpleAddShiftLayout = ({
   values,
+  errors,
   setValues,
 }: SimpleAddShiftLayoutProps) => {
   return (
@@ -29,7 +31,7 @@ const SimpleAddShiftLayout = ({
 
       <ShiftInfoForm values={values} setValues={setValues} />
 
-      <TimeNLocationForm values={values} setValues={setValues} />
+      <TimeNLocationForm values={values} errors={errors} setValues={setValues} />
 
       <CarerForm values={values} setValues={setValues} />
 

@@ -6,6 +6,7 @@ import { useStaffs } from "@/states/apis/staff";
 
 // constants
 import { EMPTY_OBJECT, EMPTY_STRING } from "@/constants/empty";
+import { PayMethodMap } from "../../constant";
 
 // utils
 import { getDisplayName } from "@/utils/strings";
@@ -15,7 +16,6 @@ import clsx from "clsx";
 import type { FC } from "react";
 import type { IFullShiftDetail } from "@/types/shift";
 import type { User as IUser } from "@/types/user";
-import { PayMethodMap } from "../../constant";
 
 type CarerSectionProps = {
   values: IFullShiftDetail;

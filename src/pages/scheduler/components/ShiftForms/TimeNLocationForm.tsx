@@ -12,6 +12,10 @@ import { useState } from "react";
 // utils
 import { getFormattedTz, parseTimeInput } from "@/utils/datetime";
 import { ZonedDateTime } from "@internationalized/date";
+import { useMemo } from "react";
+
+// utils
+import { startOfDay } from "date-fns";
 
 // types
 import type { IShiftValues } from "@/types/shift";
@@ -21,6 +25,7 @@ import RepeatForm from "./RepeatForm";
 
 type TimeNLocationFormProps = {
   values: IShiftValues;
+  errors?: FormikErrors<IShiftValues>;
   setValues: (
     values: SetStateAction<IShiftValues>,
     shouldValidate?: boolean
@@ -31,6 +36,7 @@ const formattedTz = getFormattedTz();
 
 const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
   values,
+  errors,
   setValues,
 }) => {
   const [isBonus, setIsBonus] = useState(false);
@@ -40,6 +46,13 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
     ? parseTimeInput(values.timeFrom)
     : null;
   const timeToInput = values.timeTo ? parseTimeInput(values.timeTo) : null;
+
+  const isOverNightShift = useMemo(() => {
+    return (
+      startOfDay(values.timeFrom!).getTime() <
+      startOfDay(values.timeTo!).getTime()
+    );
+  }, [values.timeFrom, values.timeTo]);
 
   return (
     <div className="py-4 px-3 rounded-lg bg-content1">
@@ -81,22 +94,95 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
               minute,
               second
             ).getTime();
+            const dateTimeTo = isOverNightShift ? date.add({ days: 1 }) : date;
             setValues((prev) => {
               const hourTo = timeToInput ? timeToInput.hour : (hour + 1) % 24;
               const minuteTo = timeToInput ? timeToInput.minute : 0;
               const secondTo = timeToInput ? timeToInput.second : 0;
               const newTimeTo = new Date(
-                year,
-                month - 1,
-                day,
+                dateTimeTo.year,
+                dateTimeTo.month - 1,
+                dateTimeTo.day,
                 hourTo,
                 minuteTo,
                 secondTo
               ).getTime();
+
+              const oldClientSchedules = prev.clientSchedules;
+              const newClientSchedules = oldClientSchedules?.map(
+                (clientSchedule) => {
+                  return {
+                    ...clientSchedule,
+                    timeFrom: newTimeFrom,
+                    timeTo: newTimeTo,
+                  };
+                }
+              );
+
+              const oldStaffSchedules = prev.staffSchedules;
+              const newStaffSchedules = oldStaffSchedules?.map(
+                (staffSchedule) => {
+                  return {
+                    ...staffSchedule,
+                    timeFrom: newTimeFrom,
+                    timeTo: newTimeTo,
+                  };
+                }
+              );
               return {
                 ...prev,
                 timeFrom: newTimeFrom,
                 timeTo: newTimeTo,
+                clientSchedules: newClientSchedules,
+                staffSchedules: newStaffSchedules,
+              };
+            });
+          }}
+        />
+      </div>
+      <div className="h-4"></div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm">Overnight Shift</span>
+        <Switch
+          isSelected={isOverNightShift}
+          onValueChange={(value) => {
+            const baseTimeto = value
+              ? timefromInput!.add({ days: 1 })
+              : timefromInput!;
+            const { hour, minute } = timeToInput!;
+            const newTimeTo = new Date(
+              baseTimeto.year,
+              baseTimeto.month - 1,
+              baseTimeto.day,
+              hour,
+              minute,
+              0
+            ).getTime();
+            setValues((prev) => {
+              const oldClientSchedules = prev.clientSchedules;
+              const newClientSchedules = oldClientSchedules?.map(
+                (clientSchedule) => {
+                  return {
+                    ...clientSchedule,
+                    timeTo: newTimeTo,
+                  };
+                }
+              );
+
+              const oldStaffSchedules = prev.staffSchedules;
+              const newStaffSchedules = oldStaffSchedules?.map(
+                (staffSchedule) => {
+                  return {
+                    ...staffSchedule,
+                    timeTo: newTimeTo,
+                  };
+                }
+              );
+              return {
+                ...prev,
+                timeTo: newTimeTo,
+                clientSchedules: newClientSchedules,
+                staffSchedules: newStaffSchedules,
               };
             });
           }}
@@ -158,9 +244,11 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                 };
               });
             }}
+            isInvalid={!!errors?.timeTo} // Due
           />
           -
           <TimeInput
+            isInvalid={!!errors?.timeTo}
             className="w-full"
             label=""
             name="birthdate"
@@ -215,6 +303,11 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
           />
         </div>
       </div>
+      {errors?.timeTo && (
+        <div className="text-xs text-danger mt-2 text-right">
+          {errors?.timeTo}
+        </div>
+      )}
       <div className="h-4"></div>
       <RepeatForm values={values} setValues={setValues} />
       <div className="h-4"></div>

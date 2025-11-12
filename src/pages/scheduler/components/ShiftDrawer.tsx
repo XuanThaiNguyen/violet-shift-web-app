@@ -39,6 +39,7 @@ import DeleteConfirm from "./DeleteConfirm";
 import DeleteRepeatConfirm from "./DeleteRepeatConfirm";
 import SimpleUpdateShiftLayout from "./ShiftLayouts/SimpleUpdateShiftLayout";
 import ViewShiftLayout from "./ShiftLayouts/ViewShiftLayout";
+import { useRefresh } from "../store/refreshStore";
 
 const initialValues: IShiftValues = {
   clientSchedules: [],
@@ -85,6 +86,10 @@ interface ShiftDrawerProps {
   readOnly?: boolean;
 }
 
+const objectEqual = (obj1: object, obj2: object) => {
+  return JSON.stringify(obj1) === JSON.stringify(obj2);
+};
+
 const ShiftDrawer = ({
   isOpen,
   selectedShiftId,
@@ -96,6 +101,7 @@ const ShiftDrawer = ({
   const [isDeleteRepeatConfirmOpen, setIsDeleteRepeatConfirmOpen] =
     useState(false);
   const [internalOpen, setInternalOpen] = useState(isOpen);
+  const refresh = useRefresh();
 
   const queryClient = useQueryClient();
 
@@ -131,73 +137,78 @@ const ShiftDrawer = ({
     };
   }, [dataShiftDetail, clientSchedules, tasks, staffSchedules]);
 
-  const { mutate: mutateUpdateShift } = useMutation({
-    mutationFn: updateShift,
-    onSuccess: (_, payload) => {
-      addToast({
-        title: "Update shift successfully",
-        color: "success",
-        timeout: 2000,
-        isClosing: true,
-      });
-      queryClient.removeQueries({
-        predicate: (query) => {
-          const firstKey = query.queryKey[0];
-          const secondKey = query.queryKey[1];
-          if (firstKey === "shiftDetail") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "staffSchedulesByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "clientSchedulesByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "tasksByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "staffSchedules") {
-            const staffNeedsUpdate: string[] = [];
-            payload.staffSchedules.update.forEach((schedule) => {
-              staffNeedsUpdate.push(schedule.staff!);
-            });
-            payload.staffSchedules.delete.forEach((staff) => {
-              staffNeedsUpdate.push(staff);
-            });
-            payload.staffSchedules.add.forEach((schedule) => {
-              staffNeedsUpdate.push(schedule.staff!);
-            });
-            return (
-              staffSchedules?.some(
-                (schedule) => schedule.staff === secondKey
-              ) || false
-            );
-          }
-          return false;
-        },
-      });
-      onClose();
-    },
-    onError: (error) => {
-      if (error instanceof AxiosError) {
-        const errorCode = error.response?.data?.code;
-        const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+  const { mutate: mutateUpdateShift, isPending: isPendingUpdate } = useMutation(
+    {
+      mutationFn: updateShift,
+      onSuccess: (_, payload) => {
         addToast({
-          title: msg,
-          color: "danger",
+          title: "Update shift successfully",
+          color: "success",
           timeout: 2000,
           isClosing: true,
         });
-      } else {
-        addToast({
-          title: "Update shift failed",
-          color: "danger",
-          timeout: 2000,
-          isClosing: true,
+        queryClient.removeQueries({
+          predicate: (query) => {
+            const firstKey = query.queryKey[0];
+            const secondKey = query.queryKey[1];
+            if (firstKey === "shiftDetail") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "staffSchedulesByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "clientSchedulesByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "tasksByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "staffSchedules") {
+              const staffNeedsUpdate: string[] = [];
+              payload.staffSchedules.update.forEach((schedule) => {
+                staffNeedsUpdate.push(schedule.staff!);
+              });
+              payload.staffSchedules.delete.forEach((staff) => {
+                staffNeedsUpdate.push(staff);
+              });
+              payload.staffSchedules.add.forEach((schedule) => {
+                staffNeedsUpdate.push(schedule.staff!);
+              });
+              staffSchedules?.forEach((schedule) => {
+                staffNeedsUpdate.push(schedule.staff!);
+              });
+              if (staffNeedsUpdate?.includes(secondKey as string)) {
+                refresh(secondKey as string);
+                return true;
+              }
+              return false;
+            }
+            return false;
+          },
         });
-      }
-    },
-  });
+        onClose();
+      },
+      onError: (error) => {
+        if (error instanceof AxiosError) {
+          const errorCode = error.response?.data?.code;
+          const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+          addToast({
+            title: msg,
+            color: "danger",
+            timeout: 2000,
+            isClosing: true,
+          });
+        } else {
+          addToast({
+            title: "Update shift failed",
+            color: "danger",
+            timeout: 2000,
+            isClosing: true,
+          });
+        }
+      },
+    }
+  );
 
   const { mutate: mutateDeleteShift } = useMutation({
     mutationFn: deleteShift,
@@ -312,7 +323,7 @@ const ShiftDrawer = ({
         update: [],
         delete: [],
       };
-      if (clientSchedule.client !== oldClientSchedule?.client._id) {
+      if (clientSchedule.repetitiveId !== oldClientSchedule?.repetitiveId) {
         clientScheduleUpdate.add.push({
           client: clientSchedule.client,
           timeFrom: clientSchedule.timeFrom,
@@ -341,7 +352,22 @@ const ShiftDrawer = ({
         });
         staffScheduleUpdate.delete.push(oldStaffSchedule.staff!);
       } else {
-        staffScheduleUpdate.update.push(staffSchedule);
+        if (
+          !objectEqual(
+            {
+              timeFrom: staffSchedule.timeFrom,
+              timeTo: staffSchedule.timeTo,
+              paymentMethod: staffSchedule.paymentMethod,
+            },
+            {
+              timeFrom: oldStaffSchedule.timeFrom,
+              timeTo: oldStaffSchedule.timeTo,
+              paymentMethod: oldStaffSchedule.paymentMethod,
+            }
+          )
+        ) {
+          staffScheduleUpdate.update.push(staffSchedule);
+        }
       }
 
       const oldTaskMap = tasks?.reduce((acc, task) => {
@@ -462,6 +488,7 @@ const ShiftDrawer = ({
                       size="md"
                       color={"primary"}
                       onPress={() => handleSubmit()}
+                      isLoading={isPendingUpdate}
                       startContent={<Save size={16} />}
                     >
                       Update

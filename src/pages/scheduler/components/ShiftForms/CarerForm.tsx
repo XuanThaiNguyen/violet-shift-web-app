@@ -37,6 +37,8 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
     query: "",
     page: 1,
     limit: 100,
+    archived: false,
+    joined: true,
   });
   const allStaffs = allStaffsData?.data || EMPTY_ARRAY;
 
@@ -80,7 +82,6 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
           value={values.staffSchedules[0]?.staff || undefined}
           onValueChange={(value) => {
             setValues((old) => {
-              const oldStaffSchedule = old.staffSchedules[0];
               return {
                 ...old,
                 staffSchedules: [
@@ -88,7 +89,7 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
                     staff: value as string,
                     timeFrom: old.timeFrom,
                     timeTo: old.timeTo,
-                    paymentMethod: oldStaffSchedule?.paymentMethod || "default",
+                    paymentMethod: "default",
                   },
                 ],
               };
