@@ -21,7 +21,7 @@ import type { FormikErrors } from "formik";
 
 type TimeNLocationFormProps = {
   values: IShiftValues;
-  errors: FormikErrors<IShiftValues>;
+  errors?: FormikErrors<IShiftValues>;
   setValues: (
     values: SetStateAction<IShiftValues>,
     shouldValidate?: boolean
