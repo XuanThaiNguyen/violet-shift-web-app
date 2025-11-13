@@ -89,7 +89,9 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
         repeat: {
           pattern: generateCronExpression(),
           endDate: endOfDay.getTime(),
-          tz: "Australia/Sydney",
+          // tz: "Australia/Sydney",
+          // tz: "Asia/Saigon",
+          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
       }));
     } else {

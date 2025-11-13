@@ -554,14 +554,18 @@ const ShiftDrawer = ({
           if (deleteType === "future") {
             mutateBulkDeleteShift({
               repeatId: dataShiftDetail?.repeat?._id || "",
-              from: Date.now(),
+              from: dataShiftDetail?.timeFrom
+                ? dataShiftDetail?.timeFrom
+                : Date.now(),
               to: endDate,
             });
           }
           if (deleteType === "all") {
             mutateBulkDeleteShift({
               repeatId: dataShiftDetail?.repeat?._id || "",
-              from: Date.now(),
+              from: dataShiftDetail?.timeFrom
+                ? dataShiftDetail?.timeFrom
+                : Date.now(),
               to: dataShiftDetail?.repeat?.endDate,
             });
           }
