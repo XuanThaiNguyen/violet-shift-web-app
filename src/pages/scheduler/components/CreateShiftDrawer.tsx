@@ -31,6 +31,7 @@ const initialValues: IShiftValues = {
   clientClockOutRequired: false,
   staffClockOutRequired: false,
   instruction: "",
+  repeat: "",
 };
 
 const clientScheduleSchema = Yup.object().shape({
@@ -148,7 +149,9 @@ const CreateShiftDrawer = ({ isOpen, onClose }: CreateShiftDrawerProps) => {
     initialValues: initialValues,
     validationSchema: shiftSchema,
     onSubmit: (values) => {
-      mutateAddShift(values);
+      const { repeat, ...rest } = values;
+      const newValues = repeat ? { ...values } : rest;
+      mutateAddShift(newValues);
     },
   });
 

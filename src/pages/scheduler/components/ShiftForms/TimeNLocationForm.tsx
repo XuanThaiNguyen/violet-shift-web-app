@@ -1,5 +1,3 @@
-import { useMemo, useState } from "react";
-import { CalendarIcon } from "lucide-react";
 import {
   Chip,
   DatePicker,
@@ -8,16 +6,22 @@ import {
   Switch,
   TimeInput,
 } from "@heroui/react";
+import { CalendarIcon } from "lucide-react";
+import { useState } from "react";
 
 // utils
-import { parseAbsoluteToLocal, ZonedDateTime } from "@internationalized/date";
-import { getFormattedTz } from "@/utils/datetime";
+import { getFormattedTz, parseTimeInput } from "@/utils/datetime";
+import { ZonedDateTime } from "@internationalized/date";
+import { useMemo } from "react";
+
+// utils
 import { startOfDay } from "date-fns";
 
 // types
-import type { FC, SetStateAction } from "react";
 import type { IShiftValues } from "@/types/shift";
 import type { FormikErrors } from "formik";
+import type { FC, SetStateAction } from "react";
+import RepeatForm from "./RepeatForm";
 
 type TimeNLocationFormProps = {
   values: IShiftValues;
@@ -28,10 +32,6 @@ type TimeNLocationFormProps = {
   ) => Promise<FormikErrors<IShiftValues>> | Promise<void>;
 };
 
-const parseTimeInput = (time: number): ZonedDateTime => {
-  return parseAbsoluteToLocal(new Date(time).toISOString());
-};
-
 const formattedTz = getFormattedTz();
 
 const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
@@ -40,6 +40,8 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
   setValues,
 }) => {
   const [isBonus, setIsBonus] = useState(false);
+
+  // const [isNightShift, setIsNightShift] = useState(false);
   const timefromInput = values.timeFrom
     ? parseTimeInput(values.timeFrom)
     : null;
@@ -306,6 +308,8 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
           {errors?.timeTo}
         </div>
       )}
+      <div className="h-4"></div>
+      <RepeatForm values={values} setValues={setValues} />
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Address</span>

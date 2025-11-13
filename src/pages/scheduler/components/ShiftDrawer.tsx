@@ -1,4 +1,6 @@
+import { EMPTY_ARRAY } from "@/constants/empty";
 import {
+  bulkDeleteShift,
   deleteShift,
   updateShift,
   useGetClientSchedulesByShift,
@@ -34,7 +36,7 @@ import { useEffect, useMemo, useState } from "react";
 import * as Yup from "yup";
 import { ErrorMessages, ShiftTypeKeys, ShiftTypeOptions } from "../constant";
 import DeleteConfirm from "./DeleteConfirm";
-import { EMPTY_ARRAY } from "@/constants/empty";
+import DeleteRepeatConfirm from "./DeleteRepeatConfirm";
 import SimpleUpdateShiftLayout from "./ShiftLayouts/SimpleUpdateShiftLayout";
 import ViewShiftLayout from "./ShiftLayouts/ViewShiftLayout";
 import { useRefresh } from "../store/refreshStore";
@@ -96,6 +98,8 @@ const ShiftDrawer = ({
 }: ShiftDrawerProps) => {
   const [isEdit, setIsEdit] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleteRepeatConfirmOpen, setIsDeleteRepeatConfirmOpen] =
+    useState(false);
   const [internalOpen, setInternalOpen] = useState(isOpen);
   const refresh = useRefresh();
 
@@ -244,6 +248,57 @@ const ShiftDrawer = ({
     },
     onError: (error) => {
       setIsDeleteConfirmOpen(false);
+      if (error instanceof AxiosError) {
+        const errorCode = error.response?.data?.code;
+        const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+        addToast({
+          title: msg,
+          color: "danger",
+          timeout: 2000,
+          isClosing: true,
+        });
+      }
+    },
+  });
+
+  const { mutate: mutateBulkDeleteShift } = useMutation({
+    mutationFn: bulkDeleteShift,
+    onSuccess: () => {
+      addToast({
+        title: "Delete shift successfully",
+        color: "success",
+      });
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const firstKey = query.queryKey[0];
+          const secondKey = query.queryKey[1];
+          if (firstKey === "shiftDetail") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "staffSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "clientSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "tasksByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "staffSchedules") {
+            return (
+              staffSchedules?.some(
+                (schedule) => schedule.staff === secondKey
+              ) || false
+            );
+          }
+          return false;
+        },
+      });
+      setIsDeleteRepeatConfirmOpen(false);
+      onClose();
+    },
+    onError: (error) => {
+      setIsDeleteRepeatConfirmOpen(false);
       if (error instanceof AxiosError) {
         const errorCode = error.response?.data?.code;
         const msg = ErrorMessages[errorCode] ?? "Something went wrong";
@@ -444,7 +499,13 @@ const ShiftDrawer = ({
                     <Button
                       size="md"
                       color="danger"
-                      onPress={() => setIsDeleteConfirmOpen(true)}
+                      onPress={() => {
+                        if (dataShiftDetail?.repeat) {
+                          setIsDeleteRepeatConfirmOpen(true);
+                        } else {
+                          setIsDeleteConfirmOpen(true);
+                        }
+                      }}
                     >
                       Delete
                     </Button>
@@ -481,6 +542,33 @@ const ShiftDrawer = ({
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={async () => {
           await mutateDeleteShift(selectedShiftId || "");
+        }}
+      />
+      <DeleteRepeatConfirm
+        isOpen={isDeleteRepeatConfirmOpen}
+        onClose={() => setIsDeleteRepeatConfirmOpen(false)}
+        onConfirm={(deleteType: string, endDate: number) => {
+          if (deleteType === "only") {
+            mutateDeleteShift(selectedShiftId || "");
+          }
+          if (deleteType === "future") {
+            mutateBulkDeleteShift({
+              repeatId: dataShiftDetail?.repeat?._id || "",
+              from: dataShiftDetail?.timeFrom
+                ? dataShiftDetail?.timeFrom
+                : Date.now(),
+              to: endDate,
+            });
+          }
+          if (deleteType === "all") {
+            mutateBulkDeleteShift({
+              repeatId: dataShiftDetail?.repeat?._id || "",
+              from: dataShiftDetail?.timeFrom
+                ? dataShiftDetail?.timeFrom
+                : Date.now(),
+              to: dataShiftDetail?.repeat?.endDate,
+            });
+          }
         }}
       />
     </>

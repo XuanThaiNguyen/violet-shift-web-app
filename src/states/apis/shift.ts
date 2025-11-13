@@ -23,6 +23,22 @@ export const deleteShift = async (shiftId: string) => {
   return res.data;
 };
 
+export const bulkDeleteShift = async ({
+  repeatId,
+  from,
+  to,
+}: {
+  repeatId: string;
+  from: number;
+  to?: number | null;
+}) => {
+  const res = await api.post(`/api/v1/shifts/bulk-delete/${repeatId}`, {
+    from,
+    to,
+  });
+  return res.data;
+};
+
 export const useGetSchedulesByStaffId = (
   staffId: string,
   from?: number | null,
@@ -44,13 +60,10 @@ export const useGetSchedulesByStaffId = (
   return schedulesByStaffId;
 };
 
-export const useGetStaffSchedulesByShift = (
-  shiftId: string
-) => {
+export const useGetStaffSchedulesByShift = (shiftId: string) => {
   const schedulesByStaffId = useQuery<IGetStaffSchedule[]>({
     queryKey: ["staffSchedulesByShift", shiftId],
-    queryFn: () =>
-      api.get(`/api/v1/shifts/${shiftId}/staff-schedules`),
+    queryFn: () => api.get(`/api/v1/shifts/${shiftId}/staff-schedules`),
     enabled: !!localStorage.getItem("auth_token") && !!shiftId,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -61,13 +74,10 @@ export const useGetStaffSchedulesByShift = (
   return schedulesByStaffId;
 };
 
-export const  useGetClientSchedulesByShift = (
-  shiftId: string
-) => {
+export const useGetClientSchedulesByShift = (shiftId: string) => {
   const clientSchedulesByShift = useQuery<IClientScheduleDetail[]>({
     queryKey: ["clientSchedulesByShift", shiftId],
-    queryFn: () =>
-      api.get(`/api/v1/shifts/${shiftId}/client-schedules`),
+    queryFn: () => api.get(`/api/v1/shifts/${shiftId}/client-schedules`),
     enabled: !!localStorage.getItem("auth_token") && !!shiftId,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -78,10 +88,7 @@ export const  useGetClientSchedulesByShift = (
   return clientSchedulesByShift;
 };
 
-
-export const useGetTasksByShift = (
-  shiftId: string
-) => {
+export const useGetTasksByShift = (shiftId: string) => {
   const tasksByShift = useQuery<IShiftTask[]>({
     queryKey: ["tasksByShiftId", shiftId],
     queryFn: () => api.get(`/api/v1/shifts/${shiftId}/tasks`),
