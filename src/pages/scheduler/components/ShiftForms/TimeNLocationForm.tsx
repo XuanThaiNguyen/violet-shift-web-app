@@ -21,6 +21,7 @@ import { startOfDay } from "date-fns";
 import type { IShiftValues } from "@/types/shift";
 import type { FormikErrors } from "formik";
 import type { FC, SetStateAction } from "react";
+import RepeatForm from "./RepeatForm";
 
 type TimeNLocationFormProps = {
   values: IShiftValues;
@@ -308,8 +309,8 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
         </div>
       )}
       <div className="h-4"></div>
-      {/* <RepeatForm values={values} setValues={setValues} />
-      <div className="h-4"></div> */}
+      <RepeatForm values={values} setValues={setValues} />
+      <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Address</span>
         <Input
