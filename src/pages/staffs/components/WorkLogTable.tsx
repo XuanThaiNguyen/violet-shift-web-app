@@ -311,6 +311,7 @@ const WorkLogTable: FC<WorkLogTableProps> = ({ staffId, from, to }) => {
 
       {isOpen && selectedShiftId && (
         <ShiftDrawer
+          isAdmin
           readOnly
           onClose={onClose}
           isOpen={isOpen}
