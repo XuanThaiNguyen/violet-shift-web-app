@@ -1,3 +1,4 @@
+import { parseAbsoluteToLocal, ZonedDateTime } from "@internationalized/date";
 import { startOfDay, endOfDay, format, fromUnixTime } from "date-fns";
 
 export const convertDateToMs = (
@@ -26,4 +27,8 @@ export const getFormattedTz = () => {
   if (!tz) return "UTC+00:00";
   const formatted = `${tz[1]}${tz[2]}:${tz[3]}`;
   return formatted;
+};
+
+export const parseTimeInput = (time: number): ZonedDateTime => {
+  return parseAbsoluteToLocal(new Date(time).toISOString());
 };

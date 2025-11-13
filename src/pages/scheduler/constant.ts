@@ -210,3 +210,9 @@ export const initialStaffMockup = [
     available: true,
   },
 ];
+
+export const RecurrenceOptions = [
+  { label: "Daily", key: "daily" },
+  { label: "Weekly", key: "weekly" },
+  { label: "Monthly", key: "monthly" },
+];
