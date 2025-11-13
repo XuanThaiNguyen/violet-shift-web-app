@@ -312,7 +312,7 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
                               {_end.getMinutes().toString().padStart(2, "0")}
                             </div>
                             <div className={`font-semibold truncate`}>
-                              {event.shift.shiftType}
+                              {getShiftTypeLabel(event.shift.shiftType)}
                             </div>
                           </div>
                           <div className="text-gray-500 text-xs">

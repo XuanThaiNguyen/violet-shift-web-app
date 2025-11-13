@@ -24,7 +24,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 
 import type { User as UserType } from "@/types/user";
-import { getDisplayName, getFullName, getUserAvatar } from "@/utils/strings";
+import { getDisplayName, getFullName } from "@/utils/strings";
 import type { FC } from "react";
 
 const columns = [
@@ -74,13 +74,10 @@ const employmentTypeMap = employmentTypeOptions.reduce((acc, option) => {
   return acc;
 }, {} as Record<string, string>);
 
-const StaffList: FC = () => {
+const Worklogs: FC = () => {
   const navigate = useNavigate();
 
   const [filterValue, setFilterValue] = useState("");
-  const [selectedKeys, setSelectedKeys] = useState<Set<string> | "all">(
-    new Set([])
-  );
   const [roleFilter, setRoleFilter] = useState<Set<string> | "all">(
     new Set([])
   );
@@ -125,15 +122,12 @@ const StaffList: FC = () => {
     switch (columnKey) {
       case "name":
         return (
-          <div
-            className="cursor-pointer"
-            onClick={() => navigate(`/staffs/${user.id}`)}
-          >
+          <div className="cursor-pointer">
             <User
               avatarProps={{
                 radius: "full",
                 size: "sm",
-                src: getUserAvatar(user),
+                src: user.avatar,
                 classNames: {
                   base: "flex-shrink-0",
                 },
@@ -324,23 +318,10 @@ const StaffList: FC = () => {
             Total {pagination?.total ?? EMPTY_STRING}{" "}
             {pagination?.total === 1 ? "user" : "users"}
           </span>
-          <span className="text-small text-default-400">
-            {selectedKeys === "all"
-              ? "All items selected"
-              : `${selectedKeys.size} of ${
-                  pagination?.total ?? EMPTY_STRING
-                } selected`}
-          </span>
         </div>
       </div>
     );
-  }, [
-    filterValue,
-    employmentTypeFilter,
-    roleFilter,
-    pagination?.total,
-    selectedKeys,
-  ]);
+  }, [filterValue, employmentTypeFilter, roleFilter, pagination?.total]);
 
   const bottomContent = useMemo(() => {
     return (
@@ -384,7 +365,7 @@ const StaffList: FC = () => {
     <div className="container mx-auto pt-4">
       <div className="bg-content1 shadow-md rounded-lg p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Staffs</h1>
+          <h1 className="text-2xl font-bold">Staffs' Overview</h1>
           <Button
             as={Link}
             to="/staffs/new"
@@ -423,15 +404,12 @@ const StaffList: FC = () => {
               "last:group-data-[last=true]/tr:before:rounded-none",
             ],
           }}
-          selectedKeys={selectedKeys}
-          selectionMode="multiple"
           sortDescriptor={{
             column: filter.sort ?? "joinedAt",
             direction: filter.order === "asc" ? "ascending" : "descending",
           }}
           topContent={topContent}
           topContentPlacement="outside"
-          onSelectionChange={setSelectedKeys as (keys: SharedSelection) => void}
           onSortChange={(sortDescriptor) => {
             setFilter((oldFilter) => ({
               ...oldFilter,
@@ -456,11 +434,15 @@ const StaffList: FC = () => {
           <TableBody
             isLoading={isLoading}
             loadingContent={<Spinner label="Loading..." />}
-            emptyContent={"No users found"}
+            emptyContent={"No worklogs found"}
             items={staffs}
           >
             {(item) => (
-              <TableRow key={item.id}>
+              <TableRow
+                key={item.id}
+                onClick={() => navigate(`/worklogs/${item.id}`)}
+                className="cursor-pointer"
+              >
                 {(columnKey) => (
                   <TableCell>{renderCell(item, columnKey as string)}</TableCell>
                 )}
@@ -473,4 +455,4 @@ const StaffList: FC = () => {
   );
 };
 
-export default StaffList;
+export default Worklogs;

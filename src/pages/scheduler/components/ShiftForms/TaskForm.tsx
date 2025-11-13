@@ -14,6 +14,7 @@ import type {
   ITask,
 } from "@/types/shift";
 import type { FormikErrors } from "formik";
+import { generateId } from "@/utils/strings";
 
 type TaskFormProps = {
   values: IShiftValues;
@@ -67,6 +68,7 @@ const TaskForm: FC<TaskFormProps> = ({ values, setValues }) => {
             }));
             setTempTask({
               name: "",
+              repetitiveId: generateId(),
               isMandatory: false,
             });
           }}
@@ -77,7 +79,7 @@ const TaskForm: FC<TaskFormProps> = ({ values, setValues }) => {
       <div className="h-2"></div>
       {values.tasks.map?.((task, index) => (
         <div
-          key={`${task.name}-${index}`}
+          key={task.repetitiveId}
           className="flex items-center justify-between py-2"
         >
           <span className="flex-1">{task.name}</span>

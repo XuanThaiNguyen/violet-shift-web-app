@@ -28,18 +28,29 @@ const initialValues: IShiftValues = {
   timeTo: 0,
   isCompanyVehicle: false,
   tasks: [],
+  clientClockOutRequired: false,
+  staffClockOutRequired: false,
+  instruction: "",
+  repeat: "",
 };
 
 const clientScheduleSchema = Yup.object().shape({
   client: Yup.string().required(),
   timeFrom: Yup.number().required(),
-  timeTo: Yup.number().required(),
+  timeTo: Yup.number()
+    .required()
+    .min(Yup.ref("timeFrom"), "Time To must be greater than Time From"),
 });
 
 const staffScheduleSchema = Yup.object().shape({
   staff: Yup.string().required("Staff is required"),
-  timeFrom: Yup.string().required("Staff Time From is required"),
-  timeTo: Yup.string().required("Staff Time To is required"),
+  timeFrom: Yup.number().required("Staff Time From is required"),
+  timeTo: Yup.number()
+    .required("Staff Time To is required")
+    .min(
+      Yup.ref("timeFrom"),
+      "Staff Time To must be greater than Staff Time From"
+    ),
 });
 
 const shiftSchema = Yup.object().shape({
@@ -48,8 +59,10 @@ const shiftSchema = Yup.object().shape({
   shiftType: Yup.string()
     .oneOf(ShiftTypeKeys, "Invalid key")
     .required("Shift Type is required"),
-  timeFrom: Yup.string().required("Time From is required"),
-  timeTo: Yup.string().required("Time To is required"),
+  timeFrom: Yup.number().required("Time From is required"),
+  timeTo: Yup.number()
+    .required("Time To is required")
+    .min(Yup.ref("timeFrom"), "Time To must be greater than Time From"),
   address: Yup.string().optional(),
   isCompanyVehicle: Yup.boolean().optional(),
   mileage: Yup.string().optional(),
@@ -77,7 +90,7 @@ const CreateShiftDrawer = ({ isOpen, onClose }: CreateShiftDrawerProps) => {
 
   const queryClient = useQueryClient();
 
-  const { mutate: mutateAddShift } = useMutation({
+  const { mutate: mutateAddShift, isPending: isPendingAddShift } = useMutation({
     mutationFn: createNewShift,
     onSuccess: (_, payload) => {
       addToast({
@@ -145,11 +158,11 @@ const CreateShiftDrawer = ({ isOpen, onClose }: CreateShiftDrawerProps) => {
     initialValues: initialValues,
     validationSchema: shiftSchema,
     onSubmit: (values) => {
-      mutateAddShift(values);
+      const { repeat, ...rest } = values;
+      const newValues = repeat ? { ...values } : rest;
+      mutateAddShift(newValues);
     },
   });
-  console.log("🚀 ~ values:", values);
-  console.log("🚀 ~ errors:", errors);
 
   const closeDrawer = () => {
     setInternalOpen(false);
@@ -185,6 +198,7 @@ const CreateShiftDrawer = ({ isOpen, onClose }: CreateShiftDrawerProps) => {
                 <Button
                   size="md"
                   color={"primary"}
+                  isLoading={isPendingAddShift}
                   isDisabled={
                     !values.clientSchedules?.[0]?.client ||
                     !values.staffSchedules?.[0]?.staff ||
@@ -199,7 +213,11 @@ const CreateShiftDrawer = ({ isOpen, onClose }: CreateShiftDrawerProps) => {
               </div>
             </DrawerHeader>
             <DrawerBody className="bg-background px-3 py-2">
-              <SimpleAddShiftLayout values={values} setValues={setValues} />
+              <SimpleAddShiftLayout
+                values={values}
+                errors={errors}
+                setValues={setValues}
+              />
             </DrawerBody>
             <DrawerFooter className="bg-background">
               <div className="h-2"></div>

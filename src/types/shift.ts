@@ -26,6 +26,10 @@ export interface IShiftValues {
   mileageCap?: number;
   isCompanyVehicle?: boolean;
   tasks: ITask[];
+  clientClockOutRequired?: boolean;
+  staffClockOutRequired?: boolean;
+  instruction?: string;
+  repeat?: IShiftRepeat | string;
 }
 
 export type IArrayUpdate<T> = {
@@ -114,8 +118,9 @@ export interface DateValue {
 
 export interface IShiftRepeat {
   pattern: string;
-  endDate: number;
+  endDate: number | null;
   tz: string;
+  _id?: string;
 }
 
 export interface IShiftDetail {
@@ -139,7 +144,7 @@ export interface IShiftDetail {
   bonus: number; // bonus
   dropOffAddress?: string; // drop off address
   dropOffUnitNumber?: string; // drop off unit/department/door number
-  repeat: IShiftRepeat | string;
+  repeat: IShiftRepeat;
 
   // instruction
   instruction: string; // rich text

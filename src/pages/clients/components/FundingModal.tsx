@@ -141,7 +141,7 @@ const FundingModal = ({
     onSubmit: (_values) => {
       if (selectedFund) {
         const params: IAddFunding = {
-          userId: clientId,
+          client: clientId,
           name: _values.name,
           isDefault: _values.isDefault,
         };
@@ -160,7 +160,7 @@ const FundingModal = ({
       } else {
         const submitValues = {
           ..._values,
-          userId: clientId,
+          client: clientId,
         };
         mutateAdd(submitValues);
       }

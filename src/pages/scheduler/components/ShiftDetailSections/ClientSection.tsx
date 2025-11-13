@@ -6,6 +6,7 @@ import { getDisplayName } from "@/utils/strings";
 import clsx from "clsx";
 
 // types
+import { EMPTY_STRING } from "@/constants/empty";
 import type { IFullShiftDetail } from "@/types/shift";
 import type { FC } from "react";
 
@@ -30,14 +31,10 @@ const ClientSection: FC<ClientSectionProps> = ({ values }) => {
           const priceBook = clientSchedule.priceBook;
           const fund = clientSchedule.fund;
 
-          const name = getDisplayName({
-            firstName: client?.firstName,
-            lastName: client?.lastName,
-            middleName: client?.middleName,
-            preferredName: client?.preferredName,
-            salutation: client?.salutation,
-          });
-          const actualName = `${client?.firstName}+${client?.lastName}`;
+          const name = client ? getDisplayName(client) : EMPTY_STRING;
+          const actualName = client
+            ? `${client.firstName}+${client.lastName}`
+            : EMPTY_STRING;
           const avatar =
             client?.avatar || `https://ui-avatars.com/api/?name=${actualName}`;
 

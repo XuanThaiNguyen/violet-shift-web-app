@@ -1,4 +1,6 @@
+import { EMPTY_ARRAY } from "@/constants/empty";
 import {
+  bulkDeleteShift,
   deleteShift,
   updateShift,
   useGetClientSchedulesByShift,
@@ -29,14 +31,15 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useFormik } from "formik";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Edit, Save, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import * as Yup from "yup";
 import { ErrorMessages, ShiftTypeKeys, ShiftTypeOptions } from "../constant";
 import DeleteConfirm from "./DeleteConfirm";
-import { EMPTY_ARRAY } from "@/constants/empty";
+import DeleteRepeatConfirm from "./DeleteRepeatConfirm";
 import SimpleUpdateShiftLayout from "./ShiftLayouts/SimpleUpdateShiftLayout";
 import ViewShiftLayout from "./ShiftLayouts/ViewShiftLayout";
+import { useRefresh } from "../store/refreshStore";
 
 const initialValues: IShiftValues = {
   clientSchedules: [],
@@ -81,17 +84,26 @@ interface ShiftDrawerProps {
   selectedShiftId: string;
   onClose: () => void;
   isAdmin: boolean;
+  readOnly?: boolean;
 }
+
+const objectEqual = (obj1: object, obj2: object) => {
+  return JSON.stringify(obj1) === JSON.stringify(obj2);
+};
 
 const ShiftDrawer = ({
   isOpen,
   selectedShiftId,
   onClose,
   isAdmin,
+  readOnly = false,
 }: ShiftDrawerProps) => {
   const [isEdit, setIsEdit] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleteRepeatConfirmOpen, setIsDeleteRepeatConfirmOpen] =
+    useState(false);
   const [internalOpen, setInternalOpen] = useState(isOpen);
+  const refresh = useRefresh();
 
   const queryClient = useQueryClient();
 
@@ -127,73 +139,78 @@ const ShiftDrawer = ({
     };
   }, [dataShiftDetail, clientSchedules, tasks, staffSchedules]);
 
-  const { mutate: mutateUpdateShift } = useMutation({
-    mutationFn: updateShift,
-    onSuccess: (_, payload) => {
-      addToast({
-        title: "Update shift successfully",
-        color: "success",
-        timeout: 2000,
-        isClosing: true,
-      });
-      queryClient.removeQueries({
-        predicate: (query) => {
-          const firstKey = query.queryKey[0];
-          const secondKey = query.queryKey[1];
-          if (firstKey === "shiftDetail") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "staffSchedulesByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "clientSchedulesByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "tasksByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "staffSchedules") {
-            const staffNeedsUpdate: string[] = [];
-            payload.staffSchedules.update.forEach((schedule) => {
-              staffNeedsUpdate.push(schedule.staff!);
-            });
-            payload.staffSchedules.delete.forEach((staff) => {
-              staffNeedsUpdate.push(staff);
-            });
-            payload.staffSchedules.add.forEach((schedule) => {
-              staffNeedsUpdate.push(schedule.staff!);
-            });
-            return (
-              staffSchedules?.some(
-                (schedule) => schedule.staff === secondKey
-              ) || false
-            );
-          }
-          return false;
-        },
-      });
-      onClose();
-    },
-    onError: (error) => {
-      if (error instanceof AxiosError) {
-        const errorCode = error.response?.data?.code;
-        const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+  const { mutate: mutateUpdateShift, isPending: isPendingUpdate } = useMutation(
+    {
+      mutationFn: updateShift,
+      onSuccess: (_, payload) => {
         addToast({
-          title: msg,
-          color: "danger",
+          title: "Update shift successfully",
+          color: "success",
           timeout: 2000,
           isClosing: true,
         });
-      } else {
-        addToast({
-          title: "Update shift failed",
-          color: "danger",
-          timeout: 2000,
-          isClosing: true,
+        queryClient.removeQueries({
+          predicate: (query) => {
+            const firstKey = query.queryKey[0];
+            const secondKey = query.queryKey[1];
+            if (firstKey === "shiftDetail") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "staffSchedulesByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "clientSchedulesByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "tasksByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "staffSchedules") {
+              const staffNeedsUpdate: string[] = [];
+              payload.staffSchedules.update.forEach((schedule) => {
+                staffNeedsUpdate.push(schedule.staff!);
+              });
+              payload.staffSchedules.delete.forEach((staff) => {
+                staffNeedsUpdate.push(staff);
+              });
+              payload.staffSchedules.add.forEach((schedule) => {
+                staffNeedsUpdate.push(schedule.staff!);
+              });
+              staffSchedules?.forEach((schedule) => {
+                staffNeedsUpdate.push(schedule.staff!);
+              });
+              if (staffNeedsUpdate?.includes(secondKey as string)) {
+                refresh(secondKey as string);
+                return true;
+              }
+              return false;
+            }
+            return false;
+          },
         });
-      }
-    },
-  });
+        onClose();
+      },
+      onError: (error) => {
+        if (error instanceof AxiosError) {
+          const errorCode = error.response?.data?.code;
+          const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+          addToast({
+            title: msg,
+            color: "danger",
+            timeout: 2000,
+            isClosing: true,
+          });
+        } else {
+          addToast({
+            title: "Update shift failed",
+            color: "danger",
+            timeout: 2000,
+            isClosing: true,
+          });
+        }
+      },
+    }
+  );
 
   const { mutate: mutateDeleteShift } = useMutation({
     mutationFn: deleteShift,
@@ -246,7 +263,58 @@ const ShiftDrawer = ({
     },
   });
 
-  const { values, setValues } = useFormik<IShiftValues>({
+  const { mutate: mutateBulkDeleteShift } = useMutation({
+    mutationFn: bulkDeleteShift,
+    onSuccess: () => {
+      addToast({
+        title: "Delete shift successfully",
+        color: "success",
+      });
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const firstKey = query.queryKey[0];
+          const secondKey = query.queryKey[1];
+          if (firstKey === "shiftDetail") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "staffSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "clientSchedulesByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "tasksByShift") {
+            return secondKey === selectedShiftId;
+          }
+          if (firstKey === "staffSchedules") {
+            return (
+              staffSchedules?.some(
+                (schedule) => schedule.staff === secondKey
+              ) || false
+            );
+          }
+          return false;
+        },
+      });
+      setIsDeleteRepeatConfirmOpen(false);
+      onClose();
+    },
+    onError: (error) => {
+      setIsDeleteRepeatConfirmOpen(false);
+      if (error instanceof AxiosError) {
+        const errorCode = error.response?.data?.code;
+        const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+        addToast({
+          title: msg,
+          color: "danger",
+          timeout: 2000,
+          isClosing: true,
+        });
+      }
+    },
+  });
+
+  const { values, setValues, handleSubmit } = useFormik<IShiftValues>({
     initialValues: initialValues,
     validationSchema: shiftSchema,
     onSubmit: (values) => {
@@ -257,7 +325,7 @@ const ShiftDrawer = ({
         update: [],
         delete: [],
       };
-      if (clientSchedule.client !== oldClientSchedule?.client._id) {
+      if (clientSchedule.repetitiveId !== oldClientSchedule?.repetitiveId) {
         clientScheduleUpdate.add.push({
           client: clientSchedule.client,
           timeFrom: clientSchedule.timeFrom,
@@ -286,7 +354,22 @@ const ShiftDrawer = ({
         });
         staffScheduleUpdate.delete.push(oldStaffSchedule.staff!);
       } else {
-        staffScheduleUpdate.update.push(staffSchedule);
+        if (
+          !objectEqual(
+            {
+              timeFrom: staffSchedule.timeFrom,
+              timeTo: staffSchedule.timeTo,
+              paymentMethod: staffSchedule.paymentMethod,
+            },
+            {
+              timeFrom: oldStaffSchedule.timeFrom,
+              timeTo: oldStaffSchedule.timeTo,
+              paymentMethod: oldStaffSchedule.paymentMethod,
+            }
+          )
+        ) {
+          staffScheduleUpdate.update.push(staffSchedule);
+        }
       }
 
       const oldTaskMap = tasks?.reduce((acc, task) => {
@@ -399,39 +482,43 @@ const ShiftDrawer = ({
                     Close
                   </Button>
                 </div>
-                {isEdit ? (
+                {readOnly ? (
                   <></>
-                ) : (
-                  // <div className="flex items-center gap-2">
-                  //   <Button
-                  //     size="md"
-                  //     color={"primary"}
-                  //     onPress={() => handleSubmit()}
-                  //     startContent={<Save size={16} />}
-                  //   >
-                  //     Update
-                  //   </Button>
-                  // </div>
+                ) : isEdit ? (
                   <div className="flex items-center gap-2">
-                    {isAdmin ? (
-                      <Button
-                        size="md"
-                        color="danger"
-                        onPress={() => setIsDeleteConfirmOpen(true)}
-                      >
-                        Delete
-                      </Button>
-                    ) : (
-                      <></>
-                    )}
-                    {/* <Button
+                    <Button
+                      size="md"
+                      color={"primary"}
+                      onPress={() => handleSubmit()}
+                      isLoading={isPendingUpdate}
+                      startContent={<Save size={16} />}
+                    >
+                      Update
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="md"
+                      color="danger"
+                      onPress={() => {
+                        if (dataShiftDetail?.repeat) {
+                          setIsDeleteRepeatConfirmOpen(true);
+                        } else {
+                          setIsDeleteConfirmOpen(true);
+                        }
+                      }}
+                    >
+                      Delete
+                    </Button>
+                    <Button
                       size="md"
                       color={"default"}
                       onPress={() => setIsEdit(true)}
                       startContent={<Edit size={16} />}
                     >
                       Edit
-                    </Button> */}
+                    </Button>
                   </div>
                 )}
               </DrawerHeader>
@@ -460,6 +547,33 @@ const ShiftDrawer = ({
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={async () => {
           await mutateDeleteShift(selectedShiftId || "");
+        }}
+      />
+      <DeleteRepeatConfirm
+        isOpen={isDeleteRepeatConfirmOpen}
+        onClose={() => setIsDeleteRepeatConfirmOpen(false)}
+        onConfirm={(deleteType: string, endDate: number) => {
+          if (deleteType === "only") {
+            mutateDeleteShift(selectedShiftId || "");
+          }
+          if (deleteType === "future") {
+            mutateBulkDeleteShift({
+              repeatId: dataShiftDetail?.repeat?._id || "",
+              from: dataShiftDetail?.timeFrom
+                ? dataShiftDetail?.timeFrom
+                : Date.now(),
+              to: endDate,
+            });
+          }
+          if (deleteType === "all") {
+            mutateBulkDeleteShift({
+              repeatId: dataShiftDetail?.repeat?._id || "",
+              from: dataShiftDetail?.timeFrom
+                ? dataShiftDetail?.timeFrom
+                : Date.now(),
+              to: dataShiftDetail?.repeat?.endDate,
+            });
+          }
         }}
       />
     </>
