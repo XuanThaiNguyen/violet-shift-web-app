@@ -29,7 +29,11 @@ const SimpleUpdateShiftLayout = ({
 
       <ShiftInfoForm values={values} setValues={setValues} />
 
-      <TimeNLocationForm values={values} setValues={setValues} />
+      <TimeNLocationForm
+        values={values}
+        setValues={setValues}
+        allowRepeat={false}
+      />
 
       <CarerForm values={values} setValues={setValues} />
 

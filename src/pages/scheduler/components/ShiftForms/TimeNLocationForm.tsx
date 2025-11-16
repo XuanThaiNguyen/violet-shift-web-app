@@ -7,23 +7,23 @@ import {
   TimeInput,
 } from "@heroui/react";
 import { CalendarIcon } from "lucide-react";
-import { useState } from "react";
-
-// utils
-import { getFormattedTz, parseTimeInput } from "@/utils/datetime";
-import { ZonedDateTime } from "@internationalized/date";
-import { useMemo } from "react";
-
-// utils
-import { startOfDay } from "date-fns";
-
-// types
-import type { IShiftValues } from "@/types/shift";
-import type { FormikErrors } from "formik";
-import type { FC, SetStateAction } from "react";
+import { useId, useState } from "react";
 import RepeatForm from "./RepeatForm";
 
+// utils
+import { getDeviceTz, getFormattedTz, parseTimeInput } from "@/utils/datetime";
+import { ZonedDateTime } from "@internationalized/date";
+import { useMemo } from "react";
+import { startOfDay } from "date-fns";
+import { rrulestr } from "rrule";
+
+// types
+import type { IShiftRepeat, IShiftValues } from "@/types/shift";
+import type { FormikErrors } from "formik";
+import type { FC, SetStateAction } from "react";
+
 type TimeNLocationFormProps = {
+  allowRepeat: boolean;
   values: IShiftValues;
   errors?: FormikErrors<IShiftValues>;
   setValues: (
@@ -33,12 +33,15 @@ type TimeNLocationFormProps = {
 };
 
 const formattedTz = getFormattedTz();
+const deviceTz = getDeviceTz();
 
 const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
+  allowRepeat = false,
   values,
   errors,
   setValues,
 }) => {
+  const overnightShiftId = useId();
   const [isBonus, setIsBonus] = useState(false);
 
   // const [isNightShift, setIsNightShift] = useState(false);
@@ -61,9 +64,12 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
           <CalendarIcon size={20} color={"red"} />
           <span className="font-medium text-md">Time & Location</span>
         </div>
-        <Chip className="rounded-sm" color="default" variant="flat">
-          {formattedTz}
-        </Chip>
+        <div className="flex items-center gap-2">
+          <span>{deviceTz}</span>
+          <Chip className="rounded-sm" color="default" variant="flat">
+            {formattedTz}
+          </Chip>
+        </div>
       </div>
       <div className="h-2"></div>
       <Divider />
@@ -129,20 +135,34 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                   };
                 }
               );
+
+              const repeat = prev.repeat as IShiftRepeat;
+              if (repeat) {
+                const newRrule = rrulestr(repeat.pattern);
+                newRrule.origOptions.dtstart = new Date(newTimeFrom);
+                return {
+                  ...prev,
+                  repeat: { ...repeat, pattern: newRrule.toString() },
+                };
+              }
+
               return {
                 ...prev,
                 timeFrom: newTimeFrom,
                 timeTo: newTimeTo,
                 clientSchedules: newClientSchedules,
                 staffSchedules: newStaffSchedules,
+                repeat: repeat,
               };
             });
           }}
         />
       </div>
       <div className="h-4"></div>
-      <div className="flex items-center justify-between">
-        <span className="text-sm">Overnight Shift</span>
+      <label
+        htmlFor={overnightShiftId}
+        className="flex items-center justify-end gap-2"
+      >
         <Switch
           isSelected={isOverNightShift}
           onValueChange={(value) => {
@@ -186,8 +206,10 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
               };
             });
           }}
+          id={overnightShiftId}
         />
-      </div>
+        <span className="text-sm">Overnight Shift</span>
+      </label>
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Time</span>
@@ -236,11 +258,22 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                   }
                 );
 
+                const repeat = prev.repeat as IShiftRepeat;
+                if (repeat) {
+                  const newRrule = rrulestr(repeat.pattern);
+                  newRrule.origOptions.dtstart = new Date(newTimeFrom);
+                  return {
+                    ...prev,
+                    repeat: { ...repeat, pattern: newRrule.toString() },
+                  };
+                }
+
                 return {
                   ...prev,
                   timeFrom: newTimeFrom,
                   clientSchedules: newClientSchedules,
                   staffSchedules: newStaffSchedules,
+                  repeat: repeat,
                 };
               });
             }}
@@ -308,8 +341,12 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
           {errors?.timeTo}
         </div>
       )}
-      <div className="h-4"></div>
-      <RepeatForm values={values} setValues={setValues} />
+      {allowRepeat && (
+        <>
+          <div className="h-4"></div>
+          <RepeatForm values={values} setValues={setValues} />
+        </>
+      )}
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Address</span>
