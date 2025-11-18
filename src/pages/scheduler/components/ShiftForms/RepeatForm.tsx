@@ -3,7 +3,7 @@ import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
 import { getDeviceTz, parseTimeInput } from "@/utils/datetime";
 import { Button, DatePicker, Select, SelectItem, Switch } from "@heroui/react";
 import { ZonedDateTime } from "@internationalized/date";
-import { addDays } from "date-fns";
+import { addDays, endOfDay } from "date-fns";
 import { Frequency, RRule, rrulestr } from "rrule";
 
 import type { SetStateAction } from "react";
@@ -89,8 +89,9 @@ const getDefaultDailyRRule = (options: DefaultRRuleOptions): string => {
   const _tz = options.tz || getDeviceTz();
   const startDate = new Date(options.startsAt);
   // TODO: Handle time zone
-  const hour = startDate.getHours();
-  const minute = startDate.getMinutes();
+  const hour = startDate.getUTCHours();
+  const minute = startDate.getUTCMinutes();
+  const endDate = endOfDay(addDays(startDate, 7));
   return new RRule({
     freq: RRule.DAILY,
     interval: options.interval,
@@ -98,6 +99,7 @@ const getDefaultDailyRRule = (options: DefaultRRuleOptions): string => {
     byhour: [hour],
     byminute: [minute],
     tzid: _tz,
+    until: endDate,
   }).toString();
 };
 
@@ -105,8 +107,9 @@ const getDefaultWeeklyRRule = (options: DefaultRRuleOptions): string => {
   const _tz = options.tz || getDeviceTz();
   const startDate = new Date(options.startsAt);
   // TODO: Handle time zone
-  const hour = startDate.getHours();
-  const minute = startDate.getMinutes();
+  const hour = startDate.getUTCHours();
+  const minute = startDate.getUTCMinutes();
+  const endDate = endOfDay(addDays(startDate, 7));
   return new RRule({
     freq: RRule.WEEKLY,
     interval: options.interval,
@@ -115,6 +118,7 @@ const getDefaultWeeklyRRule = (options: DefaultRRuleOptions): string => {
     byhour: [hour],
     byminute: [minute],
     tzid: _tz,
+    until: endDate,
   }).toString();
 };
 
@@ -122,8 +126,9 @@ const getDefaultMonthlyRRule = (options: DefaultRRuleOptions): string => {
   const _tz = options.tz || getDeviceTz();
   const startDate = new Date(options.startsAt);
   // TODO: Handle time zone
-  const hour = startDate.getHours();
-  const minute = startDate.getMinutes();
+  const hour = startDate.getUTCHours();
+  const minute = startDate.getUTCMinutes();
+  const endDate = endOfDay(addDays(startDate, 7));
   return new RRule({
     freq: RRule.MONTHLY,
     interval: options.interval,
@@ -132,23 +137,41 @@ const getDefaultMonthlyRRule = (options: DefaultRRuleOptions): string => {
     byhour: [hour],
     byminute: [minute],
     tzid: _tz,
+    until: endDate,
   }).toString();
 };
+
+const generateRRuleFromCache = (pattern: string, timeFrom: number) => {
+  const newRrule = rrulestr(pattern);
+  newRrule.origOptions.byhour = new Date(timeFrom).getUTCHours();
+  newRrule.origOptions.byminute = new Date(timeFrom).getUTCMinutes();
+  if (
+    !newRrule.origOptions.until ||
+    new Date(newRrule.origOptions.until).getTime() < timeFrom
+  ) {
+    newRrule.origOptions.until = addDays(new Date(timeFrom), 7);
+  } else {
+    newRrule.origOptions.until = endOfDay(newRrule.origOptions.until);
+  }
+  return newRrule.toString();
+};
+
 const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
   const repeat = values.repeat as IShiftRepeat | undefined;
   const hasRepeat = !!repeat;
   const lastRepeat = useRef<IShiftRepeat | undefined>(repeat);
 
   const rrule = repeat ? rrulestr(repeat.pattern) : null;
-  console.log("🚀 ~ rrule:", rrule);
 
   const rawWeekDays = rrule?.origOptions.byweekday;
   const weekDays = Array.isArray(rawWeekDays)
     ? rawWeekDays
-    : rawWeekDays ? [rawWeekDays] : EMPTY_ARRAY;
+    : rawWeekDays
+    ? [rawWeekDays]
+    : EMPTY_ARRAY;
 
   const toggleDay = (day: ByWeekday) => {
-    const isSelected = weekDays.some(d => d === day);
+    const isSelected = weekDays.some((d) => d === day);
     if (isSelected) {
       const newRrule = rrule!.clone();
       const newWeekDays = weekDays.filter((d) => d !== day);
@@ -182,10 +205,32 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
   const recurrence = rrule?.origOptions.freq;
 
   const getSummaryText = () => {
-    rrule!.origOptions.until = new Date(repeat!.endDate!);
-    const occurrences = rrule!.count();
-    return `${rrule!.toText()}, ${occurrences} occurrence${
-      occurrences !== 1 ? "s" : ""
+    if (!rrule || !repeat?.endDate) return EMPTY_STRING;
+    const clone = rrule.clone();
+    const startDate = new Date(values.timeFrom!);
+    const offsetedFrom = values.timeFrom! - startDate.getTimezoneOffset() * 60000;
+    const endDate = new Date(repeat.endDate - startDate.getTimezoneOffset() * 60000);
+    clone.origOptions.until = endDate;
+    clone.origOptions.dtstart = new Date(offsetedFrom);
+    clone.origOptions.byhour = [startDate.getHours()];
+    clone.origOptions.byminute = [startDate.getMinutes()];
+
+    clone.options.until = endDate;
+    clone.options.dtstart = new Date(offsetedFrom);
+    clone.options.byhour = [startDate.getHours()];
+    clone.options.byminute = [startDate.getMinutes()];
+    const occurrences = clone.all();
+    let occurrencesCount = occurrences.length;
+    if (
+      occurrencesCount > 0 &&
+      new Date(occurrences[0]).getTime() !== offsetedFrom
+    ) {
+      occurrencesCount++;
+    }
+    return `${clone.toText((a) => {
+      return a.toString()
+    })}, ${occurrencesCount} occurrence${
+      occurrencesCount !== 1 ? "s" : ""
     }`;
   };
 
@@ -207,7 +252,7 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
             if (value) {
               let cachedRepeat = lastRepeat.current;
               if (!cachedRepeat) {
-                const endsAt = addDays(new Date(values.timeFrom!), 7).getTime();
+                const endsAt = endOfDay(addDays(new Date(values.timeFrom!), 7)).getTime();
                 cachedRepeat = {
                   endDate: endsAt,
                   pattern: getDefaultWeeklyRRule({
@@ -216,6 +261,14 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
                     tz: getDeviceTz(),
                   }),
                   tz: getDeviceTz(),
+                };
+              } else {
+                cachedRepeat = {
+                  ...cachedRepeat,
+                  pattern: generateRRuleFromCache(
+                    cachedRepeat.pattern,
+                    values.timeFrom!
+                  ),
                 };
               }
               setValues((prev) => {
@@ -290,7 +343,9 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
               }}
             >
               {recurrenceOptions.map((recurrence) => (
-                <SelectItem key={recurrence.key.toString()}>{recurrence.label}</SelectItem>
+                <SelectItem key={recurrence.key.toString()}>
+                  {recurrence.label}
+                </SelectItem>
               ))}
             </Select>
           </div>
@@ -330,7 +385,7 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
                 <span className="text-sm">Occurs On</span>
                 <div className="flex items-center justify-between max-w-xs w-full">
                   {weekDayOptions.map((day) => {
-                    const isSelected = weekDays.some(d => d === day.key);
+                    const isSelected = weekDays.some((d) => d === day.key);
                     return (
                       <Button
                         size="sm"
@@ -359,7 +414,9 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
                   <span className="text-gray-700 mr-4 text-lg">Day</span>
                   <Select
                     className="w-20"
-                    selectedKeys={new Set([rrule?.options?.bymonthday?.toString() || "1"])}
+                    selectedKeys={
+                      new Set([rrule?.options?.bymonthday?.toString() || "1"])
+                    }
                     onSelectionChange={([value]) => {
                       if (typeof value !== "string") {
                         return;
@@ -402,27 +459,26 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
                 const day = date.day;
                 const month = date.month;
                 const year = date.year;
-                const newEndDate = new Date(
-                  year,
-                  month - 1,
-                  day,
-                  23,
-                  59,
-                  59
-                );
+                const newEndDate = new Date(year, month - 1, day, 23, 59, 59);
                 const newUnixEndDate = newEndDate.getTime();
                 const newRrule = rrule!.clone();
                 newRrule.origOptions.until = newEndDate;
                 setValues((prev) => ({
                   ...prev,
-                  repeat: { ...repeat, pattern: newRrule.toString(), endDate: newUnixEndDate },
+                  repeat: {
+                    ...repeat,
+                    pattern: newRrule.toString(),
+                    endDate: newUnixEndDate,
+                  },
                 }));
               }}
             />
           </div>
           <div className="h-4"></div>
           <div className="flex items-center justify-end">
-            <span className="text-sm text-gray-400 max-w-xs capitalize">{getSummaryText()}</span>
+            <span className="text-sm text-gray-400 max-w-xs capitalize">
+              {getSummaryText()}
+            </span>
           </div>
         </div>
       ) : (

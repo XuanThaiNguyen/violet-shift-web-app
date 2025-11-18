@@ -139,11 +139,12 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
               const repeat = prev.repeat as IShiftRepeat;
               if (repeat) {
                 const newRrule = rrulestr(repeat.pattern);
-                newRrule.origOptions.dtstart = new Date(newTimeFrom);
-                return {
-                  ...prev,
-                  repeat: { ...repeat, pattern: newRrule.toString() },
-                };
+                const newDateFrom = new Date(newTimeFrom);
+                newRrule.origOptions.dtstart = newDateFrom;
+                newRrule.origOptions.byhour = newDateFrom.getUTCHours();
+                newRrule.origOptions.byminute = newDateFrom.getUTCMinutes();
+
+                repeat.pattern = newRrule.toString();
               }
 
               return {
@@ -261,11 +262,11 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                 const repeat = prev.repeat as IShiftRepeat;
                 if (repeat) {
                   const newRrule = rrulestr(repeat.pattern);
-                  newRrule.origOptions.dtstart = new Date(newTimeFrom);
-                  return {
-                    ...prev,
-                    repeat: { ...repeat, pattern: newRrule.toString() },
-                  };
+                  const newDateFrom = new Date(newTimeFrom);
+                  newRrule.origOptions.dtstart = newDateFrom;
+                  newRrule.origOptions.byhour = newDateFrom.getUTCHours();
+                  newRrule.origOptions.byminute = newDateFrom.getUTCMinutes();
+                  repeat.pattern = newRrule.toString();
                 }
 
                 return {
