@@ -35,6 +35,7 @@ const SimpleAddShiftLayout = ({
         values={values}
         errors={errors}
         setValues={setValues}
+        allowRepeat
       />
 
       <CarerForm values={values} setValues={setValues} />

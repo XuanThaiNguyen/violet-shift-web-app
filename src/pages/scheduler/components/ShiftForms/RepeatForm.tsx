@@ -1,41 +1,62 @@
-import { EMPTY_STRING } from "@/constants/empty";
-import type { IShiftValues } from "@/types/shift";
-import { parseTimeInput } from "@/utils/datetime";
-import { DatePicker, Select, SelectItem, Switch } from "@heroui/react";
+import { useMemo, useRef } from "react";
+import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
+import { getDeviceTz, parseTimeInput } from "@/utils/datetime";
+import { Button, DatePicker, Select, SelectItem, Switch } from "@heroui/react";
 import { ZonedDateTime } from "@internationalized/date";
-import { format, isValid } from "date-fns";
+import { addDays, endOfDay } from "date-fns";
+import { Frequency, RRule, rrulestr } from "rrule";
+
+import type { SetStateAction } from "react";
+import type { IShiftRepeat, IShiftValues } from "@/types/shift";
+import type { ByWeekday } from "rrule";
 import type { FormikErrors } from "formik";
-import { useEffect, useMemo, useState, type SetStateAction } from "react";
-import { RecurrenceOptions } from "../../constant";
 
-type DayOfWeek = "Sun" | "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat";
-const days: DayOfWeek[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const recurrenceOptions = [
+  { label: "Daily", key: Frequency.DAILY },
+  { label: "Weekly", key: Frequency.WEEKLY },
+  { label: "Monthly", key: Frequency.MONTHLY },
+];
 
-const getUnit = (recurrence: string) => {
+const weekDayOptions = [
+  { label: "Sun", key: RRule.SU },
+  { label: "Mon", key: RRule.MO },
+  { label: "Tue", key: RRule.TU },
+  { label: "Wed", key: RRule.WE },
+  { label: "Thu", key: RRule.TH },
+  { label: "Fri", key: RRule.FR },
+  { label: "Sat", key: RRule.SA },
+];
+
+const getUnit = (recurrence?: Frequency) => {
+  if (!recurrence) return EMPTY_STRING;
   switch (recurrence) {
-    case "daily":
+    case Frequency.DAILY:
       return "Day(s)";
-    case "weekly":
+    case Frequency.WEEKLY:
       return "Week(s)";
-    case "monthly":
+    case Frequency.MONTHLY:
       return "Month(s)";
+    default:
+      return EMPTY_STRING;
   }
 };
 
-const getMaxRepeat = (recurrence: string) => {
+const getMaxRepeat = (recurrence?: Frequency) => {
+  if (!recurrence) return 1;
   switch (recurrence) {
-    case "daily":
+    case Frequency.DAILY:
       return 15;
-    case "weekly":
+    case Frequency.WEEKLY:
       return 12;
-    case "monthly":
+    case Frequency.MONTHLY:
       return 3;
     default:
       return 1;
   }
 };
 
-const getRepeatGapOptions = (recurrence: string) => {
+const getRepeatGapOptions = (recurrence?: Frequency) => {
+  if (!recurrence) return EMPTY_ARRAY;
   const unit = getUnit(recurrence);
   return [...Array(getMaxRepeat(recurrence))].map((_, i) => ({
     label: `${i + 1} ${unit}`,
@@ -58,129 +79,164 @@ type RepeatFormProps = {
   ) => Promise<FormikErrors<IShiftValues>> | Promise<void>;
 };
 
-const dayToCron: Record<DayOfWeek, string> = {
-  Sun: "0",
-  Mon: "1",
-  Tue: "2",
-  Wed: "3",
-  Thu: "4",
-  Fri: "5",
-  Sat: "6",
+type DefaultRRuleOptions = {
+  startsAt: number;
+  tz?: string;
+  interval: number;
+};
+
+const getDefaultDailyRRule = (options: DefaultRRuleOptions): string => {
+  const _tz = options.tz || getDeviceTz();
+  const startDate = new Date(options.startsAt);
+  // TODO: Handle time zone
+  const hour = startDate.getUTCHours();
+  const minute = startDate.getUTCMinutes();
+  const endDate = endOfDay(addDays(startDate, 7));
+  return new RRule({
+    freq: RRule.DAILY,
+    interval: options.interval,
+    dtstart: startDate,
+    byhour: [hour],
+    byminute: [minute],
+    tzid: _tz,
+    until: endDate,
+  }).toString();
+};
+
+const getDefaultWeeklyRRule = (options: DefaultRRuleOptions): string => {
+  const _tz = options.tz || getDeviceTz();
+  const startDate = new Date(options.startsAt);
+  // TODO: Handle time zone
+  const hour = startDate.getUTCHours();
+  const minute = startDate.getUTCMinutes();
+  const endDate = endOfDay(addDays(startDate, 7));
+  return new RRule({
+    freq: RRule.WEEKLY,
+    interval: options.interval,
+    byweekday: [RRule.MO],
+    dtstart: startDate,
+    byhour: [hour],
+    byminute: [minute],
+    tzid: _tz,
+    until: endDate,
+  }).toString();
+};
+
+const getDefaultMonthlyRRule = (options: DefaultRRuleOptions): string => {
+  const _tz = options.tz || getDeviceTz();
+  const startDate = new Date(options.startsAt);
+  // TODO: Handle time zone
+  const hour = startDate.getUTCHours();
+  const minute = startDate.getUTCMinutes();
+  const endDate = endOfDay(addDays(startDate, 7));
+  return new RRule({
+    freq: RRule.MONTHLY,
+    interval: options.interval,
+    bymonthday: [1],
+    dtstart: startDate,
+    byhour: [hour],
+    byminute: [minute],
+    tzid: _tz,
+    until: endDate,
+  }).toString();
+};
+
+const generateRRuleFromCache = (pattern: string, timeFrom: number) => {
+  const newRrule = rrulestr(pattern);
+  newRrule.origOptions.byhour = new Date(timeFrom).getUTCHours();
+  newRrule.origOptions.byminute = new Date(timeFrom).getUTCMinutes();
+  if (
+    !newRrule.origOptions.until ||
+    new Date(newRrule.origOptions.until).getTime() < timeFrom
+  ) {
+    newRrule.origOptions.until = addDays(new Date(timeFrom), 7);
+  } else {
+    newRrule.origOptions.until = endOfDay(newRrule.origOptions.until);
+  }
+  return newRrule.toString();
 };
 
 const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
-  const [isRepeat, setIsRepeat] = useState(false);
-  const [recurrence, setRecurrence] = useState(RecurrenceOptions[1].key);
-  const [repeatEvery, setRepeatEvery] = useState(1);
-  const [selectedDays, setSelectedDays] = useState([days[1]]);
-  const [monthDay, setMonthDay] = useState(1);
-  const [endDate, setEndDate] = useState<number | null>(
-    Date.now() + 86400000 * 7
-  );
+  const repeat = values.repeat as IShiftRepeat | undefined;
+  const hasRepeat = !!repeat;
+  const lastRepeat = useRef<IShiftRepeat | undefined>(repeat);
 
-  useEffect(() => {
-    if (isRepeat) {
-      const date = new Date(endDate!);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+  const rrule = repeat ? rrulestr(repeat.pattern) : null;
 
-      setValues((prev) => ({
-        ...prev,
-        repeat: {
-          pattern: generateCronExpression(),
-          endDate: endOfDay.getTime(),
-          // tz: "Australia/Sydney",
-          // tz: "Asia/Saigon",
-          tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        },
-      }));
+  const rawWeekDays = rrule?.origOptions.byweekday;
+  const weekDays = Array.isArray(rawWeekDays)
+    ? rawWeekDays
+    : rawWeekDays
+    ? [rawWeekDays]
+    : EMPTY_ARRAY;
+
+  const toggleDay = (day: ByWeekday) => {
+    const isSelected = weekDays.some((d) => d === day);
+    if (isSelected) {
+      const newRrule = rrule!.clone();
+      const newWeekDays = weekDays.filter((d) => d !== day);
+      newRrule.origOptions.byweekday = newWeekDays;
+      setValues((prev) => {
+        const oldRepeat = prev.repeat as IShiftRepeat;
+        return {
+          ...prev,
+          repeat: {
+            ...oldRepeat,
+            pattern: newRrule.toString(),
+          },
+        };
+      });
     } else {
-      setValues((prev) => ({ ...prev, repeat: "" }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRepeat, endDate, selectedDays]);
-
-  const toggleDay = (day: DayOfWeek) => {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
-  };
-
-  const calculateOccurrences = (): number => {
-    const start = new Date();
-    const end = new Date(endDate!);
-    const diffTime = end.getTime() - start.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return 0;
-    const weeks = Math.floor(diffDays / 7 / repeatEvery);
-    const months = Math.floor(diffDays / 30 / repeatEvery);
-
-    switch (recurrence) {
-      case "daily":
-        return Math.floor(diffDays / repeatEvery) + 1;
-      case "weekly":
-        return (weeks + 1) * selectedDays.length;
-      case "monthly":
-        return months + 1;
-      default:
-        return 0;
+      const newRrule = rrule!.clone();
+      newRrule.origOptions.byweekday = [...weekDays, day];
+      setValues((prev) => {
+        const oldRepeat = prev.repeat as IShiftRepeat;
+        return {
+          ...prev,
+          repeat: {
+            ...oldRepeat,
+            pattern: newRrule.toString(),
+          },
+        };
+      });
     }
   };
+
+  const recurrence = rrule?.origOptions.freq;
 
   const getSummaryText = () => {
-    const occurrences = calculateOccurrences();
-    return `Every ${repeatEvery} ${getUnit(recurrence)} until ${
-      isValid(new Date(endDate!))
-        ? format(new Date(endDate!), "MMM d, yyyy")
-        : EMPTY_STRING
-    }, ${occurrences} occurrence${occurrences !== 1 ? "s" : ""}`;
-  };
+    if (!rrule || !repeat?.endDate) return EMPTY_STRING;
+    const clone = rrule.clone();
+    const startDate = new Date(values.timeFrom!);
+    const offsetedFrom = values.timeFrom! - startDate.getTimezoneOffset() * 60000;
+    const endDate = new Date(repeat.endDate - startDate.getTimezoneOffset() * 60000);
+    clone.origOptions.until = endDate;
+    clone.origOptions.dtstart = new Date(offsetedFrom);
+    clone.origOptions.byhour = [startDate.getHours()];
+    clone.origOptions.byminute = [startDate.getMinutes()];
 
-  const generateCronExpression = (): string => {
-    // Extract hour and minute from timeFrom
-    const date = new Date(values.timeFrom!);
-    const hour = date.getHours();
-    const minute = date.getMinutes();
-
-    // Specific days of week at specific time
-    const cronDays = selectedDays
-      .map((day) => dayToCron[day])
-      .sort()
-      .join(",");
-
-    switch (recurrence) {
-      case "daily":
-        // Every N days at specific time
-        if (repeatEvery === 1) {
-          return `${minute} ${hour} * * *`; // Every day at specified time
-        } else {
-          return `${minute} ${hour} */${repeatEvery} * *`; // Every N days at specified time
-        }
-
-      case "weekly":
-        if (repeatEvery === 1) {
-          return `${minute} ${hour} * * ${cronDays}`; // Every week on selected days at specified time
-        } else {
-          return `${minute} ${hour} * * ${cronDays}/${repeatEvery}`;
-        }
-
-      case "monthly":
-        // Specific day of month at specific time
-        if (repeatEvery === 1) {
-          return `${minute} ${hour} ${monthDay} * *`; // Every month on specific day at specified time
-        } else {
-          return `${minute} ${hour} ${monthDay} */${repeatEvery} *`; // Every N months on specific day at specified time
-        }
-
-      default:
-        return `${minute} ${hour} * * *`;
+    clone.options.until = endDate;
+    clone.options.dtstart = new Date(offsetedFrom);
+    clone.options.byhour = [startDate.getHours()];
+    clone.options.byminute = [startDate.getMinutes()];
+    const occurrences = clone.all();
+    let occurrencesCount = occurrences.length;
+    if (
+      occurrencesCount > 0 &&
+      new Date(occurrences[0]).getTime() !== offsetedFrom
+    ) {
+      occurrencesCount++;
     }
+    return `${clone.toText((a) => {
+      return a.toString()
+    })}, ${occurrencesCount} occurrence${
+      occurrencesCount !== 1 ? "s" : ""
+    }`;
   };
 
-  const timeFromEndDate = useMemo(
-    () => (endDate ? parseTimeInput(endDate) : null),
-    [endDate]
+  const endDate = useMemo(
+    () => (repeat?.endDate ? parseTimeInput(repeat?.endDate) : null),
+    [repeat?.endDate]
   );
 
   const repeatGapOptions = getRepeatGapOptions(recurrence);
@@ -190,24 +246,106 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
     <div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Repeat</span>
-        <Switch isSelected={isRepeat} onChange={() => setIsRepeat(!isRepeat)} />
+        <Switch
+          isSelected={hasRepeat}
+          onValueChange={(value) => {
+            if (value) {
+              let cachedRepeat = lastRepeat.current;
+              if (!cachedRepeat) {
+                const endsAt = endOfDay(addDays(new Date(values.timeFrom!), 7)).getTime();
+                cachedRepeat = {
+                  endDate: endsAt,
+                  pattern: getDefaultWeeklyRRule({
+                    startsAt: values.timeFrom!,
+                    interval: 1,
+                    tz: getDeviceTz(),
+                  }),
+                  tz: getDeviceTz(),
+                };
+              } else {
+                cachedRepeat = {
+                  ...cachedRepeat,
+                  pattern: generateRRuleFromCache(
+                    cachedRepeat.pattern,
+                    values.timeFrom!
+                  ),
+                };
+              }
+              setValues((prev) => {
+                return { ...prev, repeat: cachedRepeat };
+              });
+            } else {
+              lastRepeat.current = repeat;
+              setValues((prev) => ({ ...prev, repeat: undefined }));
+            }
+          }}
+        />
       </div>
-      {isRepeat ? (
+      {hasRepeat ? (
         <div>
           <div className="h-4"></div>
           <div className="flex items-center justify-between">
             <span className="text-sm">Recurrence</span>
             <Select
               className="max-w-xs"
-              selectedKeys={[recurrence]}
+              selectedKeys={recurrence ? [recurrence.toString()] : undefined}
               onSelectionChange={([value]) => {
-                if (typeof value === "string") {
-                  setRecurrence(value);
+                if (typeof value !== "string") {
+                  return;
+                }
+                if (+value === recurrence) {
+                  return;
+                }
+                switch (+value) {
+                  case Frequency.DAILY: {
+                    setValues((prev) => ({
+                      ...prev,
+                      repeat: {
+                        ...repeat,
+                        pattern: getDefaultDailyRRule({
+                          startsAt: values.timeFrom!,
+                          interval: 1,
+                          tz: getDeviceTz(),
+                        }),
+                      },
+                    }));
+                    break;
+                  }
+                  case Frequency.WEEKLY: {
+                    setValues((prev) => ({
+                      ...prev,
+                      repeat: {
+                        ...repeat,
+                        pattern: getDefaultWeeklyRRule({
+                          startsAt: values.timeFrom!,
+                          interval: 1,
+                          tz: getDeviceTz(),
+                        }),
+                      },
+                    }));
+                    break;
+                  }
+                  case Frequency.MONTHLY: {
+                    setValues((prev) => ({
+                      ...prev,
+                      repeat: {
+                        ...repeat,
+                        pattern: getDefaultMonthlyRRule({
+                          startsAt: values.timeFrom!,
+                          interval: 1,
+                          tz: getDeviceTz(),
+                        }),
+                      },
+                    }));
+                    break;
+                  }
                 }
               }}
             >
-              {RecurrenceOptions.map((recurrence) => (
-                <SelectItem key={recurrence.key}>{recurrence.label}</SelectItem>
+              {recurrenceOptions.map((recurrence) => (
+                <SelectItem key={recurrence.key.toString()}>
+                  {recurrence.label}
+                </SelectItem>
               ))}
             </Select>
           </div>
@@ -216,10 +354,23 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
             <span className="text-sm">Repeat Every</span>
             <Select
               className="max-w-xs"
-              selectedKeys={new Set([repeatEvery.toString()])}
-              onSelectionChange={(keys) => {
-                const value = Array.from(keys)[0];
-                setRepeatEvery(+value);
+              selectedKeys={
+                new Set([rrule?.options?.interval?.toString() || "1"])
+              }
+              onSelectionChange={([value]) => {
+                if (typeof value !== "string") {
+                  return;
+                }
+                const newInterval = +value;
+                const newRrule = rrule!.clone();
+                newRrule.origOptions.interval = newInterval;
+                setValues((prev) => ({
+                  ...prev,
+                  repeat: {
+                    ...repeat,
+                    pattern: newRrule.toString(),
+                  },
+                }));
               }}
             >
               {repeatGapOptions.map((option) => (
@@ -227,44 +378,34 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
               ))}
             </Select>
           </div>
-          {recurrence === "weekly" ? (
+          {recurrence === Frequency.WEEKLY ? (
             <div>
               <div className="h-4"></div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Occurs On</span>
                 <div className="flex items-center justify-between max-w-xs w-full">
-                  {days.map((day) => (
-                    <button
-                      key={day}
-                      onClick={() => toggleDay(day)}
-                      className="relative"
-                    >
-                      <div
-                        className={`w-10 h-8 rounded-lg px-4 border-1 flex items-center justify-center text-sm transition-colors ${
-                          selectedDays.includes(day)
-                            ? "border-blue-500 bg-cyan-50"
-                            : "border-gray-300 bg-white hover:border-gray-400"
-                        }`}
+                  {weekDayOptions.map((day) => {
+                    const isSelected = weekDays.some((d) => d === day.key);
+                    return (
+                      <Button
+                        size="sm"
+                        variant="bordered"
+                        key={day.key as unknown as string}
+                        onPress={() => toggleDay(day.key)}
+                        className="relative min-w-0 w-10"
+                        color={isSelected ? "primary" : "default"}
                       >
-                        <span
-                          className={
-                            selectedDays.includes(day)
-                              ? "text-blue-700 font-medium"
-                              : "text-gray-600"
-                          }
-                        >
-                          {day}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+                        {day.label}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           ) : (
             <></>
           )}
-          {recurrence === "monthly" ? (
+          {recurrence === Frequency.MONTHLY ? (
             <>
               <div className="h-4"></div>
               <div className="flex flex-1 items-center justify-between">
@@ -273,10 +414,19 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
                   <span className="text-gray-700 mr-4 text-lg">Day</span>
                   <Select
                     className="w-20"
-                    selectedKeys={new Set([monthDay.toString()])}
-                    onSelectionChange={(keys) => {
-                      const value = Array.from(keys)[0];
-                      setMonthDay(+value);
+                    selectedKeys={
+                      new Set([rrule?.options?.bymonthday?.toString() || "1"])
+                    }
+                    onSelectionChange={([value]) => {
+                      if (typeof value !== "string") {
+                        return;
+                      }
+                      const newRrule = rrule!.clone();
+                      newRrule.origOptions.bymonthday = [+value];
+                      setValues((prev) => ({
+                        ...prev,
+                        repeat: { ...repeat, pattern: newRrule.toString() },
+                      }));
                     }}
                   >
                     {maxDayInMonth.map((day) => (
@@ -303,31 +453,32 @@ const RepeatForm = ({ values, setValues }: RepeatFormProps) => {
               label=""
               name="birthdate"
               hideTimeZone
-              value={timeFromEndDate}
+              value={endDate}
               onChange={(date: ZonedDateTime | null) => {
                 if (!date) return;
-                const hour = date.hour;
-                const minute = date.minute;
-                const second = date.second;
                 const day = date.day;
                 const month = date.month;
                 const year = date.year;
-                const newEndDate = new Date(
-                  year,
-                  month - 1,
-                  day,
-                  hour,
-                  minute,
-                  second
-                ).getTime();
-                setEndDate(newEndDate);
+                const newEndDate = new Date(year, month - 1, day, 23, 59, 59);
+                const newUnixEndDate = newEndDate.getTime();
+                const newRrule = rrule!.clone();
+                newRrule.origOptions.until = newEndDate;
+                setValues((prev) => ({
+                  ...prev,
+                  repeat: {
+                    ...repeat,
+                    pattern: newRrule.toString(),
+                    endDate: newUnixEndDate,
+                  },
+                }));
               }}
             />
           </div>
           <div className="h-4"></div>
-          <div className="flex items-center justify-between">
-            <div>{""}</div>
-            <span className="text-sm text-gray-400">{getSummaryText()}</span>
+          <div className="flex items-center justify-end">
+            <span className="text-sm text-gray-400 max-w-xs capitalize">
+              {getSummaryText()}
+            </span>
           </div>
         </div>
       ) : (
