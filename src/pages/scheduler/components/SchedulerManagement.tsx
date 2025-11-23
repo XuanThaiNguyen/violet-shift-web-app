@@ -13,9 +13,10 @@ import { useDebounceValue } from "usehooks-ts";
 interface SchedulerManagementProps {
   viewMode: ViewMode;
   dates: DayDateInfo[];
+  setSelectedShiftId: (shiftId: string) => void;
 }
 
-const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
+const SchedulerManagement = ({ viewMode, dates, setSelectedShiftId }: SchedulerManagementProps) => {
   const [query, setQuery] = useDebounceValue<string>("", 300);
   const [from, setFrom] = useState<number | null>(null);
   const [to, setTo] = useState<number | null>(null);
@@ -90,6 +91,7 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
         dates={dates}
         from={from}
         to={to}
+        setSelectedShiftId={setSelectedShiftId}
       />
     );
   };

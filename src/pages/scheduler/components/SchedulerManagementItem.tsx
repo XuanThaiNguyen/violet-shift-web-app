@@ -3,7 +3,7 @@ import type { IGetStaffSchedule } from "@/types/shift";
 import type { User as IUser } from "@/types/user";
 import { formatTimeRange } from "@/utils/datetime";
 import { getDisplayName } from "@/utils/strings";
-import { useDisclosure, User } from "@heroui/react";
+import {  User } from "@heroui/react";
 import { format, isValid } from "date-fns";
 import { GripVertical } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -16,8 +16,6 @@ import type {
   ViewMode,
 } from "../type";
 import { getShiftTypeLabel } from "../util";
-import ShiftDrawer from "./ShiftDrawer";
-import { useSubscribeRefresh } from "../store/refreshStore";
 
 interface SchedulerManagementItemProps {
   viewMode: ViewMode;
@@ -27,6 +25,7 @@ interface SchedulerManagementItemProps {
   displayName: string;
   from: number | null;
   to: number | null;
+  setSelectedShiftId: (shiftId: string) => void;
 }
 
 const SchedulerManagementItem = ({
@@ -36,13 +35,8 @@ const SchedulerManagementItem = ({
   gridCols,
   from,
   to,
+  setSelectedShiftId,
 }: SchedulerManagementItemProps) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  useSubscribeRefresh(staff.id);
-
-  const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
-    undefined
-  );
 
   const [draggedEvent, setDraggedEvent] = useState<IGetStaffSchedule | null>(
     null
@@ -227,8 +221,7 @@ const SchedulerManagementItem = ({
                       key={event._id}
                       draggable
                       onClick={() => {
-                        setSelectedShiftId(event.shift._id);
-                        onOpen();
+                        setSelectedShiftId(event.shift._id || "");
                       }}
                       onDragStart={(e) => handleDragStart(e, event)}
                       onDragEnd={handleDragEnd}
@@ -299,8 +292,7 @@ const SchedulerManagementItem = ({
                             : ""
                         }`}
                         onClick={() => {
-                          setSelectedShiftId(shift?.shift?._id);
-                          onOpen();
+                          setSelectedShiftId(shift?.shift?._id || "");
                         }}
                         style={{
                           backgroundColor: "#f7f8fa",
@@ -334,15 +326,6 @@ const SchedulerManagementItem = ({
               </div>
             );
           })}
-
-      {isOpen && selectedShiftId && (
-        <ShiftDrawer
-          onClose={onClose}
-          isOpen={isOpen}
-          isAdmin={true}
-          selectedShiftId={selectedShiftId}
-        />
-      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useRoleCheck } from "@/hooks/useRoleCheck";
-import { Button } from "@heroui/react";
+import { Button, useDisclosure } from "@heroui/react";
 import { Plus } from "lucide-react";
 import { useState, type FC } from "react";
 import SchedularPersonal from "./components/SchedularPersonal";
@@ -7,14 +7,24 @@ import SchedulerManagement from "./components/SchedulerManagement";
 import SchedulerMode from "./components/SchedulerMode";
 import type { DayDateInfo, ViewMode } from "./type";
 import CreateShiftDrawer from "./components/CreateShiftDrawer";
+import ShiftDrawer from "./components/ShiftDrawer";
 
 const Scheduler: FC = () => {
+  const { isOpen, onClose, onOpen } = useDisclosure();
+  const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
+    undefined
+  );
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [openShiftDrawer, setOpenShiftDrawer] = useState<boolean>(false);
   const [dates, setDates] = useState<DayDateInfo[]>([]);
 
   const { isAdmin } = useRoleCheck();
+
+  const handleSetSelectedShiftId = (shiftId: string) => {
+    setSelectedShiftId(shiftId);
+    onOpen();
+  };
 
   return (
     <>
@@ -45,9 +55,9 @@ const Scheduler: FC = () => {
 
         <div className="h-4"></div>
         {isAdmin ? (
-          <SchedulerManagement viewMode={viewMode} dates={dates} />
+          <SchedulerManagement viewMode={viewMode} dates={dates} setSelectedShiftId={handleSetSelectedShiftId} />
         ) : (
-          <SchedularPersonal viewMode={viewMode} dates={dates} />
+          <SchedularPersonal viewMode={viewMode} dates={dates} setSelectedShiftId={handleSetSelectedShiftId} />
         )}
       </div>
 
@@ -55,6 +65,16 @@ const Scheduler: FC = () => {
         <CreateShiftDrawer
           isOpen={openShiftDrawer}
           onClose={() => setOpenShiftDrawer(false)}
+        />
+      )}
+
+      {isOpen && selectedShiftId && (
+        <ShiftDrawer
+          isAdmin={isAdmin}
+          onClose={onClose}
+          isOpen={isOpen}
+          selectedShiftId={selectedShiftId}
+          readOnly={!isAdmin}
         />
       )}
     </>

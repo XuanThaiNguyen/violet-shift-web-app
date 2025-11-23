@@ -1,6 +1,7 @@
 import { EMPTY_ARRAY } from "@/constants/empty";
 import {
   bulkDeleteShift,
+  bulkUpdateShift,
   deleteShift,
   updateShift,
   useGetClientSchedulesByShift,
@@ -39,7 +40,8 @@ import DeleteConfirm from "./DeleteConfirm";
 import DeleteRepeatConfirm from "./DeleteRepeatConfirm";
 import SimpleUpdateShiftLayout from "./ShiftLayouts/SimpleUpdateShiftLayout";
 import ViewShiftLayout from "./ShiftLayouts/ViewShiftLayout";
-import { useRefresh } from "../store/refreshStore";
+import UpdateConfirm from "./UpdateConfirm";
+import RepeatUpdateConfirm from "./RepeatUpdateConfirm";
 
 const initialValues: IShiftValues = {
   clientSchedules: [],
@@ -91,6 +93,14 @@ const objectEqual = (obj1: object, obj2: object) => {
   return JSON.stringify(obj1) === JSON.stringify(obj2);
 };
 
+const ConfirmationModals = {
+  NONE: "none",
+  DELETE_CONFIRM: "delete_confirm",
+  DELETE_REPEAT_CONFIRM: "delete_repeat_confirm",
+  UPDATE_CONFIRM: "update_confirm",
+  UPDATE_REPEAT_CONFIRM: "update_repeat_confirm",
+} as const;
+
 const ShiftDrawer = ({
   isOpen,
   selectedShiftId,
@@ -99,11 +109,9 @@ const ShiftDrawer = ({
   readOnly = false,
 }: ShiftDrawerProps) => {
   const [isEdit, setIsEdit] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [isDeleteRepeatConfirmOpen, setIsDeleteRepeatConfirmOpen] =
-    useState(false);
   const [internalOpen, setInternalOpen] = useState(isOpen);
-  const refresh = useRefresh();
+  const [confirmationModal, setConfirmationModal] = useState<string>(ConfirmationModals.NONE);
+  const [updatePayload, setUpdatePayload] = useState<IUpdateShift | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -180,7 +188,6 @@ const ShiftDrawer = ({
                 staffNeedsUpdate.push(schedule.staff!);
               });
               if (staffNeedsUpdate?.includes(secondKey as string)) {
-                refresh(secondKey as string);
                 return true;
               }
               return false;
@@ -188,9 +195,11 @@ const ShiftDrawer = ({
             return false;
           },
         });
+        setConfirmationModal(ConfirmationModals.NONE);
         onClose();
       },
       onError: (error) => {
+        setConfirmationModal(ConfirmationModals.NONE);
         if (error instanceof AxiosError) {
           const errorCode = error.response?.data?.code;
           const msg = ErrorMessages[errorCode] ?? "Something went wrong";
@@ -212,7 +221,48 @@ const ShiftDrawer = ({
     }
   );
 
-  const { mutate: mutateDeleteShift } = useMutation({
+  const { mutate: mutateBulkUpdateShift, isPending: isPendingBulkUpdate } = useMutation(
+    {
+      mutationFn: bulkUpdateShift,
+      onSuccess: () => {
+        addToast({
+          title: "Update shifts successfully",
+          color: "success",
+          timeout: 2000,
+          isClosing: true,
+        });
+        queryClient.removeQueries({
+          predicate: (query) => {
+            return query.queryKey[0] === "staffSchedules" || query.queryKey[0] === "shiftDetail";
+          },
+        });
+        setConfirmationModal(ConfirmationModals.NONE);
+        onClose();
+      },
+      onError: (error) => {
+        setConfirmationModal(ConfirmationModals.NONE);
+        if (error instanceof AxiosError) {
+          const errorCode = error.response?.data?.code;
+          const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+          addToast({
+            title: msg,
+            color: "danger",
+            timeout: 2000,
+            isClosing: true,
+          });
+        } else {
+          addToast({
+            title: "Update shift failed",
+            color: "danger",
+            timeout: 2000,
+            isClosing: true,
+          });
+        }
+      },
+    }
+  );
+
+  const { mutate: mutateDeleteShift, isPending: isPendingDelete } = useMutation({
     mutationFn: deleteShift,
     onSuccess: () => {
       addToast({
@@ -245,11 +295,11 @@ const ShiftDrawer = ({
           return false;
         },
       });
-      setIsDeleteConfirmOpen(false);
+      setConfirmationModal(ConfirmationModals.NONE);
       onClose();
     },
     onError: (error) => {
-      setIsDeleteConfirmOpen(false);
+      setConfirmationModal(ConfirmationModals.NONE);
       if (error instanceof AxiosError) {
         const errorCode = error.response?.data?.code;
         const msg = ErrorMessages[errorCode] ?? "Something went wrong";
@@ -263,7 +313,7 @@ const ShiftDrawer = ({
     },
   });
 
-  const { mutate: mutateBulkDeleteShift } = useMutation({
+  const { mutate: mutateBulkDeleteShift, isPending: isPendingBulkDelete } = useMutation({
     mutationFn: bulkDeleteShift,
     onSuccess: () => {
       addToast({
@@ -296,11 +346,11 @@ const ShiftDrawer = ({
           return false;
         },
       });
-      setIsDeleteRepeatConfirmOpen(false);
+      setConfirmationModal(ConfirmationModals.NONE);
       onClose();
     },
     onError: (error) => {
-      setIsDeleteRepeatConfirmOpen(false);
+      setConfirmationModal(ConfirmationModals.NONE);
       if (error instanceof AxiosError) {
         const errorCode = error.response?.data?.code;
         const msg = ErrorMessages[errorCode] ?? "Something went wrong";
@@ -313,6 +363,8 @@ const ShiftDrawer = ({
       }
     },
   });
+
+  const isManipulating = isPendingUpdate || isPendingBulkUpdate || isPendingDelete || isPendingBulkDelete;
 
   const { values, setValues, handleSubmit } = useFormik<IShiftValues>({
     initialValues: initialValues,
@@ -410,12 +462,17 @@ const ShiftDrawer = ({
         tasks: taskUpdate,
       };
 
-      mutateUpdateShift(updateShift);
+      setUpdatePayload(updateShift);
+      if (dataShiftDetail?.repeat) {
+        setConfirmationModal(ConfirmationModals.UPDATE_REPEAT_CONFIRM);
+      } else {
+        setConfirmationModal(ConfirmationModals.UPDATE_CONFIRM);
+      }
     },
   });
 
   const closeDrawer = () => {
-    setIsDeleteConfirmOpen(false);
+    setConfirmationModal(ConfirmationModals.NONE);
     setInternalOpen(false);
     setTimeout(onClose, 200);
   };
@@ -446,6 +503,14 @@ const ShiftDrawer = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataShiftDetail, isSuccess, fullShiftLoading]);
 
+  const isEditable = useMemo(() => {
+    if (isLoading || staffScheduleLoading) return false;
+    const now = Date.now();
+    if (dataShiftDetail!.timeFrom <= now) return false;
+    if (staffSchedules?.some((schedule) => schedule.timeFrom! <= now)) return false;
+    return true;
+  }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
+
   return (
     <>
       <Drawer
@@ -465,6 +530,8 @@ const ShiftDrawer = ({
                       className="bg-content1 border-1 border-divider"
                       startContent={<ArrowLeft size={16} />}
                       onPress={() => setIsEdit(false)}
+                      isLoading={isManipulating}
+                      isDisabled={isManipulating}
                     >
                       Go Back
                     </Button>
@@ -478,6 +545,8 @@ const ShiftDrawer = ({
                     onPress={() => {
                       onClose();
                     }}
+                    isLoading={isManipulating}
+                    isDisabled={isManipulating}
                   >
                     Close
                   </Button>
@@ -490,7 +559,8 @@ const ShiftDrawer = ({
                       size="md"
                       color={"primary"}
                       onPress={() => handleSubmit()}
-                      isLoading={isPendingUpdate}
+                      isLoading={isManipulating}
+                      isDisabled={isManipulating}
                       startContent={<Save size={16} />}
                     >
                       Update
@@ -503,11 +573,13 @@ const ShiftDrawer = ({
                       color="danger"
                       onPress={() => {
                         if (dataShiftDetail?.repeat) {
-                          setIsDeleteRepeatConfirmOpen(true);
+                          setConfirmationModal(ConfirmationModals.DELETE_REPEAT_CONFIRM);
                         } else {
-                          setIsDeleteConfirmOpen(true);
+                          setConfirmationModal(ConfirmationModals.DELETE_CONFIRM);
                         }
                       }}
+                      isLoading={isManipulating}
+                      isDisabled={isManipulating}
                     >
                       Delete
                     </Button>
@@ -516,6 +588,8 @@ const ShiftDrawer = ({
                       color={"default"}
                       onPress={() => setIsEdit(true)}
                       startContent={<Edit size={16} />}
+                      isLoading={isManipulating}
+                      isDisabled={isManipulating || !isEditable}
                     >
                       Edit
                     </Button>
@@ -543,15 +617,15 @@ const ShiftDrawer = ({
         </DrawerContent>
       </Drawer>
       <DeleteConfirm
-        isOpen={isDeleteConfirmOpen}
-        onClose={() => setIsDeleteConfirmOpen(false)}
+        isOpen={confirmationModal === ConfirmationModals.DELETE_CONFIRM}
+        onClose={() => setConfirmationModal(ConfirmationModals.NONE)}
         onConfirm={async () => {
           await mutateDeleteShift(selectedShiftId || "");
         }}
       />
       <DeleteRepeatConfirm
-        isOpen={isDeleteRepeatConfirmOpen}
-        onClose={() => setIsDeleteRepeatConfirmOpen(false)}
+        isOpen={confirmationModal === ConfirmationModals.DELETE_REPEAT_CONFIRM}
+        onClose={() => setConfirmationModal(ConfirmationModals.NONE)}
         onConfirm={(deleteType: string, endDate: number) => {
           if (deleteType === "only") {
             mutateDeleteShift(selectedShiftId || "");
@@ -576,6 +650,37 @@ const ShiftDrawer = ({
           }
         }}
       />
+      {confirmationModal === ConfirmationModals.UPDATE_CONFIRM && updatePayload && (
+        <UpdateConfirm
+          isOpen={confirmationModal === ConfirmationModals.UPDATE_CONFIRM}
+          onClose={() => {
+            setUpdatePayload(null);
+            setConfirmationModal(ConfirmationModals.NONE);
+          }}
+          isLoading={isManipulating}
+          onConfirm={() => {
+            mutateUpdateShift(updatePayload);
+          }}  
+        />
+      )}
+      {confirmationModal === ConfirmationModals.UPDATE_REPEAT_CONFIRM && updatePayload && (
+        <RepeatUpdateConfirm
+          isOpen={confirmationModal === ConfirmationModals.UPDATE_REPEAT_CONFIRM}
+          onClose={() => {
+            setUpdatePayload(null);
+            setConfirmationModal(ConfirmationModals.NONE);
+          }}
+          handleUpdateShift={mutateUpdateShift}
+          handleBulkUpdateShift={mutateBulkUpdateShift}
+          updatePayload={updatePayload}
+          repeat={{
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+            ...dataShiftDetail?.repeat!,
+            from: dataShiftDetail?.timeFrom ?? Date.now(),
+          }}
+          isLoading={isManipulating}
+        />
+      )}
     </>
   );
 };

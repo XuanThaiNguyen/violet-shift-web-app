@@ -2,30 +2,25 @@ import { useMe } from "@/states/apis/me";
 import { useGetSchedulesByStaffId } from "@/states/apis/shift";
 import type { IGetStaffSchedule } from "@/types/shift";
 import { convertDateToMs } from "@/utils/datetime";
-import { useDisclosure } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { hours, weekDays } from "../constant";
 import type { DayDateInfo, ViewMode } from "../type";
 import { getShiftTypeLabel } from "../util";
-import ShiftDrawer from "./ShiftDrawer";
 
 interface SchedularPersonalProps {
   viewMode: ViewMode;
   dates: DayDateInfo[];
+  setSelectedShiftId: (shiftId: string) => void;
 }
 
-const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
+const SchedularPersonal = ({ viewMode, dates, setSelectedShiftId }: SchedularPersonalProps) => {
   const { data: user } = useMe();
 
   const [events, setEvents] = useState<IGetStaffSchedule[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [from, setFrom] = useState<number | null>(null);
   const [to, setTo] = useState<number | null>(null);
-  const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
-    undefined
-  );
 
   const {
     data: dataSchedules,
@@ -196,7 +191,6 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
                 <div
                   onClick={() => {
                     setSelectedShiftId(event.shift._id);
-                    onOpen();
                   }}
                   key={event._id}
                   className={`absolute left-2 right-2 border-l-4 p-3 rounded group bg-background`}
@@ -293,7 +287,6 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
                     <div
                       onClick={() => {
                         setSelectedShiftId(event.shift._id);
-                        onOpen();
                       }}
                       key={event._id}
                       className={`absolute left-1 right-1 border-l-4 p-2 rounded text-xs group bg-background`}
@@ -391,7 +384,6 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedShiftId(event.shift._id);
-                          onOpen();
                         }}
                       >
                         <div className="flex items-start justify-between">
@@ -432,15 +424,6 @@ const SchedularPersonal = ({ viewMode, dates }: SchedularPersonalProps) => {
       {viewMode === "day" && renderDayView()}
       {viewMode === "week" && renderWeekView()}
       {viewMode === "month" && renderMonthView()}
-
-      {isOpen && selectedShiftId && (
-        <ShiftDrawer
-          onClose={onClose}
-          isOpen={isOpen}
-          selectedShiftId={selectedShiftId}
-          isAdmin={false}
-        />
-      )}
     </div>
   );
 };
