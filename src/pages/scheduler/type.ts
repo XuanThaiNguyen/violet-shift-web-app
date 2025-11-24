@@ -6,6 +6,7 @@ export interface DayDateInfo {
   month: number;
   year: number;
   isToday?: boolean;
+  label?: string[];
 }
 
 export type ViewMode = "day" | "week" | "fortnight" | "month";
