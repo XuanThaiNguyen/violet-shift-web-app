@@ -1,13 +1,13 @@
+import { useGetStaffAvailability } from "@/states/apis/availability";
 import { useGetSchedulesByStaffId } from "@/states/apis/shift";
 import type { IGetStaffSchedule } from "@/types/shift";
 import type { User as IUser } from "@/types/user";
 import { formatTimeRange } from "@/utils/datetime";
-import { getDisplayName } from "@/utils/strings";
-import {  User } from "@heroui/react";
 import { format, isValid } from "date-fns";
 import { GripVertical } from "lucide-react";
 import { useEffect, useState } from "react";
 import { hours } from "../constant";
+import { useSubscribeRefresh } from "../store/refreshStore";
 import type {
   DayDateInfo,
   DragOverCell,
@@ -16,6 +16,7 @@ import type {
   ViewMode,
 } from "../type";
 import { getShiftTypeLabel } from "../util";
+import CarerAvailabilityPopover from "./CarerAvailabilityPopover";
 
 interface SchedulerManagementItemProps {
   viewMode: ViewMode;
@@ -37,6 +38,14 @@ const SchedulerManagementItem = ({
   to,
   setSelectedShiftId,
 }: SchedulerManagementItemProps) => {
+  useSubscribeRefresh(staff.id);
+
+  const { data: dataAvailabilities } = useGetStaffAvailability({
+    staff: staff.id,
+    from,
+    to,
+    type: "available",
+  });
 
   const [draggedEvent, setDraggedEvent] = useState<IGetStaffSchedule | null>(
     null
@@ -88,11 +97,6 @@ const SchedulerManagementItem = ({
     e.dataTransfer.dropEffect = "move";
     setDragOverCell({ staffId: +staff.id, day, hour });
   };
-
-  const name = getDisplayName(staff);
-  const actualName = `${staff.firstName}+${staff.lastName}`;
-  const avatar =
-    staff.avatar || `https://ui-avatars.com/api/?name=${actualName}`;
 
   const handleDragLeave = () => {
     setDragOverCell(null);
@@ -183,12 +187,10 @@ const SchedulerManagementItem = ({
   return (
     <div key={staff.id} className={`grid ${gridCols} hover:bg-gray-50`}>
       <div className="p-4 border-r border-b bg-white sticky left-0 z-10">
-        <User
-          avatarProps={{
-            src: avatar,
-          }}
-          name={name}
-          description={staff.email}
+        <CarerAvailabilityPopover
+          staff={staff}
+          dates={dates}
+          dataAvailabilities={dataAvailabilities}
         />
       </div>
 
