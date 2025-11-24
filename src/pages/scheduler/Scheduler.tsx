@@ -5,13 +5,18 @@ import { useState, type FC } from "react";
 import SchedularPersonal from "./components/SchedularPersonal";
 import SchedulerManagement from "./components/SchedulerManagement";
 import SchedulerMode from "./components/SchedulerMode";
-import type { DayDateInfo, ViewMode } from "./type";
 import CreateShiftDrawer from "./components/CreateShiftDrawer";
 import ShiftDrawer from "./components/ShiftDrawer";
+import type { DayDateInfo, ViewMode } from "./type";
+import type { IAvailibility } from "@/types/availability";
+import LeaveDetail from "./components/LeaveDetail";
 
 const Scheduler: FC = () => {
   const { isOpen, onClose, onOpen } = useDisclosure();
   const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
+    undefined
+  );
+  const [selectedUnavailability, setSelectedUnavailability] = useState<IAvailibility | undefined>(
     undefined
   );
   const [viewMode, setViewMode] = useState<ViewMode>("week");
@@ -55,7 +60,7 @@ const Scheduler: FC = () => {
 
         <div className="h-4"></div>
         {isAdmin ? (
-          <SchedulerManagement viewMode={viewMode} dates={dates} setSelectedShiftId={handleSetSelectedShiftId} />
+          <SchedulerManagement viewMode={viewMode} dates={dates} setSelectedShiftId={handleSetSelectedShiftId} setSelectedUnavailability={setSelectedUnavailability} />
         ) : (
           <SchedularPersonal viewMode={viewMode} dates={dates} setSelectedShiftId={handleSetSelectedShiftId} />
         )}
@@ -75,6 +80,14 @@ const Scheduler: FC = () => {
           isOpen={isOpen}
           selectedShiftId={selectedShiftId}
           readOnly={!isAdmin}
+        />
+      )}
+
+      {selectedUnavailability && (
+        <LeaveDetail
+          isOpen={!!selectedUnavailability}
+          onClose={() => setSelectedUnavailability(undefined)}
+          unavailability={selectedUnavailability}
         />
       )}
     </>

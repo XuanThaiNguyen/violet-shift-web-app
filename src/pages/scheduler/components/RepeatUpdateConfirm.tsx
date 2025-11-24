@@ -148,8 +148,8 @@ const RepeatUpdateConfirm = ({
               <Button variant="flat" onPress={onClose} isLoading={isLoading}>
                 Cancel
               </Button>
-              <Button color="danger" onPress={onConfirm} isLoading={isLoading} isDisabled={isLoading}>
-                Delete
+              <Button color="primary" onPress={onConfirm} isLoading={isLoading} isDisabled={isLoading}>
+                Update
               </Button>
             </ModalFooter>
           </>
