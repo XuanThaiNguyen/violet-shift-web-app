@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { UserIcon } from "lucide-react";
+import { OctagonAlert, UserIcon } from "lucide-react";
 import {
   Divider,
   Select as HerouiSelect,
@@ -10,9 +10,11 @@ import { Select } from "@/components/select/Select";
 
 // apis
 import { useStaffs } from "@/states/apis/staff";
+import { useGetAvailabilities } from "@/states/apis/availability";
 
 // constants
 import { EMPTY_ARRAY } from "@/constants/empty";
+import { PayMethodOptions } from "../../constant";
 
 // utils
 import { getDisplayName } from "@/utils/strings";
@@ -22,7 +24,7 @@ import type { FC, SetStateAction } from "react";
 import type { IShiftValues } from "@/types/shift";
 import type { FormikErrors } from "formik";
 import type { User as IUser } from "@/types/user";
-import { PayMethodOptions } from "../../constant";
+import type { IAvailibility } from "@/types/availability";
 
 type CarerFormProps = {
   values: IShiftValues;
@@ -40,6 +42,20 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
     archived: false,
     joined: true,
   });
+
+  const { data: dataAvailabilities = EMPTY_ARRAY } = useGetAvailabilities({
+    from: values.timeFrom,
+    to: values.timeTo,
+    type: "unavailable",
+    isApproved: true,
+  });
+  const dataAvailabilitiesMap = useMemo(() => {
+    return dataAvailabilities.reduce((acc, item) => {
+      acc[item.staff] = item;
+      return acc;
+    }, {} as Record<string, IAvailibility>);
+  }, [dataAvailabilities]);
+
   const allStaffs = allStaffsData?.data || EMPTY_ARRAY;
 
   const allStaffsOptions = useMemo(() => {
@@ -99,6 +115,12 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
           }}
         />
       </div>
+      {dataAvailabilitiesMap[values.staffSchedules[0]?.staff || ""] && (
+        <div className="mt-2 text-xs text-danger bg-danger-50 p-2 rounded-md max-w-xs ml-auto flex items-center gap-2">
+          <OctagonAlert size={16} />
+          <span>This carer is unavailable on the selected time.</span>
+        </div>
+      )}
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Choose pay group</span>
