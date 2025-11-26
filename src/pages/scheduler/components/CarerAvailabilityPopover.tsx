@@ -112,48 +112,48 @@ const CarerAvailabilityPopover = ({
 
       <PopoverContent
         className={clsx(
-          "p-0 overflow-hidden rounded-xl shadow-2xl border border-default-200",
+          "p-0 overflow-hidden rounded-lg shadow-md border border-default-200",
           result.length === 1
             ? "w-auto"
-            : "w-[95vw] max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-4xl"
+            : "w-[90vw] max-w-md sm:max-w-lg md:max-w-xl"
         )}
       >
         <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-rounded">
           <div
             className={clsx(
-              "gap-6",
+              "gap-3 py-2 px-2",
               result.length === 1
                 ? "grid grid-cols-1 justify-items-center"
-                : "grid grid-cols-7 min-w-[660px] py-4"
+                : "grid grid-cols-7 min-w-[580px]"
             )}
           >
             {result.map((item, i) => (
               <div
                 key={i}
-                className="flex flex-col items-center gap-2 py-4 px-3 rounded-lg hover:bg-default-100 transition-colors"
+                className="flex flex-col items-center gap-1.5 py-2 px-2 rounded-md hover:bg-default-100 transition-colors"
               >
-                <span className="text-xs font-semibold text-default-500 uppercase tracking-wider">
+                <span className="text-[10px] font-semibold text-default-500 uppercase tracking-wide">
                   {item.day}
                 </span>
 
-                <span className="text-lg font-bold text-foreground">
+                <span className="text-sm font-semibold text-foreground">
                   {shortMonthNames[item.month - 1]} {item.date}
                 </span>
 
-                <div className="w-full mt-2 flex justify-center">
+                <div className="w-full mt-1 flex justify-center">
                   {item?.label && item.label.length > 0 ? (
-                    <div className="flex flex-col gap-1.5 items-center">
+                    <div className="flex flex-col gap-1 items-center">
                       {item.label.map((lbl, idx) => (
                         <span
                           key={idx}
-                          className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 rounded-full whitespace-nowrap"
+                          className="px-2 py-1 text-[10px] font-medium text-green-700 bg-green-100 rounded-full whitespace-nowrap"
                         >
                           {lbl}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-xs text-default-400">—</span>
+                    <span className="text-[10px] text-default-400">—</span>
                   )}
                 </div>
               </div>
