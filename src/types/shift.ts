@@ -55,6 +55,13 @@ export interface IUpdateShift {
   tasks: IArrayUpdate<ITask>;
 }
 
+export interface IBulkUpdateShift {
+  payload: Omit<IUpdateShift, "_id">;
+  repeatId: string;
+  from: number;
+  to: number;
+}
+
 export interface ITask {
   repetitiveId?: string;
   id?: string;

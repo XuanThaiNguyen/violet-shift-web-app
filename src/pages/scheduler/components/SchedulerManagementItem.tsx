@@ -3,12 +3,15 @@ import { useGetSchedulesByStaffId } from "@/states/apis/shift";
 import type { IGetStaffSchedule } from "@/types/shift";
 import type { User as IUser } from "@/types/user";
 import { formatTimeRange } from "@/utils/datetime";
-import { useDisclosure } from "@heroui/react";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import { GripVertical } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { hours } from "../constant";
 import { useSubscribeRefresh } from "../store/refreshStore";
+import { getShiftTypeLabel } from "../util";
+import CarerAvailabilityPopover from "./CarerAvailabilityPopover";
+import { EMPTY_ARRAY } from "@/constants/empty";
+
 import type {
   DayDateInfo,
   DragOverCell,
@@ -16,9 +19,7 @@ import type {
   SelectedCell,
   ViewMode,
 } from "../type";
-import { getShiftTypeLabel } from "../util";
-import CarerAvailabilityPopover from "./CarerAvailabilityPopover";
-import ShiftDrawer from "./ShiftDrawer";
+import type { IAvailibility } from "@/types/availability";
 
 interface SchedulerManagementItemProps {
   viewMode: ViewMode;
@@ -28,6 +29,8 @@ interface SchedulerManagementItemProps {
   displayName: string;
   from: number | null;
   to: number | null;
+  setSelectedShiftId: (shiftId: string) => void;
+  setSelectedUnavailability: (unavailability: IAvailibility) => void;
 }
 
 const SchedulerManagementItem = ({
@@ -37,8 +40,9 @@ const SchedulerManagementItem = ({
   gridCols,
   from,
   to,
+  setSelectedShiftId,
+  setSelectedUnavailability,
 }: SchedulerManagementItemProps) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
   useSubscribeRefresh(staff.id);
 
   const { data: dataAvailabilities } = useGetStaffAvailability({
@@ -48,14 +52,9 @@ const SchedulerManagementItem = ({
     type: "available",
   });
 
-  const [selectedShiftId, setSelectedShiftId] = useState<string | undefined>(
-    undefined
-  );
-
   const [draggedEvent, setDraggedEvent] = useState<IGetStaffSchedule | null>(
     null
   );
-  const [events, setEvents] = useState<IGetStaffSchedule[]>([]);
   const [, setSelectedCell] = useState<SelectedCell | null>(null);
   const [, setShowEventForm] = useState<boolean>(false);
   const [, setNewEventData] = useState<NewEventData>({
@@ -66,17 +65,57 @@ const SchedulerManagementItem = ({
   });
   const [dragOverCell, setDragOverCell] = useState<DragOverCell | null>(null);
 
-  const { data: dataSchedules, isSuccess } = useGetSchedulesByStaffId(
+  const { data: events = EMPTY_ARRAY } = useGetSchedulesByStaffId(
     staff.id,
     from,
     to
   );
 
-  useEffect(() => {
-    if (isSuccess && dataSchedules) {
-      setEvents(dataSchedules);
-    }
-  }, [dataSchedules, isSuccess]);
+  const { data: dataUnavailabilities = EMPTY_ARRAY } = useGetStaffAvailability({
+    staff: staff.id,
+    from,
+    to,
+    type: "unavailable",
+    isApproved: true,
+  });
+
+  const scheduleAllocations = useMemo(() => {
+    const allocations = new Map<string, IGetStaffSchedule[]>();
+    events.forEach((event) => {
+      if (viewMode === "day") {
+        const _date = new Date(event.timeFrom!);
+        const hour = _date.getHours();
+        const _allocations = allocations.get(hour.toString()) || [];
+        _allocations.push(event);
+        allocations.set(hour.toString(), _allocations);
+      } else {
+        const fromDate = format(event.timeFrom!, "yyyy-MM-dd");
+        const _allocations = allocations.get(fromDate) || [];
+        _allocations.push(event);
+        allocations.set(fromDate, _allocations);
+      }
+    });
+    return allocations;
+  }, [events, viewMode]);
+
+  const unavailableAllocations = useMemo(() => {
+    const allocations = new Map<string, IAvailibility[]>();
+    dataUnavailabilities.forEach((avail) => {
+      if (viewMode === "day") {
+        const _date = new Date(avail.from);
+        const hour = _date.getHours();
+        const _allocations = allocations.get(hour.toString()) || [];
+        _allocations.push(avail);
+        allocations.set(hour.toString(), _allocations);
+      } else {
+        const fromDate = format(avail.from, "yyyy-MM-dd");
+        const _allocations = allocations.get(fromDate) || [];
+        _allocations.push(avail);
+        allocations.set(fromDate, _allocations);
+      }
+    });
+    return allocations;
+  }, [dataUnavailabilities, viewMode]);
 
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
@@ -172,23 +211,6 @@ const SchedulerManagementItem = ({
     setNewEventData({ title: "", client: "", hour: hour || 9, duration: 1 });
   };
 
-  const getEventsForCell = (date: number, hour: number | null = null) => {
-    if (viewMode === "day" && hour !== null) {
-      return events.filter((e) => {
-        if (!isValid(e.timeFrom)) return false;
-        const _date = new Date(e.timeFrom!);
-        return _date.getHours() === hour;
-      });
-    }
-
-    return events.filter((e) => {
-      if (!isValid(e.timeFrom)) return false;
-      const fromDate = format(e.timeFrom!, "yyyy-MM-dd");
-      const _date = format(date, "yyyy-MM-dd");
-      return _date === fromDate;
-    });
-  };
-
   return (
     <div key={staff.id} className={`grid ${gridCols} hover:bg-gray-50`}>
       <div className="p-4 border-r border-b bg-white sticky left-0 z-10">
@@ -201,7 +223,9 @@ const SchedulerManagementItem = ({
 
       {viewMode === "day"
         ? hours.map((hour) => {
-            const cellEvents = getEventsForCell(0, hour);
+            const cellEvents = scheduleAllocations.get(hour.toString()) || [];
+            const cellUnavailabilities =
+              unavailableAllocations.get(hour.toString()) || [];
             const isOver = isDragOver(0, hour);
 
             return (
@@ -228,8 +252,7 @@ const SchedulerManagementItem = ({
                       key={event._id}
                       draggable
                       onClick={() => {
-                        setSelectedShiftId(event.shift._id);
-                        onOpen();
+                        setSelectedShiftId(event.shift._id || "");
                       }}
                       onDragStart={(e) => handleDragStart(e, event)}
                       onDragEnd={handleDragEnd}
@@ -261,12 +284,32 @@ const SchedulerManagementItem = ({
                     </div>
                   );
                 })}
+                {cellUnavailabilities.map((unavail) => {
+                  return (
+                    <div
+                      key={unavail._id}
+                      className="p-2 rounded text-xs text-danger bg-danger-50 relative group cursor-pointer overflow-hidden break-words"
+                      onClick={() => setSelectedUnavailability(unavail)}
+                    >
+                      <div className="font-medium">Unavailable:</div>
+                      <div className="whitespace-normal">
+                        {formatTimeRange(
+                          unavail.from / 1000,
+                          unavail.to / 1000
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             );
           })
         : dates.map((d, day) => {
             const date = new Date(d.year, d.month - 1, d.date);
-            const cellEvents = getEventsForCell(date.getTime());
+            const cellEvents =
+              scheduleAllocations.get(format(date, "yyyy-MM-dd")) || [];
+            const cellUnavailabilities =
+              unavailableAllocations.get(format(date, "yyyy-MM-dd")) || [];
             const isOver = isDragOver(+staff.id, day);
 
             return (
@@ -300,8 +343,7 @@ const SchedulerManagementItem = ({
                             : ""
                         }`}
                         onClick={() => {
-                          setSelectedShiftId(shift?.shift?._id);
-                          onOpen();
+                          setSelectedShiftId(shift?.shift?._id || "");
                         }}
                         style={{
                           backgroundColor: "#f7f8fa",
@@ -331,19 +373,27 @@ const SchedulerManagementItem = ({
                       </div>
                     );
                   })}
+                  {cellUnavailabilities.map((unavail) => {
+                    return (
+                      <div
+                        key={unavail._id}
+                        className="p-2 rounded text-xs text-danger bg-danger-50 relative group cursor-pointer overflow-hidden break-words"
+                        onClick={() => setSelectedUnavailability(unavail)}
+                      >
+                        <div className="font-medium">Unavailable:</div>
+                        <div className="whitespace-normal">
+                          {formatTimeRange(
+                            unavail.from / 1000,
+                            unavail.to / 1000
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
           })}
-
-      {isOpen && selectedShiftId && (
-        <ShiftDrawer
-          onClose={onClose}
-          isOpen={isOpen}
-          isAdmin={true}
-          selectedShiftId={selectedShiftId}
-        />
-      )}
     </div>
   );
 };
