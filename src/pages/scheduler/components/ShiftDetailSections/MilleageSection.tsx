@@ -10,7 +10,6 @@ type MilleageSectionProps = {
 };
 
 const MilleageSection: FC<MilleageSectionProps> = ({ values }) => {
-
   return (
     <div className="py-4 px-3 rounded-lg mt-2 bg-content1">
       <div className="flex items-center gap-2">
@@ -22,17 +21,19 @@ const MilleageSection: FC<MilleageSectionProps> = ({ values }) => {
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Mileage cap</span>
-        <span className="text-sm">{values.mileageCap}Km</span>
+        <span className="text-sm">{values.mileageCap || 0} Km</span>
       </div>
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Mileage</span>
-        <span className="text-sm">{values.mileage}Km</span>
+        <span className="text-sm">{values.mileage || 0} Km</span>
       </div>
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Company Vehicle</span>
-        <span className="text-sm">{values.isCompanyVehicle ? "Yes" : "No"}</span>
+        <span className="text-sm">
+          {values.isCompanyVehicle ? "Yes" : "No"}
+        </span>
       </div>
       <div className="h-2"></div>
     </div>

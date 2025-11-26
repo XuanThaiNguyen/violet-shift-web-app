@@ -15,7 +15,11 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { parseAbsoluteToLocal, ZonedDateTime } from "@internationalized/date";
 
-import type { IBulkUpdateShift, IShiftRepeat, IUpdateShift } from "@/types/shift";
+import type {
+  IBulkUpdateShift,
+  IShiftRepeat,
+  IUpdateShift,
+} from "@/types/shift";
 
 interface RepeatUpdateConfirmProps {
   isOpen: boolean;
@@ -56,7 +60,7 @@ const RepeatUpdateConfirm = ({
     () => parseAbsoluteToLocal(new Date(repeat.from).toISOString()),
     [repeat.from]
   );
-  
+
   useEffect(() => {
     setInternalOpen(isOpen);
   }, [isOpen]);
@@ -66,7 +70,7 @@ const RepeatUpdateConfirm = ({
     setInternalOpen(false);
     setTimeout(onClose, 200);
   };
-  
+
   const onConfirm = () => {
     if (option === UpdateOptions.THIS_SHIFT) {
       handleUpdateShift(updatePayload);
@@ -85,10 +89,15 @@ const RepeatUpdateConfirm = ({
         to: dates.end.toDate().getTime(),
       });
     }
-  }
+  };
 
   return (
-    <Modal isOpen={internalOpen} onClose={handleClose} size="2xl" placement="top">
+    <Modal
+      isOpen={internalOpen}
+      onClose={handleClose}
+      size="2xl"
+      placement="top"
+    >
       <ModalContent>
         {(onClose) => (
           <>
@@ -139,7 +148,8 @@ const RepeatUpdateConfirm = ({
 
               {isLoading && (
                 <div className="mt-4 text-sm text-warning">
-                  Update is in progress, do not close this tab until the update is complete.
+                  Update is in progress, do not close this tab until the update
+                  is complete.
                 </div>
               )}
             </ModalBody>
@@ -148,8 +158,13 @@ const RepeatUpdateConfirm = ({
               <Button variant="flat" onPress={onClose} isLoading={isLoading}>
                 Cancel
               </Button>
-              <Button color="danger" onPress={onConfirm} isLoading={isLoading} isDisabled={isLoading}>
-                Delete
+              <Button
+                color="primary"
+                onPress={onConfirm}
+                isLoading={isLoading}
+                isDisabled={isLoading}
+              >
+                Update
               </Button>
             </ModalFooter>
           </>
