@@ -34,7 +34,7 @@ const formatTime12 = (timestamp: number): string => {
   const ampm = hours >= 12 ? "PM" : "AM";
   const h12 = hours % 12 || 12; // convert 0 → 12
   const mm = minutes.toString().padStart(2, "0");
-  return `${h12}:${mm}${ampm}`;
+  return `${h12}:${mm} ${ampm}`;
 };
 
 const isWholeDay = (
@@ -79,7 +79,7 @@ const CarerAvailabilityPopover = ({
         if (isWholeDay(from, to, dayStart, dayEnd)) {
           labels.add("Whole day");
         } else {
-          const label = `${formatTime12(from)}-${formatTime12(to)}`;
+          const label = `from ${formatTime12(from)}-to ${formatTime12(to)}`;
           labels.add(label);
         }
       }
@@ -146,9 +146,14 @@ const CarerAvailabilityPopover = ({
                       {item.label.map((lbl, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-1 text-[10px] font-medium text-green-700 bg-green-100 rounded-full whitespace-nowrap"
+                          className="text-center px-1 py-1 text-[10px] font-medium text-green-700 bg-green-100 rounded-md whitespace-nowrap"
                         >
-                          {lbl}
+                          {lbl.split("-").map((part, i, arr) => (
+                            <span className="text-center" key={i}>
+                              {part}
+                              {i < arr.length - 1 && <br />}
+                            </span>
+                          ))}
                         </span>
                       ))}
                     </div>

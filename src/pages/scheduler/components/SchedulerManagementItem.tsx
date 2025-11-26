@@ -288,11 +288,16 @@ const SchedulerManagementItem = ({
                   return (
                     <div
                       key={unavail._id}
-                      className="p-2 rounded text-sm text-danger bg-danger-50  relative group cursor-pointer"
+                      className="p-2 rounded text-xs text-danger bg-danger-50 relative group cursor-pointer overflow-hidden break-words"
                       onClick={() => setSelectedUnavailability(unavail)}
                     >
-                      <div className="">Unavailable: </div>
-                      {formatTimeRange(unavail.from / 1000, unavail.to / 1000)}
+                      <div className="font-medium">Unavailable:</div>
+                      <div className="whitespace-normal">
+                        {formatTimeRange(
+                          unavail.from / 1000,
+                          unavail.to / 1000
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -372,14 +377,16 @@ const SchedulerManagementItem = ({
                     return (
                       <div
                         key={unavail._id}
-                        className="p-2 rounded text-sm text-danger bg-danger-50  relative group cursor-pointer"
+                        className="p-2 rounded text-xs text-danger bg-danger-50 relative group cursor-pointer overflow-hidden break-words"
                         onClick={() => setSelectedUnavailability(unavail)}
                       >
-                        <div className="">Unavailable: </div>
-                        {formatTimeRange(
-                          unavail.from / 1000,
-                          unavail.to / 1000
-                        )}
+                        <div className="font-medium">Unavailable:</div>
+                        <div className="whitespace-normal">
+                          {formatTimeRange(
+                            unavail.from / 1000,
+                            unavail.to / 1000
+                          )}
+                        </div>
                       </div>
                     );
                   })}
