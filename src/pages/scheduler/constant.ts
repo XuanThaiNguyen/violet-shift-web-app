@@ -125,6 +125,21 @@ export const monthNames = [
   "November",
   "December",
 ];
+
+export const shortMonthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 export const hours = Array.from({ length: 24 }, (_, i) => i);
 
 export const initialEventsMockUp = [
