@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { parseTimeInput } from "@/utils/datetime";
 import {
   Button,
@@ -16,21 +17,22 @@ import {
   today,
   type ZonedDateTime,
 } from "@internationalized/date";
-import { useMemo, useState } from "react";
-
+import type { IShiftRepeat } from "@/types/shift";
 interface DeleteRepeatConfirmProps {
   isOpen: boolean;
+  repeat: IShiftRepeat; 
   onClose: () => void;
   onConfirm: (deleteType: string, endDate: number) => void;
 }
 
 const DeleteRepeatConfirm = ({
   isOpen,
+  repeat,
   onClose,
   onConfirm,
 }: DeleteRepeatConfirmProps) => {
   const [deleteType, setDeleteType] = useState("only");
-  const [endDate, setEndDate] = useState<number | null>(Date.now());
+  const [endDate, setEndDate] = useState<number | null>(repeat.endDate);
 
   const timeFromEndDate = useMemo(
     () => (endDate ? parseTimeInput(endDate) : null),
@@ -64,7 +66,7 @@ const DeleteRepeatConfirm = ({
                         return date.compare(todayDate) < 0; // disable any date before today
                       }}
                       showMonthAndYearPickers
-                      granularity="day"
+                      // granularity="day"
                       label=""
                       name="birthdate"
                       hideTimeZone
@@ -97,7 +99,13 @@ const DeleteRepeatConfirm = ({
                 )}
                 <Radio value={"all"}>All</Radio>
               </RadioGroup>
-              <div className="h-1"></div>
+              {
+                deleteType !== "only" && (
+                  <div className="mb-4 text-xs bg-warning-50 p-2 rounded-md text-warning">
+                    Only unprocessed shifts will be deleted. All processed and processing ones will be kept.
+                  </div>
+                )
+              }
             </ModalBody>
             <Divider />
             <ModalFooter>

@@ -110,7 +110,9 @@ const ShiftDrawer = ({
 }: ShiftDrawerProps) => {
   const [isEdit, setIsEdit] = useState(false);
   const [internalOpen, setInternalOpen] = useState(isOpen);
-  const [confirmationModal, setConfirmationModal] = useState<string>(ConfirmationModals.NONE);
+  const [confirmationModal, setConfirmationModal] = useState<string>(
+    ConfirmationModals.NONE
+  );
   const [updatePayload, setUpdatePayload] = useState<IUpdateShift | null>(null);
 
   const queryClient = useQueryClient();
@@ -221,8 +223,8 @@ const ShiftDrawer = ({
     }
   );
 
-  const { mutate: mutateBulkUpdateShift, isPending: isPendingBulkUpdate } = useMutation(
-    {
+  const { mutate: mutateBulkUpdateShift, isPending: isPendingBulkUpdate } =
+    useMutation({
       mutationFn: bulkUpdateShift,
       onSuccess: () => {
         addToast({
@@ -233,7 +235,14 @@ const ShiftDrawer = ({
         });
         queryClient.removeQueries({
           predicate: (query) => {
-            return query.queryKey[0] === "staffSchedules" || query.queryKey[0] === "shiftDetail";
+            const keys = [
+              "shiftDetail",
+              "staffSchedulesByShift",
+              "clientSchedulesByShift",
+              "tasksByShift",
+              "staffSchedules",
+            ];
+            return keys.includes(query.queryKey[0] as string);
           },
         });
         setConfirmationModal(ConfirmationModals.NONE);
@@ -259,112 +268,98 @@ const ShiftDrawer = ({
           });
         }
       },
+    });
+
+  const { mutate: mutateDeleteShift, isPending: isPendingDelete } = useMutation(
+    {
+      mutationFn: deleteShift,
+      onSuccess: () => {
+        addToast({
+          title: "Delete shift successfully",
+          color: "success",
+        });
+        queryClient.removeQueries({
+          predicate: (query) => {
+            const firstKey = query.queryKey[0];
+            const secondKey = query.queryKey[1];
+            if (firstKey === "shiftDetail") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "staffSchedulesByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "clientSchedulesByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "tasksByShift") {
+              return secondKey === selectedShiftId;
+            }
+            if (firstKey === "staffSchedules") {
+              return (
+                staffSchedules?.some(
+                  (schedule) => schedule.staff === secondKey
+                ) || false
+              );
+            }
+            return false;
+          },
+        });
+        setConfirmationModal(ConfirmationModals.NONE);
+        onClose();
+      },
+      onError: (error) => {
+        setConfirmationModal(ConfirmationModals.NONE);
+        if (error instanceof AxiosError) {
+          const errorCode = error.response?.data?.code;
+          const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+          addToast({
+            title: msg,
+            color: "danger",
+            timeout: 2000,
+            isClosing: true,
+          });
+        }
+      },
     }
   );
 
-  const { mutate: mutateDeleteShift, isPending: isPendingDelete } = useMutation({
-    mutationFn: deleteShift,
-    onSuccess: () => {
-      addToast({
-        title: "Delete shift successfully",
-        color: "success",
-      });
-      queryClient.removeQueries({
-        predicate: (query) => {
-          const firstKey = query.queryKey[0];
-          const secondKey = query.queryKey[1];
-          if (firstKey === "shiftDetail") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "staffSchedulesByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "clientSchedulesByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "tasksByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "staffSchedules") {
-            return (
-              staffSchedules?.some(
-                (schedule) => schedule.staff === secondKey
-              ) || false
-            );
-          }
-          return false;
-        },
-      });
-      setConfirmationModal(ConfirmationModals.NONE);
-      onClose();
-    },
-    onError: (error) => {
-      setConfirmationModal(ConfirmationModals.NONE);
-      if (error instanceof AxiosError) {
-        const errorCode = error.response?.data?.code;
-        const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+  const { mutate: mutateBulkDeleteShift, isPending: isPendingBulkDelete } =
+    useMutation({
+      mutationFn: bulkDeleteShift,
+      onSuccess: () => {
         addToast({
-          title: msg,
-          color: "danger",
-          timeout: 2000,
-          isClosing: true,
+          title: "Delete shift successfully",
+          color: "success",
         });
-      }
-    },
-  });
-
-  const { mutate: mutateBulkDeleteShift, isPending: isPendingBulkDelete } = useMutation({
-    mutationFn: bulkDeleteShift,
-    onSuccess: () => {
-      addToast({
-        title: "Delete shift successfully",
-        color: "success",
-      });
-      queryClient.removeQueries({
-        predicate: (query) => {
-          const firstKey = query.queryKey[0];
-          const secondKey = query.queryKey[1];
-          if (firstKey === "shiftDetail") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "staffSchedulesByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "clientSchedulesByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "tasksByShift") {
-            return secondKey === selectedShiftId;
-          }
-          if (firstKey === "staffSchedules") {
-            return (
-              staffSchedules?.some(
-                (schedule) => schedule.staff === secondKey
-              ) || false
-            );
-          }
-          return false;
-        },
-      });
-      setConfirmationModal(ConfirmationModals.NONE);
-      onClose();
-    },
-    onError: (error) => {
-      setConfirmationModal(ConfirmationModals.NONE);
-      if (error instanceof AxiosError) {
-        const errorCode = error.response?.data?.code;
-        const msg = ErrorMessages[errorCode] ?? "Something went wrong";
-        addToast({
-          title: msg,
-          color: "danger",
-          timeout: 2000,
-          isClosing: true,
+        queryClient.removeQueries({
+          predicate: (query) => {
+            const selectedKeys = ["shiftDetail", "staffSchedulesByShift", "clientSchedulesByShift", "tasksByShift", "staffSchedules"];
+            return selectedKeys.includes(query.queryKey[0] as string);
+          },
         });
-      }
-    },
-  });
+        setConfirmationModal(ConfirmationModals.NONE);
+        onClose();
+      },
+      onError: (error) => {
+        setConfirmationModal(ConfirmationModals.NONE);
+        if (error instanceof AxiosError) {
+          const errorCode = error.response?.data?.code;
+          const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+          addToast({
+            title: msg,
+            color: "danger",
+            timeout: 2000,
+            isClosing: true,
+          });
+        }
+      },
+    });
 
-  const isManipulating = isPendingUpdate || isPendingBulkUpdate || isPendingDelete || isPendingBulkDelete;
+  const isManipulating =
+    isPendingUpdate ||
+    isPendingBulkUpdate ||
+    isPendingDelete ||
+    isPendingBulkDelete;
 
   const { values, setValues, handleSubmit } = useFormik<IShiftValues>({
     initialValues: initialValues,
@@ -507,7 +502,8 @@ const ShiftDrawer = ({
     if (isLoading || staffScheduleLoading) return false;
     const now = Date.now();
     if (dataShiftDetail!.timeFrom <= now) return false;
-    if (staffSchedules?.some((schedule) => schedule.timeFrom! <= now)) return false;
+    if (staffSchedules?.some((schedule) => schedule.timeFrom! <= now))
+      return false;
     return true;
   }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
 
@@ -573,13 +569,17 @@ const ShiftDrawer = ({
                       color="danger"
                       onPress={() => {
                         if (dataShiftDetail?.repeat) {
-                          setConfirmationModal(ConfirmationModals.DELETE_REPEAT_CONFIRM);
+                          setConfirmationModal(
+                            ConfirmationModals.DELETE_REPEAT_CONFIRM
+                          );
                         } else {
-                          setConfirmationModal(ConfirmationModals.DELETE_CONFIRM);
+                          setConfirmationModal(
+                            ConfirmationModals.DELETE_CONFIRM
+                          );
                         }
                       }}
                       isLoading={isManipulating}
-                      isDisabled={isManipulating}
+                      isDisabled={isManipulating || !isEditable}
                     >
                       Delete
                     </Button>
@@ -623,64 +623,71 @@ const ShiftDrawer = ({
           await mutateDeleteShift(selectedShiftId || "");
         }}
       />
-      <DeleteRepeatConfirm
-        isOpen={confirmationModal === ConfirmationModals.DELETE_REPEAT_CONFIRM}
-        onClose={() => setConfirmationModal(ConfirmationModals.NONE)}
-        onConfirm={(deleteType: string, endDate: number) => {
-          if (deleteType === "only") {
-            mutateDeleteShift(selectedShiftId || "");
+      {dataShiftDetail?.repeat && (
+        <DeleteRepeatConfirm
+          isOpen={
+            confirmationModal === ConfirmationModals.DELETE_REPEAT_CONFIRM
           }
-          if (deleteType === "future") {
-            mutateBulkDeleteShift({
-              repeatId: dataShiftDetail?.repeat?._id || "",
-              from: dataShiftDetail?.timeFrom
-                ? dataShiftDetail?.timeFrom
-                : Date.now(),
-              to: endDate,
-            });
-          }
-          if (deleteType === "all") {
-            mutateBulkDeleteShift({
-              repeatId: dataShiftDetail?.repeat?._id || "",
-              from: dataShiftDetail?.timeFrom
-                ? dataShiftDetail?.timeFrom
-                : Date.now(),
-              to: dataShiftDetail?.repeat?.endDate,
-            });
-          }
-        }}
-      />
-      {confirmationModal === ConfirmationModals.UPDATE_CONFIRM && updatePayload && (
-        <UpdateConfirm
-          isOpen={confirmationModal === ConfirmationModals.UPDATE_CONFIRM}
-          onClose={() => {
-            setUpdatePayload(null);
-            setConfirmationModal(ConfirmationModals.NONE);
+          onClose={() => setConfirmationModal(ConfirmationModals.NONE)}
+          repeat={dataShiftDetail.repeat}
+          onConfirm={(deleteType: string, endDate: number) => {
+            if (deleteType === "only") {
+              mutateDeleteShift(selectedShiftId || "");
+            }
+            if (deleteType === "future") {
+              mutateBulkDeleteShift({
+                repeatId: dataShiftDetail?.repeat?._id || "",
+                from: dataShiftDetail?.timeFrom
+                  ? dataShiftDetail?.timeFrom
+                  : Date.now(),
+                to: endDate,
+              });
+            }
+            if (deleteType === "all") {
+              mutateBulkDeleteShift({
+                repeatId: dataShiftDetail?.repeat?._id || "",
+                from: Date.now(),
+                to: dataShiftDetail?.repeat?.endDate,
+              });
+            }
           }}
-          isLoading={isManipulating}
-          onConfirm={() => {
-            mutateUpdateShift(updatePayload);
-          }}  
         />
       )}
-      {confirmationModal === ConfirmationModals.UPDATE_REPEAT_CONFIRM && updatePayload && (
-        <RepeatUpdateConfirm
-          isOpen={confirmationModal === ConfirmationModals.UPDATE_REPEAT_CONFIRM}
-          onClose={() => {
-            setUpdatePayload(null);
-            setConfirmationModal(ConfirmationModals.NONE);
-          }}
-          handleUpdateShift={mutateUpdateShift}
-          handleBulkUpdateShift={mutateBulkUpdateShift}
-          updatePayload={updatePayload}
-          repeat={{
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            ...dataShiftDetail?.repeat!,
-            from: dataShiftDetail?.timeFrom ?? Date.now(),
-          }}
-          isLoading={isManipulating}
-        />
-      )}
+      {confirmationModal === ConfirmationModals.UPDATE_CONFIRM &&
+        updatePayload && (
+          <UpdateConfirm
+            isOpen={confirmationModal === ConfirmationModals.UPDATE_CONFIRM}
+            onClose={() => {
+              setUpdatePayload(null);
+              setConfirmationModal(ConfirmationModals.NONE);
+            }}
+            isLoading={isManipulating}
+            onConfirm={() => {
+              mutateUpdateShift(updatePayload);
+            }}
+          />
+        )}
+      {confirmationModal === ConfirmationModals.UPDATE_REPEAT_CONFIRM &&
+        updatePayload && (
+          <RepeatUpdateConfirm
+            isOpen={
+              confirmationModal === ConfirmationModals.UPDATE_REPEAT_CONFIRM
+            }
+            onClose={() => {
+              setUpdatePayload(null);
+              setConfirmationModal(ConfirmationModals.NONE);
+            }}
+            handleUpdateShift={mutateUpdateShift}
+            handleBulkUpdateShift={mutateBulkUpdateShift}
+            updatePayload={updatePayload}
+            repeat={{
+              // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+              ...dataShiftDetail?.repeat!,
+              from: dataShiftDetail?.timeFrom ?? Date.now(),
+            }}
+            isLoading={isManipulating}
+          />
+        )}
     </>
   );
 };
