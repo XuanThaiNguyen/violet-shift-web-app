@@ -44,6 +44,10 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
   const overnightShiftId = useId();
   const [isBonus, setIsBonus] = useState(false);
 
+  const minDate = useMemo(() => {
+    return parseTimeInput(startOfDay(Date.now()).getTime());
+  }, []);
+
   // const [isNightShift, setIsNightShift] = useState(false);
   const timefromInput = values.timeFrom
     ? parseTimeInput(values.timeFrom)
@@ -84,6 +88,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
           name="birthdate"
           hideTimeZone
           value={timefromInput}
+          minValue={minDate}
           onChange={(date: ZonedDateTime | null) => {
             if (!date) return;
             const hour = date.hour;

@@ -65,12 +65,12 @@ const UpdateConfirm = ({
                 Cancel
               </Button>
               <Button
-                color="danger"
+                color="primary"
                 onPress={onConfirm}
                 isLoading={isLoading}
                 isDisabled={isLoading}
               >
-                Delete
+                Update
               </Button>
             </ModalFooter>
           </>

@@ -23,11 +23,15 @@ export const getAvailQueryOptions = (params: GetAvailabilitiesParams) => {
           isApproved: params.isApproved,
         },
       }),
-    enabled: !!localStorage.getItem("auth_token"),
+    enabled:
+      !!localStorage.getItem("auth_token") &&
+      !isNaN(params.from!) &&
+      !isNaN(params.to!) &&
+      params.from! < params.to!,
   });
 };
 
-export const useGetAvailabilities = (params: GetAvailabilitiesParams) =>{
+export const useGetAvailabilities = (params: GetAvailabilitiesParams) => {
   return useQuery<IAvailibility[]>({
     ...getAvailQueryOptions(params),
     refetchOnMount: false,

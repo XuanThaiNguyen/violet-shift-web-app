@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useDeferredValue, useMemo } from "react";
 import { OctagonAlert, UserIcon } from "lucide-react";
 import {
   Divider,
@@ -7,6 +7,7 @@ import {
   User,
 } from "@heroui/react";
 import { Select } from "@/components/select/Select";
+import { format } from "date-fns";
 
 // apis
 import { useStaffs } from "@/states/apis/staff";
@@ -43,17 +44,21 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
     joined: true,
   });
 
+  const deferredFrom = useDeferredValue(values.timeFrom);
+  const deferredTo = useDeferredValue(values.timeTo);
+
   const { data: dataAvailabilities = EMPTY_ARRAY } = useGetAvailabilities({
-    from: values.timeFrom,
-    to: values.timeTo,
+    from: deferredFrom,
+    to: deferredTo,
     type: "unavailable",
     isApproved: true,
   });
   const dataAvailabilitiesMap = useMemo(() => {
     return dataAvailabilities.reduce((acc, item) => {
-      acc[item.staff] = item;
+      const old = acc[item.staff] || [];
+      acc[item.staff] = [...old, item];
       return acc;
-    }, {} as Record<string, IAvailibility>);
+    }, {} as Record<string, IAvailibility[]>);
   }, [dataAvailabilities]);
 
   const allStaffs = allStaffsData?.data || EMPTY_ARRAY;
@@ -115,10 +120,16 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
           }}
         />
       </div>
-      {dataAvailabilitiesMap[values.staffSchedules[0]?.staff || ""] && (
+      {dataAvailabilitiesMap[values.staffSchedules[0]?.staff || ""]?.length >
+        0 && (
         <div className="mt-2 text-xs text-danger bg-danger-50 p-2 rounded-md max-w-xs ml-auto flex items-center gap-2">
           <OctagonAlert size={16} />
-          <span>This carer is unavailable on the selected time.</span>
+          <span>
+            This carer is unavailable on{" "}
+            {dataAvailabilitiesMap[values.staffSchedules[0]?.staff || ""]
+              ?.map((item) => `${format(item.from, "h:mm a")}-${format(item.to, "h:mm a")}`)
+              .join(", ")}
+          </span>
         </div>
       )}
       <div className="h-4"></div>
