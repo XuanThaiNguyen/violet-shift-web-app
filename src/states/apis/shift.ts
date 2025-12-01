@@ -1,6 +1,7 @@
 import api from "@/services/api/http";
 import type {
   IShiftValues as IAddShift,
+  IBulkUpdateShift,
   IClientScheduleDetail,
   IGetStaffSchedule,
   IShiftDetail,
@@ -18,6 +19,12 @@ export const updateShift = async (values: IUpdateShift) => {
   const res = await api.put(`/api/v1/shifts/${values._id}`, values);
   return res.data;
 };
+
+export const bulkUpdateShift = async (values: IBulkUpdateShift) => {
+  const res = await api.post(`/api/v1/shifts/bulk-update/${values.repeatId}`, values);
+  return res.data;
+};
+
 export const deleteShift = async (shiftId: string) => {
   const res = await api.delete(`/api/v1/shifts/${shiftId}`);
   return res.data;

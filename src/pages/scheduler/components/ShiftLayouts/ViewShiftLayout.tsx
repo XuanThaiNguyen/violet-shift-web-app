@@ -1,8 +1,10 @@
 import CarerSection from "../ShiftDetailSections/CarerSection";
 import ClientSection from "../ShiftDetailSections/ClientSection";
+import InstructionSection from "../ShiftDetailSections/InstructionSection";
 import MilleageSection from "../ShiftDetailSections/MilleageSection";
 import PersonalSection from "../ShiftDetailSections/PersonalSection";
 import ShiftInfoSection from "../ShiftDetailSections/ShiftInfoSection";
+import SignatureSection from "../ShiftDetailSections/SignatureSection";
 import TaskSection from "../ShiftDetailSections/TaskSection";
 import TimeNLocationSection from "../ShiftDetailSections/TimeNLocationSection";
 
@@ -26,11 +28,11 @@ const ViewShiftLayout = ({ values, isAdmin }: ViewShiftLayoutProps) => {
 
       {isAdmin ? <TaskSection values={values} /> : <></>}
 
-      {/* <InstructionSection values={values} /> */}
+      <InstructionSection values={values} />
 
       <MilleageSection values={values} />
 
-      {/* <SignatureSection values={values} /> */}
+      <SignatureSection values={values} />
     </div>
   );
 };

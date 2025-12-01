@@ -125,6 +125,21 @@ export const monthNames = [
   "November",
   "December",
 ];
+
+export const shortMonthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 export const hours = Array.from({ length: 24 }, (_, i) => i);
 
 export const initialEventsMockUp = [
@@ -209,10 +224,4 @@ export const initialStaffMockup = [
     hours: "0.00 Hours",
     available: true,
   },
-];
-
-export const RecurrenceOptions = [
-  { label: "Daily", key: "daily" },
-  { label: "Weekly", key: "weekly" },
-  { label: "Monthly", key: "monthly" },
 ];

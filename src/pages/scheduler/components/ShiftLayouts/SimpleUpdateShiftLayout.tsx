@@ -1,7 +1,9 @@
 import CarerForm from "../ShiftForms/CarerForm";
 import ClientForm from "../ShiftForms/ClientForm";
+import InstructionForm from "../ShiftForms/InstructionForm";
 import MilleageForm from "../ShiftForms/MilleageForm";
 import ShiftInfoForm from "../ShiftForms/ShiftInfoForm";
+import SignatureForm from "../ShiftForms/SignatureForm";
 import TaskForm from "../ShiftForms/TaskForm";
 import TimeNLocationForm from "../ShiftForms/TimeNLocationForm";
 
@@ -27,17 +29,21 @@ const SimpleUpdateShiftLayout = ({
 
       <ShiftInfoForm values={values} setValues={setValues} />
 
-      <TimeNLocationForm values={values} setValues={setValues} />
+      <TimeNLocationForm
+        values={values}
+        setValues={setValues}
+        allowRepeat={false}
+      />
 
       <CarerForm values={values} setValues={setValues} />
 
       <TaskForm values={values} setValues={setValues} />
 
-      {/* <InstructionForm values={values} setValues={setValues} /> */}
+      <InstructionForm values={values} setValues={setValues} />
 
       <MilleageForm values={values} setValues={setValues} />
 
-      {/* <SignatureForm values={values} setValues={setValues} /> */}
+      <SignatureForm values={values} setValues={setValues} />
     </form>
   );
 };

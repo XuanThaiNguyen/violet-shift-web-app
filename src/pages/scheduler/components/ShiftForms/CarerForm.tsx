@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { UserIcon } from "lucide-react";
+import { useDeferredValue, useMemo } from "react";
+import { OctagonAlert, UserIcon } from "lucide-react";
 import {
   Divider,
   Select as HerouiSelect,
@@ -7,12 +7,15 @@ import {
   User,
 } from "@heroui/react";
 import { Select } from "@/components/select/Select";
+import { format } from "date-fns";
 
 // apis
 import { useStaffs } from "@/states/apis/staff";
+import { useGetAvailabilities } from "@/states/apis/availability";
 
 // constants
 import { EMPTY_ARRAY } from "@/constants/empty";
+import { PayMethodOptions } from "../../constant";
 
 // utils
 import { getDisplayName } from "@/utils/strings";
@@ -22,7 +25,7 @@ import type { FC, SetStateAction } from "react";
 import type { IShiftValues } from "@/types/shift";
 import type { FormikErrors } from "formik";
 import type { User as IUser } from "@/types/user";
-import { PayMethodOptions } from "../../constant";
+import type { IAvailibility } from "@/types/availability";
 
 type CarerFormProps = {
   values: IShiftValues;
@@ -40,6 +43,24 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
     archived: false,
     joined: true,
   });
+
+  const deferredFrom = useDeferredValue(values.timeFrom);
+  const deferredTo = useDeferredValue(values.timeTo);
+
+  const { data: dataAvailabilities = EMPTY_ARRAY } = useGetAvailabilities({
+    from: deferredFrom,
+    to: deferredTo,
+    type: "unavailable",
+    isApproved: true,
+  });
+  const dataAvailabilitiesMap = useMemo(() => {
+    return dataAvailabilities.reduce((acc, item) => {
+      const old = acc[item.staff] || [];
+      acc[item.staff] = [...old, item];
+      return acc;
+    }, {} as Record<string, IAvailibility[]>);
+  }, [dataAvailabilities]);
+
   const allStaffs = allStaffsData?.data || EMPTY_ARRAY;
 
   const allStaffsOptions = useMemo(() => {
@@ -99,6 +120,18 @@ const CarerForm: FC<CarerFormProps> = ({ values, setValues }) => {
           }}
         />
       </div>
+      {dataAvailabilitiesMap[values.staffSchedules[0]?.staff || ""]?.length >
+        0 && (
+        <div className="mt-2 text-xs text-danger bg-danger-50 p-2 rounded-md max-w-xs ml-auto flex items-center gap-2">
+          <OctagonAlert size={16} />
+          <span>
+            This carer is unavailable on{" "}
+            {dataAvailabilitiesMap[values.staffSchedules[0]?.staff || ""]
+              ?.map((item) => `${format(item.from, "h:mm a")}-${format(item.to, "h:mm a")}`)
+              .join(", ")}
+          </span>
+        </div>
+      )}
       <div className="h-4"></div>
       <div className="flex items-center justify-between">
         <span className="text-sm">Choose pay group</span>

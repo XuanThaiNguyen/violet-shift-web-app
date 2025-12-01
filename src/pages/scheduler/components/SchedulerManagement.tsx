@@ -2,20 +2,24 @@ import { EMPTY_ARRAY } from "@/constants/empty";
 import { useStaffs } from "@/states/apis/staff";
 import { useEffect, useMemo, useState } from "react";
 import { hours } from "../constant";
-import type { DayDateInfo, ViewMode } from "../type";
 import { formatHour } from "../util";
 import SchedulerManagementItem from "./SchedulerManagementItem";
-import type { User } from "@/types/user";
 import { getDisplayName } from "@/utils/strings";
 import { convertDateToMs } from "@/utils/datetime";
 import { useDebounceValue } from "usehooks-ts";
 
+import type { DayDateInfo, ViewMode } from "../type";
+import type { User } from "@/types/user";
+import type { IAvailibility } from "@/types/availability";
+
 interface SchedulerManagementProps {
   viewMode: ViewMode;
   dates: DayDateInfo[];
+  setSelectedShiftId: (shiftId: string) => void;
+  setSelectedUnavailability: (unavailability: IAvailibility) => void;
 }
 
-const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
+const SchedulerManagement = ({ viewMode, dates, setSelectedShiftId, setSelectedUnavailability }: SchedulerManagementProps) => {
   const [query, setQuery] = useDebounceValue<string>("", 300);
   const [from, setFrom] = useState<number | null>(null);
   const [to, setTo] = useState<number | null>(null);
@@ -90,6 +94,8 @@ const SchedulerManagement = ({ viewMode, dates }: SchedulerManagementProps) => {
         dates={dates}
         from={from}
         to={to}
+        setSelectedShiftId={setSelectedShiftId}
+        setSelectedUnavailability={setSelectedUnavailability}
       />
     );
   };
