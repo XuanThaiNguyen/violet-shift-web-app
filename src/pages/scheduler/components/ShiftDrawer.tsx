@@ -507,6 +507,28 @@ const ShiftDrawer = ({
     return true;
   }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
 
+  const isDeletable = useMemo(() => {
+    if (isLoading || staffScheduleLoading) return false;
+    const now = Date.now();
+    // check if the shift is happening
+    if (dataShiftDetail!.timeFrom <= now && dataShiftDetail!.timeTo >= now) return false;
+    // check if the staff is clocked in or shift is processed
+    if (staffSchedules?.some((schedule) => {
+      const isHappening = schedule.timeFrom! <= now && schedule.timeTo! >= now;
+      const isClockedIn = schedule.clocksInAt! < now
+      return !isHappening && !isClockedIn;
+    }))
+    return true;
+  }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
+
+  const isPastShift = useMemo(() => {
+    if (isLoading || staffScheduleLoading) return false;
+    const now = Date.now();
+    if (dataShiftDetail!.timeFrom <= now) return true;
+    if (staffSchedules?.some((schedule) => schedule.timeFrom! <= now)) return true;
+    return false;
+  }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
+
   return (
     <>
       <Drawer
@@ -579,7 +601,7 @@ const ShiftDrawer = ({
                         }
                       }}
                       isLoading={isManipulating}
-                      isDisabled={isManipulating || !isEditable}
+                      isDisabled={isManipulating || !isDeletable}
                     >
                       Delete
                     </Button>
@@ -630,6 +652,7 @@ const ShiftDrawer = ({
           }
           onClose={() => setConfirmationModal(ConfirmationModals.NONE)}
           repeat={dataShiftDetail.repeat}
+          isPastShift={isPastShift}
           onConfirm={(deleteType: string, endDate: number) => {
             if (deleteType === "only") {
               mutateDeleteShift(selectedShiftId || "");
