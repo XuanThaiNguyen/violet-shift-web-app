@@ -109,6 +109,7 @@ export interface IGetStaffSchedule {
   timeFrom: number | null;
   timeTo: number | null;
   paymentMethod: PaymentMethodEnum;
+  clocksInAt?: number | null;
   _id: string;
 }
 

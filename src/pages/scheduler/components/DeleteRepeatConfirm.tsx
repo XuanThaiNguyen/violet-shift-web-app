@@ -20,7 +20,8 @@ import {
 import type { IShiftRepeat } from "@/types/shift";
 interface DeleteRepeatConfirmProps {
   isOpen: boolean;
-  repeat: IShiftRepeat; 
+  repeat: IShiftRepeat;
+  isPastShift: boolean;
   onClose: () => void;
   onConfirm: (deleteType: string, endDate: number) => void;
 }
@@ -28,6 +29,7 @@ interface DeleteRepeatConfirmProps {
 const DeleteRepeatConfirm = ({
   isOpen,
   repeat,
+  isPastShift,
   onClose,
   onConfirm,
 }: DeleteRepeatConfirmProps) => {
@@ -56,7 +58,13 @@ const DeleteRepeatConfirm = ({
                 onValueChange={setDeleteType}
               >
                 <Radio value={"only"}>Only this shift</Radio>
-                <Radio value={"future"}>Future shifts</Radio>
+                <Radio
+                  value={"future"}
+                  disabled={isPastShift}
+                  isDisabled={isPastShift}
+                >
+                  Future shifts
+                </Radio>
                 {deleteType === "future" ? (
                   <>
                     <DatePicker
@@ -97,15 +105,20 @@ const DeleteRepeatConfirm = ({
                 ) : (
                   <></>
                 )}
-                <Radio value={"all"}>All</Radio>
+                <Radio
+                  value={"all"}
+                  disabled={isPastShift}
+                  isDisabled={isPastShift}
+                >
+                  All
+                </Radio>
               </RadioGroup>
-              {
-                deleteType !== "only" && (
-                  <div className="mb-4 text-xs bg-warning-50 p-2 rounded-md text-warning">
-                    Only unprocessed shifts will be deleted. All processed and processing ones will be kept.
-                  </div>
-                )
-              }
+              {deleteType !== "only" && (
+                <div className="mb-4 text-xs bg-warning-50 p-2 rounded-md text-warning">
+                  Only unprocessed shifts will be deleted. All processed and
+                  processing ones will be kept.
+                </div>
+              )}
             </ModalBody>
             <Divider />
             <ModalFooter>
