@@ -28,7 +28,7 @@ type TimeNLocationFormProps = {
   errors?: FormikErrors<IShiftValues>;
   setValues: (
     values: SetStateAction<IShiftValues>,
-    shouldValidate?: boolean
+    shouldValidate?: boolean,
   ) => Promise<FormikErrors<IShiftValues>> | Promise<void>;
 };
 
@@ -44,9 +44,9 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
   const overnightShiftId = useId();
   const [isBonus, setIsBonus] = useState(false);
 
-  const minDate = useMemo(() => {
-    return parseTimeInput(startOfDay(Date.now()).getTime());
-  }, []);
+  // const minDate = useMemo(() => {
+  //   return parseTimeInput(startOfDay(Date.now()).getTime());
+  // }, []);
 
   // const [isNightShift, setIsNightShift] = useState(false);
   const timefromInput = values.timeFrom
@@ -88,7 +88,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
           name="birthdate"
           hideTimeZone
           value={timefromInput}
-          minValue={minDate}
+          // minValue={minDate}
           onChange={(date: ZonedDateTime | null) => {
             if (!date) return;
             const hour = date.hour;
@@ -103,7 +103,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
               day,
               hour,
               minute,
-              second
+              second,
             ).getTime();
             const dateTimeTo = isOverNightShift ? date.add({ days: 1 }) : date;
             setValues((prev) => {
@@ -116,7 +116,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                 dateTimeTo.day,
                 hourTo,
                 minuteTo,
-                secondTo
+                secondTo,
               ).getTime();
 
               const oldClientSchedules = prev.clientSchedules;
@@ -127,7 +127,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                     timeFrom: newTimeFrom,
                     timeTo: newTimeTo,
                   };
-                }
+                },
               );
 
               const oldStaffSchedules = prev.staffSchedules;
@@ -138,7 +138,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                     timeFrom: newTimeFrom,
                     timeTo: newTimeTo,
                   };
-                }
+                },
               );
 
               const repeat = prev.repeat as IShiftRepeat;
@@ -182,7 +182,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
               baseTimeto.day,
               hour,
               minute,
-              0
+              0,
             ).getTime();
             setValues((prev) => {
               const oldClientSchedules = prev.clientSchedules;
@@ -192,7 +192,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                     ...clientSchedule,
                     timeTo: newTimeTo,
                   };
-                }
+                },
               );
 
               const oldStaffSchedules = prev.staffSchedules;
@@ -202,7 +202,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                     ...staffSchedule,
                     timeTo: newTimeTo,
                   };
-                }
+                },
               );
               return {
                 ...prev,
@@ -241,7 +241,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                 day,
                 hour,
                 minute,
-                0
+                0,
               ).getTime();
               setValues((prev) => {
                 const oldClientSchedules = prev.clientSchedules;
@@ -251,7 +251,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                       ...clientSchedule,
                       timeFrom: newTimeFrom,
                     };
-                  }
+                  },
                 );
 
                 const oldStaffSchedules = prev.staffSchedules;
@@ -261,7 +261,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                       ...staffSchedule,
                       timeFrom: newTimeFrom,
                     };
-                  }
+                  },
                 );
 
                 const repeat = prev.repeat as IShiftRepeat;
@@ -308,7 +308,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                 day,
                 hour,
                 minute,
-                0
+                0,
               ).getTime();
               setValues((prev) => {
                 const oldClientSchedules = prev.clientSchedules;
@@ -318,7 +318,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                       ...clientSchedule,
                       timeTo: newTimeTo,
                     };
-                  }
+                  },
                 );
 
                 const oldStaffSchedules = prev.staffSchedules;
@@ -328,7 +328,7 @@ const TimeNLocationForm: FC<TimeNLocationFormProps> = ({
                       ...staffSchedule,
                       timeTo: newTimeTo,
                     };
-                  }
+                  },
                 );
 
                 return {

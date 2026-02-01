@@ -1,5 +1,6 @@
 import api from "@/services/api/http";
 import type {
+  IAddLogWork,
   IShiftValues as IAddShift,
   IBulkUpdateShift,
   IClientScheduleDetail,
@@ -7,8 +8,9 @@ import type {
   IShiftDetail,
   IShiftTask,
   IUpdateShift,
+  IWorklog,
 } from "@/types/shift";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 export const createNewShift = async (values: IAddShift) => {
   const res = await api.post("/api/v1/shifts", values);
@@ -21,7 +23,17 @@ export const updateShift = async (values: IUpdateShift) => {
 };
 
 export const bulkUpdateShift = async (values: IBulkUpdateShift) => {
-  const res = await api.post(`/api/v1/shifts/bulk-update/${values.repeatId}`, values);
+  const res = await api.post(
+    `/api/v1/shifts/bulk-update/${values.repeatId}`,
+    values,
+  );
+  return res.data;
+};
+
+export const logWork = async (payload: IAddLogWork) => {
+  const res = await api.post(
+    `/api/v1/shifts/${payload.shiftId}/staff-schedules/${payload.scheduleId}/log-work`,
+  );
   return res.data;
 };
 
@@ -49,7 +61,7 @@ export const bulkDeleteShift = async ({
 export const useGetSchedulesByStaffId = (
   staffId: string,
   from?: number | null,
-  to?: number | null
+  to?: number | null,
 ) => {
   const schedulesByStaffId = useQuery<IGetStaffSchedule[]>({
     queryKey: ["staffSchedules", staffId, from, to],
@@ -121,4 +133,25 @@ export const useGetShiftDetail = (shiftId?: string) => {
   });
 
   return shiftDetail;
+};
+
+export const getWorkLogsByStaffQueryOptions = (
+  shiftId: string,
+  staffId: string,
+) => {
+  return queryOptions<IWorklog[]>({
+    queryKey: ["workLogs", shiftId, staffId],
+    queryFn: () => api.get(`/api/v1/worklogs/shifts/${shiftId}/${staffId}`),
+    enabled: !!shiftId && !!staffId && !!localStorage.getItem("auth_token"),
+    retry: false,
+  });
+};
+
+export const useShiftLogsOfStaff = (shiftId: string, staffId: string) => {
+  return useQuery({
+    ...getWorkLogsByStaffQueryOptions(shiftId, staffId),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 };
