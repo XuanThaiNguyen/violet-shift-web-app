@@ -3,11 +3,13 @@ import {
   bulkDeleteShift,
   bulkUpdateShift,
   deleteShift,
+  logWork,
   updateShift,
   useGetClientSchedulesByShift,
   useGetShiftDetail,
   useGetStaffSchedulesByShift,
   useGetTasksByShift,
+  useShiftLogsOfStaff,
 } from "@/states/apis/shift";
 import type {
   IArrayUpdate,
@@ -32,7 +34,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useFormik } from "formik";
-import { ArrowLeft, Edit, Save, X } from "lucide-react";
+import { ArrowLeft, Clock, Edit, Save, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import * as Yup from "yup";
 import { ErrorMessages, ShiftTypeKeys, ShiftTypeOptions } from "../constant";
@@ -111,7 +113,7 @@ const ShiftDrawer = ({
   const [isEdit, setIsEdit] = useState(false);
   const [internalOpen, setInternalOpen] = useState(isOpen);
   const [confirmationModal, setConfirmationModal] = useState<string>(
-    ConfirmationModals.NONE
+    ConfirmationModals.NONE,
   );
   const [updatePayload, setUpdatePayload] = useState<IUpdateShift | null>(null);
 
@@ -133,6 +135,15 @@ const ShiftDrawer = ({
     isLoading: clientScheduleLoading,
   } = useGetClientSchedulesByShift(selectedShiftId || "");
 
+  const assignedStaff =
+    staffSchedules.length > 0 ? staffSchedules[0].staff! : "";
+  const scheduleId = staffSchedules.length > 0 ? staffSchedules[0]._id : "";
+
+  const { data: workLogs = EMPTY_ARRAY, isLoading: isWorkLogsLoading } =
+    useShiftLogsOfStaff(selectedShiftId, assignedStaff);
+
+  const isLogged = !isWorkLogsLoading && workLogs?.length > 0;
+
   const { data: tasks = EMPTY_ARRAY, isLoading: tasksLoading } =
     useGetTasksByShift(selectedShiftId || "");
 
@@ -148,6 +159,47 @@ const ShiftDrawer = ({
       staffSchedules: staffSchedules,
     };
   }, [dataShiftDetail, clientSchedules, tasks, staffSchedules]);
+
+  const { mutate: mutateLogWork, isPending: isLogging } = useMutation({
+    mutationFn: logWork,
+    onSuccess: () => {
+      addToast({
+        title: "this work logged successfully",
+        color: "success",
+        timeout: 2000,
+        isClosing: true,
+      });
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const isWorlkLogs = query.queryKey[0] === "workLogs";
+          const isSelectedShift = query.queryKey[1] === selectedShiftId;
+          const isSelectedStaff = query.queryKey[2] === assignedStaff;
+
+          return isWorlkLogs && isSelectedShift && isSelectedStaff;
+        },
+      });
+    },
+    onError: (error) => {
+      setConfirmationModal(ConfirmationModals.NONE);
+      if (error instanceof AxiosError) {
+        const errorCode = error.response?.data?.code;
+        const msg = ErrorMessages[errorCode] ?? "Something went wrong";
+        addToast({
+          title: msg,
+          color: "danger",
+          timeout: 2000,
+          isClosing: true,
+        });
+      } else {
+        addToast({
+          title: "Update shift failed",
+          color: "danger",
+          timeout: 2000,
+          isClosing: true,
+        });
+      }
+    },
+  });
 
   const { mutate: mutateUpdateShift, isPending: isPendingUpdate } = useMutation(
     {
@@ -220,7 +272,7 @@ const ShiftDrawer = ({
           });
         }
       },
-    }
+    },
   );
 
   const { mutate: mutateBulkUpdateShift, isPending: isPendingBulkUpdate } =
@@ -297,7 +349,7 @@ const ShiftDrawer = ({
             if (firstKey === "staffSchedules") {
               return (
                 staffSchedules?.some(
-                  (schedule) => schedule.staff === secondKey
+                  (schedule) => schedule.staff === secondKey,
                 ) || false
               );
             }
@@ -320,7 +372,7 @@ const ShiftDrawer = ({
           });
         }
       },
-    }
+    },
   );
 
   const { mutate: mutateBulkDeleteShift, isPending: isPendingBulkDelete } =
@@ -333,7 +385,13 @@ const ShiftDrawer = ({
         });
         queryClient.removeQueries({
           predicate: (query) => {
-            const selectedKeys = ["shiftDetail", "staffSchedulesByShift", "clientSchedulesByShift", "tasksByShift", "staffSchedules"];
+            const selectedKeys = [
+              "shiftDetail",
+              "staffSchedulesByShift",
+              "clientSchedulesByShift",
+              "tasksByShift",
+              "staffSchedules",
+            ];
             return selectedKeys.includes(query.queryKey[0] as string);
           },
         });
@@ -412,17 +470,20 @@ const ShiftDrawer = ({
               timeFrom: oldStaffSchedule.timeFrom,
               timeTo: oldStaffSchedule.timeTo,
               paymentMethod: oldStaffSchedule.paymentMethod,
-            }
+            },
           )
         ) {
           staffScheduleUpdate.update.push(staffSchedule);
         }
       }
 
-      const oldTaskMap = tasks?.reduce((acc, task) => {
-        acc[task.repetitiveId!] = task;
-        return acc;
-      }, {} as Record<string, IShiftTask>);
+      const oldTaskMap = tasks?.reduce(
+        (acc, task) => {
+          acc[task.repetitiveId!] = task;
+          return acc;
+        },
+        {} as Record<string, IShiftTask>,
+      );
       const newTaskMap: Record<string, true> = {};
       const taskUpdate: IArrayUpdate<ITask> = {
         add: [],
@@ -511,21 +572,26 @@ const ShiftDrawer = ({
     if (isLoading || staffScheduleLoading) return false;
     const now = Date.now();
     // check if the shift is happening
-    if (dataShiftDetail!.timeFrom <= now && dataShiftDetail!.timeTo >= now) return false;
+    if (dataShiftDetail!.timeFrom <= now && dataShiftDetail!.timeTo >= now)
+      return false;
     // check if the staff is clocked in or shift is processed
-    if (staffSchedules?.some((schedule) => {
-      const isHappening = schedule.timeFrom! <= now && schedule.timeTo! >= now;
-      const isClockedIn = schedule.clocksInAt! < now
-      return !isHappening && !isClockedIn;
-    }))
-    return true;
+    if (
+      staffSchedules?.some((schedule) => {
+        const isHappening =
+          schedule.timeFrom! <= now && schedule.timeTo! >= now;
+        const isClockedIn = schedule.clocksInAt! < now;
+        return !isHappening && !isClockedIn;
+      })
+    )
+      return true;
   }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
 
   const isPastShift = useMemo(() => {
     if (isLoading || staffScheduleLoading) return false;
     const now = Date.now();
     if (dataShiftDetail!.timeFrom <= now) return true;
-    if (staffSchedules?.some((schedule) => schedule.timeFrom! <= now)) return true;
+    if (staffSchedules?.some((schedule) => schedule.timeFrom! <= now))
+      return true;
     return false;
   }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
 
@@ -592,11 +658,11 @@ const ShiftDrawer = ({
                       onPress={() => {
                         if (dataShiftDetail?.repeat) {
                           setConfirmationModal(
-                            ConfirmationModals.DELETE_REPEAT_CONFIRM
+                            ConfirmationModals.DELETE_REPEAT_CONFIRM,
                           );
                         } else {
                           setConfirmationModal(
-                            ConfirmationModals.DELETE_CONFIRM
+                            ConfirmationModals.DELETE_CONFIRM,
                           );
                         }
                       }}
@@ -615,6 +681,24 @@ const ShiftDrawer = ({
                     >
                       Edit
                     </Button>
+                    {isAdmin && !isWorkLogsLoading && !isLogged && (
+                      <Button
+                        size="md"
+                        color={"secondary"}
+                        onPress={() =>
+                          mutateLogWork({
+                            scheduleId: scheduleId,
+                            shiftId: selectedShiftId,
+                          })
+                        }
+                        startContent={<Clock size={16} />}
+                        isLoading={isLogging}
+                        disabled={isLogging}
+                        isDisabled={isLogging}
+                      >
+                        Log Work
+                      </Button>
+                    )}
                   </div>
                 )}
               </DrawerHeader>

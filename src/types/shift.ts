@@ -54,7 +54,6 @@ export interface IUpdateShift {
   staffSchedules: IArrayUpdate<IStaffSchedule>;
   tasks: IArrayUpdate<ITask>;
 }
-
 export interface IBulkUpdateShift {
   payload: Omit<IUpdateShift, "_id">;
   repeatId: string;
@@ -188,3 +187,16 @@ export interface IShiftTask {
   isCompleted: boolean;
   completedAt?: Date;
 }
+
+export type IWorklog = {
+  staff: string;
+  shift: string;
+  startedAt: number;
+  endedAt: number;
+  hours: number;
+};
+
+export type IAddLogWork = {
+  scheduleId: string;
+  shiftId: string;
+};
