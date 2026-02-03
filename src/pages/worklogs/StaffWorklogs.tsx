@@ -1,6 +1,7 @@
 import { useStaffDetail } from "@/states/apis/staff";
 import { useParams } from "react-router";
 import { getDisplayName } from "@/utils/strings";
+import StaffWorklogsDetail from "@/pages/staffs/components/Worklogs";
 
 import type { FC } from "react";
 
@@ -24,6 +25,8 @@ const StaffWorklogs: FC = () => {
         </div>
         <div className="h-4"></div>
       </div>
+      <div className="h-4"></div>
+      <StaffWorklogsDetail staffId={staffId as string} />
     </div>
   );
 };

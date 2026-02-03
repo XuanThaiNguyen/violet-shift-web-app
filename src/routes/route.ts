@@ -10,14 +10,14 @@ const Home = lazy(() => import("@/pages/home/Home"));
 const Login = lazy(() => import("@/pages/auth/login/Login"));
 // const Register = lazy(() => import("@/pages/auth/register/Register"));
 const ForgotPassword = lazy(
-  () => import("@/pages/auth/forgot-password/ForgotPassword")
+  () => import("@/pages/auth/forgot-password/ForgotPassword"),
 );
 const NewPassword = lazy(() => import("@/pages/auth/new-password/NewPassword"));
 const AcceptInvitation = lazy(
-  () => import("@/pages/auth/accept-invitation/AcceptInvitation")
+  () => import("@/pages/auth/accept-invitation/AcceptInvitation"),
 );
 const ProfileSetup = lazy(
-  () => import("@/pages/auth/ProfileSetup/ProfileSetup")
+  () => import("@/pages/auth/ProfileSetup/ProfileSetup"),
 );
 const Profile = lazy(() => import("@/pages/profile/Profile"));
 const ProfileUpdate = lazy(() => import("@/pages/profile/ProfileUpdate"));
@@ -27,14 +27,14 @@ const AddStaff = lazy(() => import("@/pages/staffs/AddStaff"));
 const StaffProfile = lazy(() => import("@/pages/staffs/StaffProfile"));
 const UpdateStaff = lazy(() => import("@/pages/staffs/UpdateStaff"));
 const StaffArchivedList = lazy(
-  () => import("@/pages/staffs/StaffArchivedList")
+  () => import("@/pages/staffs/StaffArchivedList"),
 );
 const ClientList = lazy(() => import("@/pages/clients/ClientList"));
 const AddClient = lazy(() => import("@/pages/clients/AddClient"));
 const UpdateClient = lazy(() => import("@/pages/clients/UpdateClient"));
 const ClientProfile = lazy(() => import("@/pages/clients/ClientProfile"));
 const ClientArchivedList = lazy(
-  () => import("@/pages/clients/ClientArchivedList")
+  () => import("@/pages/clients/ClientArchivedList"),
 );
 const AccountPrices = lazy(() => import("@/pages/account/Prices"));
 const StaffWorklogs = lazy(() => import("@/pages/worklogs/StaffWorklogs"));
@@ -94,8 +94,14 @@ export const router = createBrowserRouter([
       { path: "staffs/:id/update", Component: UpdateStaff },
       { path: "clients/:id", Component: ClientProfile },
       { path: "clients/:id/update", Component: UpdateClient },
-      { path: "worklogs", Component: Worklogs },
-      { path: "worklogs/:staffId", Component: StaffWorklogs },
+      {
+        path: "worklogs",
+        Component: PrivateModule([ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR]),
+        children: [
+          { index: true, Component: Worklogs },
+          { path: ":staffId", Component: StaffWorklogs },
+        ],
+      },
       { path: "*", Component: NotFound },
     ],
   },
