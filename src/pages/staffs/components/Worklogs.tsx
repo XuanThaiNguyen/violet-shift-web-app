@@ -8,7 +8,7 @@ import {
   startOfWeek,
   subWeeks,
 } from "date-fns";
-import { ArrowLeft, ArrowRight, InfoIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, InfoIcon } from "lucide-react";
 import { Button, Tooltip } from "@heroui/react";
 import { useGetWorklogs } from "@/states/apis/worklogs";
 import { TIME_RULES_DATA, timeRules } from "@/constants/timeRules";
@@ -100,7 +100,7 @@ const Worklogs: FC<WorklogsProps> = ({ staffId: staffIdProp }) => {
             }
             onPress={() => setFrom(subWeeks(from, 2))}
           >
-            <ArrowLeft size={16} />
+            <ChevronLeft size={16} />
           </Button>
           <span className="text-sm md:text-base">
             {format(from, "dd MMM yyyy")} - {format(to, "dd MMM yyyy")}
@@ -114,7 +114,7 @@ const Worklogs: FC<WorklogsProps> = ({ staffId: staffIdProp }) => {
             disabled={from.getTime() >= maxFrom.getTime()}
             onPress={() => setFrom(addWeeks(from, 2))}
           >
-            <ArrowRight size={16} />
+            <ChevronRight size={16} />
           </Button>
         </div>
       </div>

@@ -26,7 +26,7 @@ import {
   startOfWeek,
   subWeeks,
 } from "date-fns";
-import { ArrowLeft, ArrowRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -36,6 +36,7 @@ import type { FC } from "react";
 
 type StaffRow = UserType & {
   _id?: string;
+  totalWorklogHours?: number;
 };
 
 const columns = [
@@ -105,12 +106,18 @@ const Worklogs: FC = () => {
     );
   }, [summaryData]);
 
+  const staffList = useMemo(() => {
+    return staffs.map((staff) => ({
+      ...staff,
+      totalWorklogHours: summaryMap[staff.id ?? EMPTY_STRING]?.totalHours ?? 0,
+    }));
+  }, [staffs, summaryMap]);
+
   const pages = Math.ceil((pagination?.total ?? 1) / (filter.limit ?? 10));
 
   const hasSearchFilter = Boolean(filter.query);
 
-  const renderCell = (user: StaffRow, columnKey: string) => {
-    const staffId = user.id ?? user._id;
+  const renderCell = useCallback((user: StaffRow, columnKey: string) => {
     const fullName = getFullName({
       firstName: user?.firstName,
       middleName: user?.middleName,
@@ -139,15 +146,10 @@ const Worklogs: FC = () => {
           </div>
         );
       case "totalWorklogHours": {
-        const summary = summaryMap[String(staffId ?? "")];
-        const hoursRaw = summary?.totalHours ?? 0;
-        const hoursNumber =
-          typeof hoursRaw === "number" ? hoursRaw : Number(hoursRaw);
-        const hours = Number.isFinite(hoursNumber) ? hoursNumber : 0;
         return (
           <div className="flex flex-col">
             <p className="text-bold text-small capitalize">
-              {hours.toFixed(2)} hrs
+              {user?.totalWorklogHours?.toFixed(2)} hrs
             </p>
           </div>
         );
@@ -155,7 +157,7 @@ const Worklogs: FC = () => {
       default:
         return null;
     }
-  };
+  }, []);
 
   const onRowsPerPageChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -227,7 +229,7 @@ const Worklogs: FC = () => {
                     delete newFilter.query;
                   }
 
-                  if (roleFilter) {
+                  if (roleFilter !== "all") {
                     newFilter.roles = Array.from(roleFilter);
                   } else {
                     delete newFilter.roles;
@@ -311,7 +313,7 @@ const Worklogs: FC = () => {
               }
               onPress={() => setFrom(subWeeks(from, 2))}
             >
-              <ArrowLeft size={16} />
+              <ChevronLeft size={16} />
             </Button>
             <span className="text-sm md:text-base whitespace-nowrap">
               {format(from, "dd MMM yyyy")} - {format(to, "dd MMM yyyy")}
@@ -325,7 +327,7 @@ const Worklogs: FC = () => {
               disabled={from.getTime() >= maxFrom.getTime()}
               onPress={() => setFrom(addWeeks(from, 2))}
             >
-              <ArrowRight size={16} />
+              <ChevronRight size={16} />
             </Button>
           </div>
         </div>
@@ -388,12 +390,11 @@ const Worklogs: FC = () => {
             isLoading={isLoading}
             loadingContent={<Spinner label="Loading..." />}
             emptyContent={"No worklogs found"}
-            items={staffs}
+            items={staffList}
           >
             {(item) => (
               <TableRow
                 key={(item as StaffRow).id ?? (item as StaffRow)._id}
-                // onClick={() => navigate(`/worklogs/${item.id}`)}
                 onClick={() =>
                   navigate(
                     `/staffs/${(item as StaffRow).id ?? (item as StaffRow)._id}?tab=worklogs&from=worklogs`,

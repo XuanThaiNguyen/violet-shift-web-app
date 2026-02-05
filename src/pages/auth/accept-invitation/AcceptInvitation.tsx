@@ -11,9 +11,7 @@ const AcceptInvitation: FC = () => {
   useEffect(() => {
     (async () => {
       const searchParams = new URLSearchParams(window.location.search);
-      console.log("🚀 ~ searchParams:", searchParams);
       const token = searchParams.get("token");
-      console.log("🚀 ~ token ne:", token);
       if (!token) {
         return;
       }
