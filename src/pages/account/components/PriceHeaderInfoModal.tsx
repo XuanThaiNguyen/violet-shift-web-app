@@ -25,8 +25,6 @@ const PriceHeaderInfoModal = ({
   name = "",
   mode = "add",
 }: PriceHeaderInfoModalProps) => {
-  console.log("namename", name);
-
   const {
     values,
     handleSubmit,
@@ -57,8 +55,8 @@ const PriceHeaderInfoModal = ({
               {mode === "edit"
                 ? "Edit"
                 : mode === "duplicate"
-                ? "Duplicate"
-                : "Add"}{" "}
+                  ? "Duplicate"
+                  : "Add"}{" "}
               Price Book
             </ModalHeader>
             <Divider />

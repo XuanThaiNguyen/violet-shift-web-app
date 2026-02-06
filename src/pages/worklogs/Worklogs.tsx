@@ -1,7 +1,7 @@
 import { EMPTY_ARRAY, EMPTY_STRING } from "@/constants/empty";
-import { ROLE_IDS, ROLE_NAMES, ROLES } from "@/constants/roles";
-import { employmentTypeOptions, genderOptions } from "@/constants/userOptions";
+import { ROLE_IDS, ROLE_NAMES } from "@/constants/roles";
 import { useStaffs, type StaffFilter } from "@/states/apis/staff";
+import { useGetWorklogSummary } from "@/states/apis/worklogs";
 import {
   Button,
   Input,
@@ -18,76 +18,69 @@ import {
   User,
   type SharedSelection,
 } from "@heroui/react";
-import { format, isValid } from "date-fns";
-import { PlusIcon, Search } from "lucide-react";
+import {
+  addWeeks,
+  endOfWeek,
+  format,
+  startOfDay,
+  startOfWeek,
+  subWeeks,
+} from "date-fns";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import type { User as UserType } from "@/types/user";
-import { getDisplayName, getFullName } from "@/utils/strings";
+import { getFullName } from "@/utils/strings";
 import type { FC } from "react";
 
+type StaffRow = UserType & {
+  _id?: string;
+  totalWorklogHours?: number;
+};
+
 const columns = [
-  { name: "Name", uid: "name", width: 240, className: "min-w-[160px]" },
-  { name: "Gender", uid: "gender" },
-  { name: "Role", uid: "role" },
   {
-    name: "Email",
-    uid: "email",
-    sortable: true,
+    name: "Name",
+    uid: "name",
+    sortable: false,
     width: 240,
-    className: "min-w-[240px]",
+    className: "min-w-[160px]",
   },
-  { name: "Mobile", uid: "mobile", width: 120, className: "min-w-[120px]" },
   {
-    name: "Birthdate",
-    uid: "birthdate",
-    sortable: true,
-    width: 130,
-    className: "min-w-[130px]",
-  },
-  { name: "Employment Type", uid: "employmentType" },
-  {
-    name: "Joined At",
-    uid: "joinedAt",
-    sortable: true,
-    width: 130,
-    className: "min-w-[130px]",
+    name: "Total worklog hours",
+    uid: "totalWorklogHours",
+    sortable: false,
+    width: 180,
+    className: "min-w-[180px]",
   },
 ];
 
+const minFrom = startOfDay(new Date("2025-10-01"));
+const weekStartsOn = 1;
+
 const roleOptions = [
   { name: ROLE_NAMES.CARER, value: ROLE_IDS.CARER },
-  { name: ROLE_NAMES.HR, value: ROLE_IDS.HR },
   { name: ROLE_NAMES.ADMIN, value: ROLE_IDS.ADMIN },
   { name: ROLE_NAMES.COORDINATOR, value: ROLE_IDS.COORDINATOR },
   { name: ROLE_NAMES.OFFICE_SUPPORT, value: ROLE_IDS.OFFICE_SUPPORT },
 ];
 
-const genderMap = genderOptions.reduce((acc, option) => {
-  acc[option.value] = option.label;
-  return acc;
-}, {} as Record<string, string>);
-
-const employmentTypeMap = employmentTypeOptions.reduce((acc, option) => {
-  acc[option.value] = option.label;
-  return acc;
-}, {} as Record<string, string>);
-
 const Worklogs: FC = () => {
   const navigate = useNavigate();
 
+  const currentBlockFrom = startOfWeek(new Date(), { weekStartsOn });
+  const maxFrom = currentBlockFrom;
+  const [from, setFrom] = useState<Date>(currentBlockFrom);
+  const to = endOfWeek(addWeeks(from, 1), { weekStartsOn });
+
   const [filterValue, setFilterValue] = useState("");
   const [roleFilter, setRoleFilter] = useState<Set<string> | "all">(
-    new Set([])
+    new Set([]),
   );
-  const [employmentTypeFilter, setEmploymentTypeFilter] = useState<
-    Set<string> | "all"
-  >(new Set([]));
   const [filter, setFilter] = useState<StaffFilter>({
     query: "",
     roles: [],
-    employmentTypes: [],
     page: 1,
     limit: 10,
     sort: "createdAt",
@@ -96,23 +89,35 @@ const Worklogs: FC = () => {
   });
 
   const { data: staffData, isLoading } = useStaffs(filter);
+  const { data: summaryData } = useGetWorklogSummary({
+    from: from.getTime(),
+    to: to.getTime(),
+  });
   const staffs = staffData?.data || EMPTY_ARRAY;
   const pagination = staffData?.pagination;
+
+  const summaryMap = useMemo(() => {
+    return (summaryData ?? []).reduce(
+      (acc, item) => {
+        acc[item.staffId] = item;
+        return acc;
+      },
+      {} as Record<string, { totalHours: number; segments: number }>,
+    );
+  }, [summaryData]);
+
+  const staffList = useMemo(() => {
+    return staffs.map((staff) => ({
+      ...staff,
+      totalWorklogHours: summaryMap[staff.id ?? EMPTY_STRING]?.totalHours ?? 0,
+    }));
+  }, [staffs, summaryMap]);
 
   const pages = Math.ceil((pagination?.total ?? 1) / (filter.limit ?? 10));
 
   const hasSearchFilter = Boolean(filter.query);
 
-  const renderCell = useCallback((user: UserType, columnKey: string) => {
-    const cellValue = user[columnKey as keyof UserType];
-    const displayName = getDisplayName({
-      firstName: user?.firstName,
-      middleName: user?.middleName,
-      lastName: user?.lastName,
-      salutation: user?.salutation,
-      preferredName: user?.preferredName,
-    });
-
+  const renderCell = useCallback((user: StaffRow, columnKey: string) => {
     const fullName = getFullName({
       firstName: user?.firstName,
       middleName: user?.middleName,
@@ -135,71 +140,23 @@ const Worklogs: FC = () => {
               classNames={{
                 description: "text-default-500",
               }}
-              description={fullName || ""}
-              name={displayName || ""}
+              description={user?.email || ""}
+              name={fullName || ""}
             />
           </div>
         );
-      case "role":
+      case "totalWorklogHours": {
         return (
           <div className="flex flex-col">
             <p className="text-bold text-small capitalize">
-              {ROLES[user.role as keyof typeof ROLES]}
+              {user?.totalWorklogHours?.toFixed(2)} hrs
             </p>
           </div>
         );
-      case "mobile":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {user.mobileNumber ? user.mobileNumber : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "gender":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {user.gender ? genderMap[user.gender || ""] : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "birthdate":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {isValid(new Date(user.birthdate ?? ""))
-                ? format(user.birthdate!, "dd-MM-yyyy")
-                : EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "employmentType":
-        return (
-          <div className="flex flex-col">
-            <p className="text-bold text-small capitalize">
-              {employmentTypeMap[user.employmentType] || EMPTY_STRING}
-            </p>
-          </div>
-        );
-      case "joinedAt":
-        return (
-          <div className="flex flex-col">
-            <p
-              className={`text-bold text-small ${
-                isValid(new Date(user.joinedAt ?? "")) ? "" : "text-red-500"
-              }`}
-            >
-              {isValid(new Date(user.joinedAt ?? ""))
-                ? format(user.joinedAt!, "dd-MM-yyyy")
-                : "Waiting for response..."}
-            </p>
-          </div>
-        );
+      }
       default:
-        return cellValue;
+        return null;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onRowsPerPageChange = useCallback(
@@ -212,7 +169,7 @@ const Worklogs: FC = () => {
         };
       });
     },
-    []
+    [],
   );
 
   const topContent = useMemo(() => {
@@ -235,26 +192,6 @@ const Worklogs: FC = () => {
             onValueChange={setFilterValue}
           />
           <div className="flex items-end gap-2">
-            <Select
-              items={employmentTypeOptions}
-              label="Employment Types"
-              size="sm"
-              placeholder="Select Type"
-              selectionMode="multiple"
-              selectedKeys={employmentTypeFilter}
-              labelPlacement="outside"
-              onSelectionChange={
-                setEmploymentTypeFilter as (keys: SharedSelection) => void
-              }
-              className="w-40"
-              classNames={{ trigger: "cursor-pointer" }}
-            >
-              {employmentTypeOptions.map((employmentType) => (
-                <SelectItem key={employmentType.value}>
-                  {employmentType.label}
-                </SelectItem>
-              ))}
-            </Select>
             <Select
               items={roleOptions}
               label="Roles"
@@ -292,14 +229,7 @@ const Worklogs: FC = () => {
                     delete newFilter.query;
                   }
 
-                  if (employmentTypeFilter !== "all") {
-                    newFilter.employmentTypes =
-                      Array.from(employmentTypeFilter);
-                  } else {
-                    delete newFilter.employmentTypes;
-                  }
-
-                  if (roleFilter) {
+                  if (roleFilter !== "all") {
                     newFilter.roles = Array.from(roleFilter);
                   } else {
                     delete newFilter.roles;
@@ -321,7 +251,7 @@ const Worklogs: FC = () => {
         </div>
       </div>
     );
-  }, [filterValue, employmentTypeFilter, roleFilter, pagination?.total]);
+  }, [filterValue, roleFilter, pagination?.total]);
 
   const bottomContent = useMemo(() => {
     return (
@@ -365,16 +295,41 @@ const Worklogs: FC = () => {
     <div className="container mx-auto pt-4">
       <div className="bg-content1 shadow-md rounded-lg p-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Staffs' Overview</h1>
-          <Button
-            as={Link}
-            to="/staffs/new"
-            color="primary"
-            size="sm"
-            endContent={<PlusIcon size={16} />}
-          >
-            Add New
-          </Button>
+          <h1 className="text-2xl font-bold">Staffs' Worklogs</h1>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              isIconOnly
+              color="default"
+              variant="light"
+              isDisabled={
+                from.getTime() <=
+                startOfWeek(minFrom, { weekStartsOn }).getTime()
+              }
+              disabled={
+                from.getTime() <=
+                startOfWeek(minFrom, { weekStartsOn }).getTime()
+              }
+              onPress={() => setFrom(subWeeks(from, 2))}
+            >
+              <ChevronLeft size={16} />
+            </Button>
+            <span className="text-sm md:text-base whitespace-nowrap">
+              {format(from, "dd MMM yyyy")} - {format(to, "dd MMM yyyy")}
+            </span>
+            <Button
+              size="sm"
+              isIconOnly
+              color="default"
+              variant="light"
+              isDisabled={from.getTime() >= maxFrom.getTime()}
+              disabled={from.getTime() >= maxFrom.getTime()}
+              onPress={() => setFrom(addWeeks(from, 2))}
+            >
+              <ChevronRight size={16} />
+            </Button>
+          </div>
         </div>
         <div className="h-4"></div>
 
@@ -435,12 +390,16 @@ const Worklogs: FC = () => {
             isLoading={isLoading}
             loadingContent={<Spinner label="Loading..." />}
             emptyContent={"No worklogs found"}
-            items={staffs}
+            items={staffList}
           >
             {(item) => (
               <TableRow
-                key={item.id}
-                onClick={() => navigate(`/worklogs/${item.id}`)}
+                key={(item as StaffRow).id ?? (item as StaffRow)._id}
+                onClick={() =>
+                  navigate(
+                    `/staffs/${(item as StaffRow).id ?? (item as StaffRow)._id}?tab=worklogs&from=worklogs`,
+                  )
+                }
                 className="cursor-pointer"
               >
                 {(columnKey) => (

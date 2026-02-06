@@ -56,7 +56,6 @@ const Login = () => {
                 navigate("/");
                 queryClient.invalidateQueries({ queryKey: ["me"] });
               } catch (error) {
-                console.log("🚀 ~ error:", error);
                 if (error instanceof AxiosError) {
                   const errorCode = error.response?.data?.code;
                   const msg =

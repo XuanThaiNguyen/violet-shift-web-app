@@ -136,6 +136,13 @@ const sidebarItems: SidebarItem[] = [
         to: "/account/prices",
         roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
       },
+      {
+        icon: ChevronsRight,
+        key: "worklogs",
+        label: "Worklogs",
+        to: "/worklogs",
+        roles: [ROLE_IDS.ADMIN, ROLE_IDS.COORDINATOR],
+      },
     ],
   },
 ];
@@ -152,13 +159,13 @@ const Sidebar: FC = () => {
         "-z-10 lg:!z-50 fixed top-0 left-0 w-full h-screen",
         isOpen
           ? "z-50 lg:w-64"
-          : "lg:w-18 animate-[delayZOffEffect_ease-in-out_0.3s_forwards]"
+          : "lg:w-18 animate-[delayZOffEffect_ease-in-out_0.3s_forwards]",
       )}
     >
       <div
         className={clsx(
           "fixed top-0 left-0 bg-black/60 w-full h-full transition-all duration-300 lg:!hidden",
-          isOpen ? "opacity-100 lg:hidden" : "opacity-0"
+          isOpen ? "opacity-100 lg:hidden" : "opacity-0",
         )}
         onClick={() => setIsOpen(false)}
       ></div>
@@ -167,7 +174,7 @@ const Sidebar: FC = () => {
           "w-64 h-screen bg-content1 text-content1-foreground flex-shrink-0 transition-all duration-300",
           isOpen
             ? "translate-x-0"
-            : "lg:w-18 lg:translate-x-0 -translate-x-full"
+            : "lg:w-18 lg:translate-x-0 -translate-x-full",
         )}
       >
         <h1 className="w-full flex-shrink-0 text-center text-lg font-semibold h-14 bg-primary text-primary-foreground flex items-center justify-center">
@@ -178,7 +185,7 @@ const Sidebar: FC = () => {
               className={clsx(
                 isOpen
                   ? "lg:animate-[fadeIn_ease-in-out_0.3s_forwards] "
-                  : "lg:hidden"
+                  : "lg:hidden",
               )}
             >
               Violet Shift
@@ -205,7 +212,7 @@ const Sidebar: FC = () => {
                   <div
                     className={clsx(
                       "hidden px-4 py-2 w-full cursor-pointer hover:bg-primary/20 hover:text-primary rounded-md",
-                      isOpen ? "" : "lg:block"
+                      isOpen ? "" : "lg:block",
                     )}
                     key={item.key}
                     onClick={() => setIsOpen(true)}
@@ -230,7 +237,7 @@ const Sidebar: FC = () => {
                       trigger: "cursor-pointer gap-2",
                       heading: clsx(
                         "hover:bg-primary/20 hover:text-primary cursor-pointer rounded-md px-2 h-10",
-                        isActive && "text-primary"
+                        isActive && "text-primary",
                       ),
                       content: "ml-2 ",
                       indicator:
@@ -241,7 +248,7 @@ const Sidebar: FC = () => {
                     {item.children.map((child) => {
                       const ChildIcon = child.icon;
                       const isChildActive = location.pathname?.includes(
-                        child.to
+                        child.to,
                       );
                       const isChildAllowed = child.roles
                         ? child.roles.includes(user?.role ?? "")
@@ -255,7 +262,7 @@ const Sidebar: FC = () => {
                         <Link
                           className={clsx(
                             "flex items-center gap-2 px-4 py-2 hover:bg-primary/20 hover:text-primary cursor-pointer rounded-md",
-                            isChildActive && "text-primary"
+                            isChildActive && "text-primary",
                           )}
                           to={child.to}
                           key={child.key}
@@ -265,7 +272,7 @@ const Sidebar: FC = () => {
                             className={clsx(
                               isOpen
                                 ? "lg:animate-[fadeIn_ease-in-out_0.3s_forwards]"
-                                : "lg:hidden"
+                                : "lg:hidden",
                             )}
                           >
                             {child.label}
@@ -290,7 +297,7 @@ const Sidebar: FC = () => {
                     isActive && "text-primary",
                     isOpen
                       ? "lg:animate-[fadeIn_ease-in-out_0.3s_forwards]"
-                      : "lg:hidden"
+                      : "lg:hidden",
                   )}
                 >
                   {item.label}

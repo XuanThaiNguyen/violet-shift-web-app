@@ -568,6 +568,15 @@ const ShiftDrawer = ({
     return true;
   }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
 
+  const isChangeLogWork = useMemo(() => {
+    if (isLoading || staffScheduleLoading) return false;
+    const now = Date.now();
+    if (dataShiftDetail!.timeTo > now) return false;
+    if (staffSchedules?.some((schedule) => schedule.timeTo! > now))
+      return false;
+    return true;
+  }, [dataShiftDetail, staffSchedules, isLoading, staffScheduleLoading]);
+
   const isDeletable = useMemo(() => {
     if (isLoading || staffScheduleLoading) return false;
     const now = Date.now();
@@ -681,24 +690,27 @@ const ShiftDrawer = ({
                     >
                       Edit
                     </Button>
-                    {isAdmin && !isWorkLogsLoading && !isLogged && (
-                      <Button
-                        size="md"
-                        color={"secondary"}
-                        onPress={() =>
-                          mutateLogWork({
-                            scheduleId: scheduleId,
-                            shiftId: selectedShiftId,
-                          })
-                        }
-                        startContent={<Clock size={16} />}
-                        isLoading={isLogging}
-                        disabled={isLogging}
-                        isDisabled={isLogging}
-                      >
-                        Log Work
-                      </Button>
-                    )}
+                    {isAdmin &&
+                      !isWorkLogsLoading &&
+                      !isLogged &&
+                      isChangeLogWork && (
+                        <Button
+                          size="md"
+                          color={"secondary"}
+                          onPress={() =>
+                            mutateLogWork({
+                              scheduleId: scheduleId,
+                              shiftId: selectedShiftId,
+                            })
+                          }
+                          startContent={<Clock size={16} />}
+                          isLoading={isLogging}
+                          disabled={isLogging}
+                          isDisabled={isLogging}
+                        >
+                          Log Work
+                        </Button>
+                      )}
                   </div>
                 )}
               </DrawerHeader>
